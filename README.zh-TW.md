@@ -1,5 +1,7 @@
 # speech-clock-dub
 
+[![CI](https://github.com/Nexplico-Ltd/speech-clock-dub/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Nexplico-Ltd/speech-clock-dub/actions/workflows/ci.yml)
+
 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | **繁體中文** | [简体中文](README.zh-CN.md)
 
 > 本文件是英文版 [README.md](README.md) 的繁體中文翻譯。若內容不一致，以英文版為準。翻譯可能落後於最新內容。
