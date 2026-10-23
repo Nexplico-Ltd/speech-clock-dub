@@ -11,7 +11,7 @@ permissions:
 jobs:
   extension:
     name: Extension (syntax + unit tests)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -27,7 +27,7 @@ jobs:
 
   bridge:
     name: edge-tts bridge (lint + unit tests)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
