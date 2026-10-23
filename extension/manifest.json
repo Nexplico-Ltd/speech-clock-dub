@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Japanese Dub",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Dubs YouTube lecture videos into Japanese. The video follows the voice, not the other way around.",
   "permissions": ["storage"],
   "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
