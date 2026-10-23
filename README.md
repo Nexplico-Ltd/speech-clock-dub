@@ -129,10 +129,11 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 
 ## Example lectures
 
-The extension is meant for slide-based lectures. Two playlists you can try it on:
+The extension is meant for slide-based lectures. Two playlists and one podcast episode you can try it on:
 
 - Adi Teman's [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me) (Bar-Ilan University 83-313, 66 videos). The lectures we checked have manual English captions, the best-supported case.
 - Prof. Tony Chan Carusone's [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F) (37 graduate-level videos on the Microelectronics channel). These videos have only auto-generated English captions, which is the least-tested path (see Known limitations below).
+- Lex Fridman Podcast [#494, Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0) (2 h 26 min conversation with no slides, English captions). It shows how the extension behaves on a long, speech-only video, and it has not been tested as thoroughly as the lectures above.
 
 Videos with manual captions work better. The videos are not part of this project, and the project is not affiliated with their authors. Please respect their rights: do not republish dubbed copies without permission.
 

@@ -95,10 +95,11 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
 ## 範例講課影片
 
-這個擴充功能是為以投影片為主的講課影片設計的。以下兩個播放清單可以拿來試用：
+這個擴充功能是為以投影片為主的講課影片設計的。以下兩個播放清單和一集 Podcast 可以拿來試用：
 
 - Adi Teman 的 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313，共 66 支影片）。我們檢查過的課程都有手動的英文字幕，是支援最完整的情況。
 - Tony Chan Carusone 教授的 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics 頻道上 37 支研究所等級的影片）。這些影片只有自動產生的英文字幕，這是測試最少的路徑（請見下方的「已知限制 / TODO」）。
+- Lex Fridman Podcast 的 [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)（沒有投影片的 2 小時 26 分鐘對談，有英文字幕）。可以用它看看在較長的純語音影片上的表現，但測試不如上面的課程充分。
 
 有手動字幕的影片效果更好。這些影片不屬於本專案，本專案與其作者也沒有關係。請尊重作者的權利，未經許可不要重新發布配音後的副本。
 
