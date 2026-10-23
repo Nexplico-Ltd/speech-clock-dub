@@ -14,12 +14,20 @@ from importlib.metadata import version
 import edge_tts
 
 
-async def synthesize(text: str, voice: str, rate: str) -> bytes:
-    chunks = []
-    async for chunk in edge_tts.Communicate(text, voice, rate=rate).stream():
-        if chunk["type"] == "audio":
-            chunks.append(chunk["data"])
-    return b"".join(chunks)
+async def synthesize(text: str, voice: str, rate: str, attempts: int = 3) -> bytes:
+    # The service occasionally answers with no audio at all; a retry normally succeeds.
+    for attempt in range(attempts):
+        try:
+            chunks = []
+            async for chunk in edge_tts.Communicate(text, voice, rate=rate).stream():
+                if chunk["type"] == "audio":
+                    chunks.append(chunk["data"])
+            return b"".join(chunks)
+        except edge_tts.exceptions.EdgeTTSException:
+            if attempt == attempts - 1:
+                raise
+            await asyncio.sleep(0.3)
+    return b""
 
 
 class Handler(BaseHTTPRequestHandler):

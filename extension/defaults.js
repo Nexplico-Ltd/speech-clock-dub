@@ -1,36 +1,37 @@
 // Shared default settings. Loaded by the service worker (importScripts),
 // the content script and the options page. Stored overrides live in chrome.storage.sync.
 
-// Target languages: how the LLM is told to write, and the default edge-tts voice.
+// Target languages: how the LLM is told to write, and the default edge-tts voice per gender.
 const YTD_LANGS = {
   ja: {
     name: 'Japanese',
     style: 'natural spoken Japanese (polite desu/masu style)',
-    voice: 'ja-JP-NanamiNeural',
+    voices: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
     // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
     extraRule:
       '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
   },
-  en: { name: 'English', style: 'natural spoken English', voice: 'en-US-AriaNeural' },
+  en: { name: 'English', style: 'natural spoken English', voices: { female: 'en-US-AriaNeural', male: 'en-US-GuyNeural' } },
   'zh-TW': {
     name: 'Traditional Chinese',
     style: 'natural spoken Mandarin as used in Taiwan, written in Traditional Chinese characters',
-    voice: 'zh-TW-HsiaoChenNeural',
+    voices: { female: 'zh-TW-HsiaoChenNeural', male: 'zh-TW-YunJheNeural' },
   },
   'zh-CN': {
     name: 'Simplified Chinese',
     style: 'natural spoken Mandarin as used in mainland China, written in Simplified Chinese characters',
-    voice: 'zh-CN-XiaoxiaoNeural',
+    voices: { female: 'zh-CN-XiaoxiaoNeural', male: 'zh-CN-YunxiNeural' },
   },
   ko: {
     name: 'Korean',
     style: 'natural spoken Korean (polite haeyo/hapnida style)',
-    voice: 'ko-KR-SunHiNeural',
+    voices: { female: 'ko-KR-SunHiNeural', male: 'ko-KR-InJoonNeural' },
   },
 };
 
 const YTD_DEFAULTS = {
   targetLang: 'ja', // a key of YTD_LANGS
+  voiceGender: 'female', // 'female' | 'male'
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language.
   ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge'
 
@@ -45,10 +46,11 @@ const YTD_DEFAULTS = {
 
   // VOICEVOX engine.
   voicevoxUrl: 'http://localhost:50021',
-  speaker: 2, // VOICEVOX style id
+  speakerFemale: 2, // VOICEVOX style id (四国めたん ノーマル)
+  speakerMale: 11, // VOICEVOX style id (玄野武宏 ノーマル); GET /speakers lists them
   ttsSpeed: 1.1, // speedScale; a slightly faster voice means less slow-down of the video
 
-  // edge-tts bridge (tools/edge_tts_server.py). Empty voice = default for targetLang.
+  // edge-tts bridge (tools/edge_tts_server.py). Empty voice = default for targetLang and voiceGender.
   edgeUrl: 'http://127.0.0.1:5050',
   edgeVoice: '',
   edgeRate: '+0%', // e.g. '+10%' for a faster voice

@@ -3,6 +3,7 @@ const form = document.getElementById('form');
 
 const CHOICES = {
   targetLang: Object.keys(YTD_LANGS),
+  voiceGender: ['female', 'male'],
   ttsProvider: ['auto', 'voicevox', 'edge'],
 };
 

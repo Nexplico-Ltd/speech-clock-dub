@@ -46,7 +46,15 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
    VOICEVOX needs roughly 1-2 GB of VRAM, so it can share a 16 GB GPU with a 12B LLM.
 
    Each voice character has its own terms of use; check them before publishing dubbed videos.
-   `speaker` is the VOICEVOX style id (`GET /speakers` lists them).
+   `speakerFemale` / `speakerMale` are VOICEVOX style ids (`GET /speakers` lists them).
+
+   **VRAM:** each additional VOICEVOX voice loads another model on the GPU. With a 12B LLM that
+   reserves nearly all of a 16 GB card (e.g. a very large context window), the first voice may work
+   while another one fails with a CUDA out-of-memory error (HTTP 500 on `/synthesis`). Dubbing needs
+   only a small LLM context (a few thousand tokens), so lower the context length when loading the
+   model. Alternatively run VOICEVOX on the CPU (about 0.5x real time per sentence; omit `--use_gpu`
+   by overriding the image's command: `... voicevox_engine:nvidia-latest gosu user
+   /opt/voicevox_engine/run --host 0.0.0.0`).
 
 3. **edge-tts bridge** (only for non-Japanese targets, or Japanese if you prefer it over VOICEVOX).
    edge-tts uses Microsoft's online speech service through an unofficial API, so **the translated
@@ -68,7 +76,7 @@ it to `host_permissions` in `extension/manifest.json`.
 
 Set `targetLang` in the options page:
 
-| `targetLang` | Language | Default edge-tts voice |
+| `targetLang` | Language | Default edge-tts voice (female) |
 | --- | --- | --- |
 | `ja` | Japanese | `ja-JP-NanamiNeural` (VOICEVOX is used by default) |
 | `en` | English | `en-US-AriaNeural` |
@@ -76,8 +84,19 @@ Set `targetLang` in the options page:
 | `zh-CN` | Simplified Chinese | `zh-CN-XiaoxiaoNeural` |
 | `ko` | Korean | `ko-KR-SunHiNeural` |
 
+`voiceGender` (`female` or `male`) picks the voice:
+
+| `targetLang` | female | male |
+| --- | --- | --- |
+| `ja` (VOICEVOX) | style `2` (四国めたん) | style `11` (玄野武宏) |
+| `ja` (edge-tts) | `ja-JP-NanamiNeural` | `ja-JP-KeitaNeural` |
+| `en` | `en-US-AriaNeural` | `en-US-GuyNeural` |
+| `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
+| `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
+| `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+
 `ttsProvider` is `auto` by default: VOICEVOX for `ja`, edge-tts otherwise. `edgeVoice` overrides the
-voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
+edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.
 
 ## Install (development)

@@ -68,7 +68,7 @@ async function synthesizeEdge(s, text) {
   const res = await fetch(`${s.edgeUrl.replace(/\/$/, '')}/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice: s.edgeVoice || getLang(s).voice, rate: s.edgeRate }),
+    body: JSON.stringify({ text, voice: s.edgeVoice || getLang(s).voices[s.voiceGender], rate: s.edgeRate }),
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) throw new Error(`edge-tts bridge HTTP ${res.status}: ${await res.text()}`);
@@ -78,15 +78,16 @@ async function synthesizeEdge(s, text) {
 async function synthesizeVoicevox(s, text) {
   if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
+  const speaker = s.voiceGender === 'male' ? s.speakerMale : s.speakerFemale;
 
-  const q = await fetch(`${base}/audio_query?speaker=${s.speaker}&text=${encodeURIComponent(text)}`, {
+  const q = await fetch(`${base}/audio_query?speaker=${speaker}&text=${encodeURIComponent(text)}`, {
     method: 'POST',
   });
   if (!q.ok) throw new Error(`VOICEVOX audio_query HTTP ${q.status}`);
   const query = await q.json();
   query.speedScale = s.ttsSpeed;
 
-  const w = await fetch(`${base}/synthesis?speaker=${s.speaker}`, {
+  const w = await fetch(`${base}/synthesis?speaker=${speaker}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(query),
