@@ -10,6 +10,9 @@ const CHOICES = {
   ttsProvider: ['auto', 'voicevox', 'edge'],
 };
 
+// Secrets are masked at all times, so the key is never visible on screen after saving.
+const SECRET_KEY = /ApiKey/i;
+
 chrome.storage.sync.get(null).then((stored) => {
   const values = { ...YTD_DEFAULTS, ...stored };
   for (const [key, def] of Object.entries(YTD_DEFAULTS)) {
@@ -21,7 +24,8 @@ chrome.storage.sync.get(null).then((stored) => {
       for (const c of CHOICES[key]) input.add(new Option(c, c));
     } else {
       input = document.createElement('input');
-      input.type = typeof def === 'number' ? 'number' : 'text';
+      input.type = typeof def === 'number' ? 'number' : SECRET_KEY.test(key) ? 'password' : 'text';
+      if (SECRET_KEY.test(key)) input.autocomplete = 'new-password';
       if (typeof def === 'number') input.step = 'any';
     }
     input.name = key;
