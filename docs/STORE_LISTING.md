@@ -93,7 +93,7 @@ A short screen recording of this flow is linked in the "Additional instructions"
 ## Assets checklist
 
 - [x] Icons 16 / 48 / 128 px (`extension/icons/`)
-- [ ] At least one screenshot, 1280x800 or 640x400
+- [x] Screenshots, 1280x800 (`docs/store/`)
 - [ ] Small promo tile, 440x280
 - [ ] Demo recording for reviewers
 - [ ] Support URL: https://github.com/Nexplico-Ltd/speech-clock-dub/issues
