@@ -1,0 +1,8 @@
+{
+  "name": "speech-clock-dub",
+  "private": true,
+  "description": "Test runner for the speech-clock-dub Chrome extension (no runtime dependencies).",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

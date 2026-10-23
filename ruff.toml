@@ -1,0 +1,5 @@
+# Pin the rule set so local runs and CI agree, whatever user-level ruff config exists.
+line-length = 120
+
+[lint]
+select = ["E4", "E7", "E9", "F"]
