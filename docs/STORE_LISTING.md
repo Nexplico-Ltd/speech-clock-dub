@@ -94,6 +94,6 @@ A short screen recording of this flow is linked in the "Additional instructions"
 
 - [x] Icons 16 / 48 / 128 px (`extension/icons/`)
 - [x] Screenshots, 1280x800 (`docs/store/`)
-- [ ] Small promo tile, 440x280
+- [x] Small promo tile, 440x280 (`docs/store/promo-tile.png`, `tools/make_promo.py`)
 - [ ] Demo recording for reviewers
 - [ ] Support URL: https://github.com/Nexplico-Ltd/speech-clock-dub/issues
