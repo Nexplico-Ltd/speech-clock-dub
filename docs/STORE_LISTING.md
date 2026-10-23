@@ -81,19 +81,20 @@ speech servers, and keep the video in step with the generated speech.
 The extension needs local servers, so it will not do anything on a clean machine. To verify it:
 
 1. Install the extension and open its options page.
-2. Run an OpenAI-compatible server (for example Ollama or llama.cpp's `llama-server`) and set
-   `llmBaseUrl` (ending in `/v1`) and `llmModel`.
+2. Run an OpenAI-compatible chat server (for example llama.cpp's `llama-server`, or the Unsloth service
+   the project was developed with) and set `llmBaseUrl` (ending in `/v1`) and `llmModel`.
 3. Run VOICEVOX: `docker run --rm -p 50021:50021 voicevox/voicevox_engine:cpu-latest`.
 4. Open a video with captions, for example https://www.youtube.com/watch?v=vif8NQcjVf0, and click
    **Dub (ja)** at the top left of the player.
 
-A short screen recording of this flow is linked in the "Additional instructions" field of the dashboard.
-(TODO: record it and add the link before submitting.)
+A screen recording of this flow (video only, no sound) is linked in the "Additional instructions"
+field of the dashboard. (TODO: upload it, for example as an unlisted YouTube video, and add the link
+before submitting.)
 
 ## Assets checklist
 
 - [x] Icons 16 / 48 / 128 px (`extension/icons/`)
 - [x] Screenshots, 1280x800 (`docs/store/`)
 - [x] Small promo tile, 440x280 (`docs/store/promo-tile.png`, `tools/make_promo.py`)
-- [ ] Demo recording for reviewers
+- [ ] Demo recording for reviewers (recorded locally, not yet uploaded; no sound)
 - [ ] Support URL: https://github.com/Nexplico-Ltd/speech-clock-dub/issues
