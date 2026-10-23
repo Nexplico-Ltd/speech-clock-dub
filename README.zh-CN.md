@@ -83,6 +83,8 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 
 `ttsProvider` 默认为 `auto`：`ja` 使用 VOICEVOX，其他语言使用 edge-tts。`edgeVoice` 可覆盖 edge-tts 的声音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可调整语速。如需添加语言，请在 `extension/defaults.js` 的 `YTD_LANGS` 中加入一个条目。
 
+`speakerVoices`（默认 `off`）适用于访谈、播客之类的对话。许多手动字幕会在换人说话时，在行首加上 `- ` 或 `>>`。设为 `alternate` 后，这些标记会从文本中去掉，并在每次换人时切换声音：第一位说话者使用 `voiceGender` 的声音，另一位使用相反性别的声音。标记中没有姓名，所以只适用于两个人；自动生成的字幕通常也没有这些标记。
+
 ## 屏幕字幕
 
 播放器中的 **Sub** 按钮会依次切换 `off` -> `translated` -> `both`（译文加原文）。选择会保存在 `subtitles` 设置中（默认 `off`）。正在朗读的 cue 的文字会显示在播放器下方，cue 之间会隐藏；用户暂停时则保持显示。字体大小会随播放器宽度缩放，所以全屏也适用。它显示在 YouTube 自带的字幕行上方，因此即使开启了 YouTube 字幕也不会重叠。 较长的句子会分成每页最多 `subtitleMaxLines` 行（默认 2，`0` 表示不限制）的页面显示，页面会随语音的进度切换，因此字幕不会大面积遮住视频。在 `both` 模式下，译文与原文各自分开限制。
@@ -111,6 +113,7 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 | `extension/defaults.js` | 所有上下文共用的默认设置 |
 | `extension/page-hook.js` | MAIN world 脚本；通过播放器 API 获取字幕 JSON |
 | `extension/asr.js` | ASR 字幕辅助函数：单词展平、标点窗口、对齐、以句子为单位的 cue |
+| `extension/speakers.js` | 对话辅助函数：按换人标记切分字幕，并交替分配声音 |
 | `extension/subtitle.js` | 字幕分页辅助函数：把较长的文字分成几行一页 |
 | `extension/content.js` | cue 的构建、预生成循环、播放调度器、HUD |
 | `extension/background.js` | Service worker；与 LLM、VOICEVOX、edge-tts 的 HTTP 桥接 |

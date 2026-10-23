@@ -83,6 +83,8 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
 `ttsProvider` の既定は `auto` で、`ja` は VOICEVOX、それ以外は edge-tts を使います。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
 
+`speakerVoices`（既定は `off`）は、インタビューやポッドキャストのような対話向けです。手動字幕の多くは、話者の交代を行頭の `- ` や `>>` で示しています。`alternate` にすると、この印を本文から取り除き、話者が替わるたびに声を切り替えます。最初の話者には `voiceGender` の声、もう一人には反対の性別の声を使います。印には名前がないため、対応できるのは 2 人までです。また、自動生成字幕には通常この印がありません。
+
 ## 画面上の字幕
 
 プレイヤーの **Sub** ボタンで、`off` -> `translated` -> `both`（訳＋原文）と切り替わります。選択は `subtitles` 設定（既定は `off`）に保存されます。いま喋っている cue のテキストがプレイヤー下部に表示され、cue の間は非表示になります。ユーザーが一時停止している間は表示されたままです。フォントはプレイヤーの幅に合わせて拡縮するので、全画面でも使えます。YouTube 自身の字幕行より上に表示されるため、YouTube の字幕がオンでも重なりません。 長い文は、最大 `subtitleMaxLines` 行（既定 2、`0` で無制限）のページに分けて表示され、ページは音声の進みに合わせて切り替わります。そのため、字幕が映像を大きく隠すことはありません。`both` では、訳と原文をそれぞれ別に制限します。
@@ -111,6 +113,7 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 | `extension/defaults.js` | すべてのコンテキストで共有する既定設定 |
 | `extension/page-hook.js` | MAIN ワールドのスクリプト。プレイヤー API 経由で字幕 JSON を取得 |
 | `extension/asr.js` | ASR 字幕のヘルパー。単語の平坦化、句読点の窓、突き合わせ、文単位の cue |
+| `extension/speakers.js` | 対話用ヘルパー。話者交代の印で字幕を区切り、声を交互に割り当てる |
 | `extension/subtitle.js` | 字幕のページ分割ヘルパー。長い文を数行ずつのページに分ける |
 | `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
 | `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |

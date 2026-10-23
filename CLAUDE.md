@@ -24,6 +24,7 @@ Pipeline: YouTube captions -> sentence segmentation -> local LLM translation (Op
 - `extension/defaults.js` - shared default settings (loaded by background, content script and options page)
 - `extension/page-hook.js` - runs in the page's MAIN world; reads caption tracks from the YouTube player
 - `extension/asr.js` - pure helpers for auto-generated captions (word flattening, LLM punctuation windows, alignment, sentence-based cues)
+- `extension/speakers.js` - pure helpers for dialogue captions (speaker-change markers, alternating voices)
 - `extension/subtitle.js` - pure helpers that split long subtitle text into pages of a few lines
 - `extension/content.js` - captions -> cues, production loop, playback scheduler, HUD
 - `extension/background.js` - service worker; bridges to the LLM and TTS HTTP servers

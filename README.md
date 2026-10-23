@@ -111,6 +111,8 @@ Set `targetLang` in the options page:
 edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.
 
+`speakerVoices` (`off` by default) is for dialogue such as interviews and podcasts. Many manual captions mark a change of speaker with a leading `- ` or `>>`. With `speakerVoices` set to `alternate`, the markers are removed from the text and the voice switches at every change: the first speaker gets the voice of `voiceGender`, the other speaker gets the opposite gender. The markers carry no names, so this only works for two speakers, and auto-generated captions usually have no markers.
+
 ## On-screen subtitles
 
 The **Sub** button in the player cycles `off` -> `translated` -> `both` (translation plus the original
@@ -145,6 +147,7 @@ Videos with manual captions work better. The videos are not part of this project
 | `extension/defaults.js` | Default settings shared by all contexts |
 | `extension/page-hook.js` | MAIN-world script; fetches caption JSON through the player API |
 | `extension/asr.js` | ASR caption helpers: word flattening, punctuation windows, alignment, sentence-based cues |
+| `extension/speakers.js` | Dialogue helpers: splitting captions at speaker-change markers and alternating voices |
 | `extension/subtitle.js` | Subtitle paging helpers: splitting long text into pages of a few lines |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
