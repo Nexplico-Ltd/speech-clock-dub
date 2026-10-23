@@ -4,6 +4,9 @@
 
 - Always reply to the user in Japanese, regardless of the language the user writes in.
 - All documentation (README, CLAUDE.md, docs/), code comments, and commit messages must be written in plain English.
+  The one exception is the translated READMEs (`README.ja.md`, `README.ko.md`, `README.zh-TW.md`,
+  `README.zh-CN.md`), which the user asked for. `README.md` (English) is the source of truth: when
+  it changes, update the translations to match.
 
 ## Project
 
@@ -24,3 +27,5 @@ Pipeline: YouTube captions -> sentence segmentation -> local LLM translation (Op
 - `extension/background.js` - service worker; bridges to the LLM and TTS HTTP servers
 - `extension/options.html`, `extension/options.js` - settings UI
 - `tools/edge_tts_server.py` - local HTTP bridge around edge-tts (run with `.venv/bin/python`)
+- `tests/` - unit tests; `npm test` for the extension, `python -m unittest discover -s tests -p "test_*.py"` for the bridge
+- `.github/workflows/ci.yml` - CI (syntax check, ruff, both test suites)

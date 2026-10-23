@@ -1,0 +1,130 @@
+# speech-clock-dub
+
+[English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [繁體中文](README.zh-TW.md) | **简体中文**
+
+> 本文档是英文版 [README.md](README.md) 的简体中文翻译。如有出入，以英文版为准。翻译可能落后于最新内容。
+
+让画面跟着语音走的 YouTube 讲课视频配音工具。
+
+这是一个 Chrome（MV3）扩展程序，可以把 YouTube 讲课视频配音成日语、英语、繁体中文、简体中文或韩语。它面向以幻灯片为主的视频：不是把翻译后的语音硬压进画面的节奏，而是 **让画面跟着语音走**。
+
+## 工作原理
+
+```
+YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> Web Audio 队列
+                                                                            |
+                              <video> 的 playbackRate / pause / play  <------+
+```
+
+- 合成的语音是主时钟，原始音频会被静音。
+- 每个 cue 的 `playbackRate` 会设为 `cue 剩余时间 / 语音时长`，并限制在 `[minRate, maxRate]` 范围内。
+- 如果语音比该 cue 的画面片段长，视频会暂停（幻灯片定格），直到语音说完；如果语音更短，视频会以更快的速度播放到下一个 cue。
+- cue 之间较长的静默间隙以 `gapRate` 速度通过。
+- 预生成（producer）循环会在播放之前先翻译并合成 cue。翻译按顺序进行（每句都会把前面的译文作为上下文），语音合成则最多同时处理 `concurrency` 个 cue；对于每次请求要几秒的云端 TTS，这一点很重要。在 cue 的边界，如果已准备好的语音少于 `lowWaterSec` 秒，视频就暂停，直到积累到 `highWaterSec` 秒才继续（迟滞机制）。因为视频是从属的一方，缓冲耗尽不会造成不同步，只会让视频暂停。播放不会在一句话的中途被打断。
+- 用户暂停/播放时，语音也会随之暂停/继续；用户拖动进度（seek）时，会重新对齐 cue 的位置。广告会被检测到（`.ad-showing`），期间调度器会暂停。
+
+## 需求
+
+1. **兼容 OpenAI 的 LLM 端点**（例如 Unsloth 服务），并运行 Gemma 12B 级别的模型。请在选项页面设置 `llmBaseUrl`（以 `/v1` 结尾的 URL）和 `llmModel`。扩展程序会调用 `POST {llmBaseUrl}/chat/completions`。
+2. **VOICEVOX 引擎**（开源、高质量的日语 TTS）：
+
+   ```
+   # GPU（需要 nvidia-container-toolkit）。镜像的默认命令已经带有
+   # --use_gpu --host 0.0.0.0，所以请不要再追加参数：它们会替换该默认命令。
+   docker run -d --rm --name voicevox --gpus all -p 50021:50021 voicevox/voicevox_engine:nvidia-latest
+   # 仅 CPU
+   docker run --rm -p 50021:50021 voicevox/voicevox_engine:cpu-latest
+   ```
+
+   VOICEVOX 大约需要 1-2 GB 的 VRAM，所以可以和 12B 的 LLM 共用一张 16 GB 的 GPU。
+
+   每个声音角色都有各自的使用条款，公开配音后的视频之前请先确认。
+   `speakerFemale` / `speakerMale` 是 VOICEVOX 的风格 ID（可用 `GET /speakers` 列出）。
+
+   **VRAM：** 每多用一个 VOICEVOX 声音，就会在 GPU 上多加载一个模型。如果 12B 的 LLM 几乎占满 16 GB 的显卡（例如上下文窗口非常大），第一个声音可能正常，另一个声音却会因 CUDA 内存不足而失败（`/synthesis` 返回 HTTP 500）。配音只需要几千个 token 的 LLM 上下文，所以加载模型时请调低上下文长度。在 16 GB 的 RTX 4060 Ti 与 Gemma 4 12B（Q4）上的实测：上下文为 262144 个 token 时，llama-server 用了 14.2 GB（剩余约 0.5 GB，男声失败）；调成 16384 后用了 9.5 GB（加载 VOICEVOX 后剩余约 3.9 GB，两种声音都正常），翻译也变快了（每句 0.5 秒 -> 0.3 秒）。
+
+   另一个做法是让 VOICEVOX 在 CPU 上运行（每句约为实时速度的 0.5 倍）。覆盖镜像的命令来省略 `--use_gpu`：`... voicevox_engine:nvidia-latest gosu user /opt/voicevox_engine/run --host 0.0.0.0`。
+
+3. **edge-tts 桥接程序**（仅用于日语以外的目标语言；如果你想用它代替 VOICEVOX，日语也可以）。edge-tts 通过非官方 API 使用 Microsoft 的在线语音服务，因此 **翻译后的文本会发送给 Microsoft**，需要互联网连接，而且服务一旦变动就可能失效。扩展程序通过一个小型的本地 HTTP 桥接程序来使用它：
+
+   ```
+   python3 -m venv .venv && .venv/bin/pip install edge-tts
+   .venv/bin/python tools/edge_tts_server.py        # 监听 127.0.0.1:5050
+   ```
+
+   `--port` 可更改端口（之后请同步更新 `edgeUrl`）。每句约需 2-3 秒；缓冲填满之后，并行的 producer 会把这段延迟掩盖掉，但第一次开始播放会比 VOICEVOX 久。
+
+`host_permissions` 中只有 `localhost` / `127.0.0.1`。如果你的 LLM 运行在其他主机上，请把它添加到 `extension/manifest.json` 的 `host_permissions`。
+
+## 目标语言
+
+在选项页面设置 `targetLang`：
+
+| `targetLang` | 语言 | edge-tts 默认声音（女声） |
+| --- | --- | --- |
+| `ja` | 日语 | `ja-JP-NanamiNeural`（默认使用 VOICEVOX） |
+| `en` | 英语 | `en-US-AriaNeural` |
+| `zh-TW` | 繁体中文（台湾） | `zh-TW-HsiaoChenNeural` |
+| `zh-CN` | 简体中文 | `zh-CN-XiaoxiaoNeural` |
+| `ko` | 韩语 | `ko-KR-SunHiNeural` |
+
+`voiceGender`（`female` 或 `male`）用来选择声音：
+
+| `targetLang` | female | male |
+| --- | --- | --- |
+| `ja`（VOICEVOX） | 风格 `2`（四国めたん） | 风格 `11`（玄野武宏） |
+| `ja`（edge-tts） | `ja-JP-NanamiNeural` | `ja-JP-KeitaNeural` |
+| `en` | `en-US-AriaNeural` | `en-US-GuyNeural` |
+| `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
+| `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
+| `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+
+`ttsProvider` 默认为 `auto`：`ja` 使用 VOICEVOX，其他语言使用 edge-tts。`edgeVoice` 可覆盖 edge-tts 的声音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可调整语速。如需添加语言，请在 `extension/defaults.js` 的 `YTD_LANGS` 中加入一个条目。
+
+## 屏幕字幕
+
+播放器中的 **Sub** 按钮会依次切换 `off` -> `translated` -> `both`（译文加原文）。选择会保存在 `subtitles` 设置中（默认 `off`）。正在朗读的 cue 的文字会显示在播放器下方，cue 之间会隐藏；用户暂停时则保持显示。字体大小会随播放器宽度缩放，所以全屏也适用。它显示在 YouTube 自带的字幕行上方，因此即使开启了 YouTube 字幕也不会重叠。
+
+## 安装（开发用）
+
+1. 打开 `chrome://extensions`，启用“开发者模式”，点击“加载已解压的扩展程序”，选择 `extension/`。
+2. 打开扩展程序的选项页面并调整设置。
+3. 打开一个有字幕的 YouTube 视频，点击播放器左上角的 **Dub (xx)**（**Sub** 用来切换屏幕上的翻译字幕）。每次重新加载扩展程序之后，也要刷新 YouTube 标签页。
+
+## 文件
+
+| 文件 | 用途 |
+| --- | --- |
+| `extension/manifest.json` | MV3 清单 |
+| `extension/defaults.js` | 所有上下文共用的默认设置 |
+| `extension/page-hook.js` | MAIN world 脚本；通过播放器 API 获取字幕 JSON |
+| `extension/content.js` | cue 的构建、预生成循环、播放调度器、HUD |
+| `extension/background.js` | Service worker；与 LLM、VOICEVOX、edge-tts 的 HTTP 桥接 |
+| `extension/options.html`, `options.js` | 设置界面 |
+| `tools/edge_tts_server.py` | 封装 `edge-tts` 的本地 HTTP 桥接程序 |
+| `tests/` | 单元测试（扩展程序使用 Node 内置的测试运行器，桥接程序使用 `unittest`） |
+| `.github/workflows/ci.yml` | GitHub Actions CI |
+
+## 开发
+
+```
+npm test                                                  # 扩展程序测试（Node 22 及以上，无依赖）
+.venv/bin/pip install ruff
+.venv/bin/ruff check tools tests                          # 对桥接程序及其测试做 lint
+.venv/bin/python -m unittest discover -s tests -p "test_*.py"   # 桥接程序测试
+```
+
+每次推送到 `main`，以及每个 pull request，GitHub Actions（`.github/workflows/ci.yml`）都会对所有扩展程序脚本做语法检查，并运行两组测试。
+
+## 已知限制 / TODO
+
+- 自动生成（ASR）的字幕会按单词的绝对时间逐词去除重复。这是尽力而为的做法，尚未在很多真实的字幕轨上测试过；手动字幕效果最好。
+- YouTube 可能要求 `timedtext` 端点提供 PO token，导致字幕请求返回空内容。这时请用 **Load captions** 按钮提供 SRT / WebVTT / JSON3 文件，例如用 `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>` 生成。请在选项页面设置 `localCaptionLang`（*源*语言的名称，例如 `English`）。切换到其他视频时，加载的文件会被丢弃。滚动式（rolling）的自动字幕 VTT 不会去除重复；这条路径请使用手动字幕。
+- 翻译一次处理一个 cue，并以前面 `contextCues` 句的译文作为上下文。支持批量翻译和术语表可改善用词一致性。
+- 只会使用符合偏好顺序的第一条字幕轨，没有语言选择界面。
+- 比播放位置更早 4 个以上的 cue，其解码后的音频会被释放；向回拖动时会重新合成。
+- 测试覆盖设置、清单、service worker 和 edge-tts 桥接程序。content script（cue 构建、调度器、HUD）和 page hook 目前还没有自动化测试，是在浏览器中手动检查。
+
+## 许可证
+
+Copyright 2026 Nexplico-Ltd. 依据 Apache License 2.0 授权，详见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。这仅适用于本仓库中的代码。它所对接的服务和模型各有自己的条款：VOICEVOX 及其每个声音角色、edge-tts 背后的 Microsoft 在线语音服务，以及你所运行的 LLM（例如 Gemma）。公开配音后的视频之前请先确认。

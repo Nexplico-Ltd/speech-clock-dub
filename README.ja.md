@@ -1,0 +1,130 @@
+# speech-clock-dub
+
+[English](README.md) | **日本語** | [한국어](README.ko.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+
+> これは英語版 [README.md](README.md) の日本語訳です。内容が食い違う場合は英語版が正です。翻訳は更新が遅れることがあります。
+
+YouTube の講義動画向けの吹き替えツール。映像が音声に合わせて動きます。
+
+YouTube の講義動画を、日本語・英語・繁体字中国語・簡体字中国語・韓国語に吹き替える Chrome（MV3）拡張機能です。スライドが中心の動画を想定しています。翻訳した音声を映像に合わせて詰め込むのではなく、**映像のほうが音声に合わせて動きます**。
+
+## 仕組み
+
+```
+YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) -> Web Audio キュー
+                                                                            |
+                              <video> の playbackRate / pause / play  <------+
+```
+
+- 合成した音声が主時計です。元の音声はミュートされます。
+- 各 cue で、映像の `playbackRate` を `cue の残り時間 / 音声の長さ` に設定します（`[minRate, maxRate]` の範囲に収めます）。
+- 音声が cue の映像区間より長い場合、音声が終わるまで映像を一時停止します（スライドが静止します）。音声のほうが短い場合は、次の cue まで映像を速めに進めます。
+- cue と cue の間の長い無音は、`gapRate` で通過します。
+- 先読みのプロデューサーループが、再生に先行して cue を翻訳・音声合成します。翻訳は順番に実行し（各翻訳は直前までの訳を文脈として受け取ります）、音声合成は最大 `concurrency` 件の cue を並列に実行します。クラウド TTS は 1 リクエストに数秒かかるため、これが効きます。cue の境界で、準備済みの音声が `lowWaterSec` 秒分を下回っていたら映像を一時停止し、`highWaterSec` 秒分が溜まってから再開します（ヒステリシス）。映像が従属側なので、バッファが尽きても同期はずれず、映像が止まるだけです。文の途中で再生が中断されることはありません。
+- ユーザーが一時停止・再生すると音声も一時停止・再開します。ユーザーがシークすると、cue の位置を再同期します。広告は検出され（`.ad-showing`）、その間スケジューラは停止します。
+
+## 必要なもの
+
+1. **OpenAI 互換の LLM エンドポイント**（例: Unsloth サービス）で、Gemma 12B クラスのモデルを動かします。オプションページで `llmBaseUrl`（`/v1` で終わる URL）と `llmModel` を設定してください。拡張機能は `POST {llmBaseUrl}/chat/completions` を呼び出します。
+2. **VOICEVOX エンジン**（オープンソースで高品質な日本語 TTS）:
+
+   ```
+   # GPU（nvidia-container-toolkit が必要）。イメージの既定コマンドがすでに
+   # --use_gpu --host 0.0.0.0 を渡しているので、引数を追加しないでください（既定コマンドが置き換わります）。
+   docker run -d --rm --name voicevox --gpus all -p 50021:50021 voicevox/voicevox_engine:nvidia-latest
+   # CPU のみ
+   docker run --rm -p 50021:50021 voicevox/voicevox_engine:cpu-latest
+   ```
+
+   VOICEVOX が必要とする VRAM は 1〜2 GB 程度なので、16 GB の GPU で 12B の LLM と同居できます。
+
+   声のキャラクターごとに利用規約があります。吹き替えた動画を公開する前に確認してください。
+   `speakerFemale` / `speakerMale` は VOICEVOX のスタイル ID です（`GET /speakers` で一覧できます）。
+
+   **VRAM:** VOICEVOX は、声を追加するたびに GPU に別のモデルを読み込みます。12B の LLM が 16 GB のカードのほぼ全部を確保していると（たとえばコンテキストウィンドウが非常に大きい場合）、最初の声は動いても、別の声が CUDA のメモリ不足で失敗することがあります（`/synthesis` が HTTP 500）。吹き替えに必要な LLM のコンテキストは数千トークンで足りるので、モデルを読み込むときにコンテキスト長を下げてください。16 GB の RTX 4060 Ti と Gemma 4 12B（Q4）での実測: コンテキスト 262144 トークンでは llama-server が 14.2 GB を使い（空きは約 0.5 GB で、男性の声は失敗）、16384 では 9.5 GB でした（VOICEVOX を読み込んだ状態で空き約 3.9 GB、両方の声が動作）。翻訳も速くなりました（1 文 0.5 秒 -> 0.3 秒）。
+
+   代わりに VOICEVOX を CPU で動かすこともできます（1 文あたり実時間の約 0.5 倍）。イメージのコマンドを上書きして `--use_gpu` を外します: `... voicevox_engine:nvidia-latest gosu user /opt/voicevox_engine/run --host 0.0.0.0`。
+
+3. **edge-tts ブリッジ**（日本語以外をターゲットにする場合。VOICEVOX よりこちらを使いたい場合は日本語でも）。edge-tts は非公式 API 経由で Microsoft のオンライン音声サービスを使うため、**翻訳したテキストが Microsoft に送信されます**。インターネット接続が必要で、サービスの変更で動かなくなる可能性があります。拡張機能からは、小さなローカル HTTP ブリッジを通して使います:
+
+   ```
+   python3 -m venv .venv && .venv/bin/pip install edge-tts
+   .venv/bin/python tools/edge_tts_server.py        # 127.0.0.1:5050 で待ち受け
+   ```
+
+   `--port` でポートを変えられます（その場合は `edgeUrl` も更新してください）。1 文あたり 2〜3 秒かかりますが、バッファが溜まれば並列プロデューサーが隠してくれます。ただし、最初の再生開始までは VOICEVOX より時間がかかります。
+
+`host_permissions` に入っているのは `localhost` / `127.0.0.1` だけです。LLM を別のホストで動かす場合は、`extension/manifest.json` の `host_permissions` に追加してください。
+
+## ターゲット言語
+
+オプションページで `targetLang` を設定します:
+
+| `targetLang` | 言語 | edge-tts の既定の声（女性） |
+| --- | --- | --- |
+| `ja` | 日本語 | `ja-JP-NanamiNeural`（既定では VOICEVOX を使用） |
+| `en` | 英語 | `en-US-AriaNeural` |
+| `zh-TW` | 繁体字中国語（台湾） | `zh-TW-HsiaoChenNeural` |
+| `zh-CN` | 簡体字中国語 | `zh-CN-XiaoxiaoNeural` |
+| `ko` | 韓国語 | `ko-KR-SunHiNeural` |
+
+`voiceGender`（`female` または `male`）で声を選びます:
+
+| `targetLang` | female | male |
+| --- | --- | --- |
+| `ja`（VOICEVOX） | スタイル `2`（四国めたん） | スタイル `11`（玄野武宏） |
+| `ja`（edge-tts） | `ja-JP-NanamiNeural` | `ja-JP-KeitaNeural` |
+| `en` | `en-US-AriaNeural` | `en-US-GuyNeural` |
+| `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
+| `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
+| `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+
+`ttsProvider` の既定は `auto` で、`ja` は VOICEVOX、それ以外は edge-tts を使います。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
+
+## 画面上の字幕
+
+プレイヤーの **Sub** ボタンで、`off` -> `translated` -> `both`（訳＋原文）と切り替わります。選択は `subtitles` 設定（既定は `off`）に保存されます。いま喋っている cue のテキストがプレイヤー下部に表示され、cue の間は非表示になります。ユーザーが一時停止している間は表示されたままです。フォントはプレイヤーの幅に合わせて拡縮するので、全画面でも使えます。YouTube 自身の字幕行より上に表示されるため、YouTube の字幕がオンでも重なりません。
+
+## インストール（開発用）
+
+1. `chrome://extensions` を開き、デベロッパー モードを有効にして「パッケージ化されていない拡張機能を読み込む」を押し、`extension/` を選びます。
+2. 拡張機能のオプションページを開き、設定を調整します。
+3. 字幕付きの YouTube 動画を開き、プレイヤー左上の **Dub (xx)** を押します（**Sub** で画面上の翻訳表示を切り替えます）。拡張機能を再読み込みしたら、YouTube のタブも毎回再読み込みしてください。
+
+## ファイル
+
+| ファイル | 役割 |
+| --- | --- |
+| `extension/manifest.json` | MV3 マニフェスト |
+| `extension/defaults.js` | すべてのコンテキストで共有する既定設定 |
+| `extension/page-hook.js` | MAIN ワールドのスクリプト。プレイヤー API 経由で字幕 JSON を取得 |
+| `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
+| `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |
+| `extension/options.html`, `options.js` | 設定 UI |
+| `tools/edge_tts_server.py` | `edge-tts` を包むローカル HTTP ブリッジ |
+| `tests/` | ユニットテスト（拡張機能は Node 標準のテストランナー、ブリッジは `unittest`） |
+| `.github/workflows/ci.yml` | GitHub Actions の CI |
+
+## 開発
+
+```
+npm test                                                  # 拡張機能のテスト（Node 22 以上、依存なし）
+.venv/bin/pip install ruff
+.venv/bin/ruff check tools tests                          # ブリッジとそのテストを lint
+.venv/bin/python -m unittest discover -s tests -p "test_*.py"   # ブリッジのテスト
+```
+
+GitHub Actions（`.github/workflows/ci.yml`）が、`main` への push と、すべてのプルリクエストで、拡張機能の全スクリプトの構文チェックと、2 つのテストスイートを実行します。
+
+## 既知の制限 / TODO
+
+- 自動生成（ASR）字幕は、単語の絶対時刻を使って単語単位で重複を除去します。ベストエフォートで、多くの実際のトラックでは未検証です。手動字幕がもっとも確実です。
+- YouTube が `timedtext` エンドポイントに PO トークンを要求し、字幕の取得が空の応答になることがあります。その場合は **Load captions** ボタンで SRT / WebVTT / JSON3 ファイルを渡してください。たとえば `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>` で作れます。オプションページで `localCaptionLang`（`English` などの*元の*言語名）を設定してください。読み込んだファイルは、別の動画に移動すると破棄されます。ローリング形式の自動字幕 VTT は重複を除去しないので、この経路では手動字幕を使ってください。
+- 翻訳は 1 cue ずつで、直前の `contextCues` 件の訳を文脈として渡します。まとめて翻訳する方式や用語集に対応すると、用語の一貫性が良くなります。
+- 優先順位に合った最初の字幕トラックだけを使います。言語を選ぶ UI はありません。
+- 再生位置より 4 つ以上前の cue のデコード済み音声は解放されます。後ろへシークすると再合成されます。
+- テストが対象とするのは、設定、マニフェスト、サービスワーカー、edge-tts ブリッジです。content script（cue の生成、スケジューラ、HUD）と page hook には、まだ自動テストがありません。ブラウザで手動確認しています。
+
+## ライセンス
+
+Copyright 2026 Nexplico-Ltd. Apache License 2.0 の下で提供されます。[LICENSE](LICENSE) と [NOTICE](NOTICE) を参照してください。これはこのリポジトリのコードにだけ適用されます。連携するサービスやモデルには、それぞれ別の利用規約があります。VOICEVOX と各声のキャラクター、edge-tts の裏にある Microsoft のオンライン音声サービス、実行する LLM（たとえば Gemma）です。吹き替えた動画を公開する前に確認してください。

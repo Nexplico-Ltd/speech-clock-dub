@@ -1,9 +1,14 @@
-# YouTube Dub
+# speech-clock-dub
+
+**English** | [日本語](README.ja.md) | [한국어](README.ko.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+
+> This English README is the source of truth; the translations may lag behind it.
+
+YouTube dubbing for lectures where the video follows the voice.
 
 A Chrome (MV3) extension that dubs YouTube lecture videos into Japanese, English, Traditional
-Chinese, Simplified Chinese or Korean. It is designed for
-videos that are essentially slideshows: instead of squeezing the translated speech to fit the
-picture, **the picture follows the speech**.
+Chinese, Simplified Chinese or Korean. It is designed for videos that are essentially slideshows:
+instead of squeezing the translated speech to fit the picture, **the picture follows the speech**.
 
 ## How it works
 
@@ -131,6 +136,20 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |
 | `tools/edge_tts_server.py` | Local HTTP bridge around `edge-tts` |
+| `tests/` | Unit tests (Node's built-in runner for the extension, `unittest` for the bridge) |
+| `.github/workflows/ci.yml` | GitHub Actions CI |
+
+## Development
+
+```
+npm test                                                  # extension tests, Node 22+, no dependencies
+.venv/bin/pip install ruff
+.venv/bin/ruff check tools tests                          # lint the bridge and its tests
+.venv/bin/python -m unittest discover -s tests -p "test_*.py"   # bridge tests
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs a syntax check of every extension script plus both
+test suites on each push to `main` and on every pull request.
 
 ## Known limitations / TODO
 
@@ -147,7 +166,9 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
   Batching and glossary support would improve terminology consistency.
 - Only the first caption track matching the preference order is used; there is no language picker.
 - Decoded audio for cues more than 4 behind the playhead is freed; seeking back re-synthesizes them.
-- No tests yet.
+- The tests cover the settings, the manifest, the service worker and the edge-tts bridge. The content
+  script (cue building, scheduler, HUD) and the page hook have no automated tests yet; they are
+  checked by hand in a browser.
 
 ## License
 
