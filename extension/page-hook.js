@@ -6,10 +6,16 @@
   // YouTube rejects timedtext requests that lack the player's proof-of-origin token and answers
   // with an empty body. The player's own requests are valid, so remember their responses.
   const captured = new Map(); // `${videoId}|${lang}` -> response text
+  const stats = { requests: 0, empty: 0 }; // for the error message when nothing usable arrives
   function record(url, text) {
     try {
       const u = new URL(url, location.href);
-      if (!u.pathname.endsWith('/api/timedtext') || !text) return;
+      if (!u.pathname.endsWith('/api/timedtext')) return;
+      stats.requests++;
+      if (!text) {
+        stats.empty++;
+        return;
+      }
       captured.set(`${u.searchParams.get('v')}|${u.searchParams.get('lang')}`, text);
     } catch {}
   }
@@ -40,13 +46,24 @@
   // Ask the player to load the track, then wait for its own request to be captured.
   async function viaPlayer(track, videoId) {
     const key = `${videoId}|${track.languageCode}`;
-    captured.delete(key);
+    // The player may have loaded this track already (e.g. captions were switched on).
+    if (captured.has(key)) return captured.get(key);
     const player = document.getElementById('movie_player');
     const ccBtn = document.querySelector('.ytp-subtitles-button');
     const wasOn = ccBtn?.getAttribute('aria-pressed') === 'true';
-    player?.loadModule?.('captions');
-    player?.setOption?.('captions', 'track', { languageCode: track.languageCode });
-    for (let i = 0; i < 40 && !captured.has(key); i++) await sleep(250);
+    const request = () => {
+      player?.loadModule?.('captions');
+      player?.setOption?.('captions', 'track', { languageCode: track.languageCode });
+    };
+    request();
+    for (let i = 0; i < 40 && !captured.has(key); i++) {
+      await sleep(250);
+      // No request after 3 s: force the player to load the track again.
+      if (i === 12 && !captured.has(key)) {
+        player?.unloadModule?.('captions');
+        request();
+      }
+    }
     // Leave the player's caption state as we found it.
     if (!wasOn && ccBtn?.getAttribute('aria-pressed') === 'true') ccBtn.click();
     return captured.get(key) ?? '';
@@ -74,7 +91,11 @@
       const res = await fetch(url);
       let text = res.ok ? await res.text() : '';
       if (!text) text = await viaPlayer(track, videoId);
-      if (!text) throw new Error('Caption fetch returned an empty body');
+      if (!text) {
+        throw new Error(
+          `Caption fetch returned an empty body (${stats.requests} caption requests seen, ${stats.empty} empty)`,
+        );
+      }
       if (!text.trimStart().startsWith('{')) throw new Error('Captions are not in JSON3 format');
       const json = JSON.parse(text);
 
