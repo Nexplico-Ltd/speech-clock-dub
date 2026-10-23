@@ -16,8 +16,12 @@ async function translate({ text, prev, sourceLang }) {
   // Single user message: some Gemma chat templates have no system role.
   const prompt =
     `You translate ${sourceLang} lecture subtitles into natural spoken Japanese (polite desu/masu style) ` +
-    `for a voice-over. Keep technical terms accurate. Output ONLY the Japanese translation of the ` +
-    `last line, with no notes, quotes or romaji.\n\n${context}Translate this line:\n${text}`;
+    `for a voice-over.\nRules:\n` +
+    `- Be faithful: do not add, omit or reinterpret content. Keep technical terms accurate.\n` +
+    `- Translate the meaning, not word by word. In particular, "Welcome back" is a greeting to ` +
+    `returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.\n` +
+    `Output ONLY the Japanese translation of the last line, with no notes, quotes or romaji.` +
+    `\n\n${context}Translate this line:\n${text}`;
 
   let extra = {};
   try {
