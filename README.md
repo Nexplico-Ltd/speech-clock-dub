@@ -148,3 +148,10 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 - Only the first caption track matching the preference order is used; there is no language picker.
 - Decoded audio for cues more than 4 behind the playhead is freed; seeking back re-synthesizes them.
 - No tests yet.
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE). This applies to the code in this repository only. The
+services and models it talks to have their own terms: VOICEVOX and each of its voice characters,
+Microsoft's online speech service behind edge-tts, and the LLM you run (e.g. Gemma). Check them
+before publishing dubbed videos.
