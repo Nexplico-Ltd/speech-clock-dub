@@ -49,6 +49,15 @@ const YTD_DEFAULTS = {
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language. 'google' = Google Cloud
   // Text-to-Speech (a paid online service: the translated text is sent to Google).
   ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge' | 'google'
+  // Per-speaker overrides for dialogues (speakerVoices 'alternate' or 'llm'): slot 1 is the first speaker,
+  // slot 2 the second. An empty provider uses ttsProvider; an empty voice uses the defaults below
+  // (slot 2 gets the gender opposite to voiceGender). A voice is a VOICEVOX style id, an edge-tts voice
+  // name or a Google voice name, matching the provider. Mixing providers is allowed, e.g. two female
+  // voices, one from VOICEVOX and one from Google.
+  voice1Provider: '', // '' | 'auto' | 'voicevox' | 'edge' | 'google'
+  voice1Voice: '',
+  voice2Provider: '',
+  voice2Voice: '',
 
   // OpenAI-compatible chat completions endpoint (e.g. the Unsloth service).
   llmBaseUrl: 'http://127.0.0.1:8888/v1',

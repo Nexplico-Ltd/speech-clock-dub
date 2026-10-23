@@ -124,6 +124,20 @@ test('google TTS sends the key in a header and picks the voice for language and 
   assert.match((await synth({ ttsProvider: 'google' })).res.error, /googleApiKey is empty/);
 });
 
+test('speaker slots can use different providers and voices, even with the same gender', async () => {
+  // Slot 1 (first speaker): VOICEVOX style 8; slot 2: a Google female voice although voiceGender is female.
+  const settings = { voice1Provider: 'voicevox', voice1Voice: '8', voice2Provider: 'google', voice2Voice: 'ja-JP-Neural2-B', googleApiKey: 'gk' };
+  const first = await synth(settings);
+  assert.match(first.calls[0].url, /\/audio_query\?speaker=8&/);
+  const second = await synth(settings, { alt: true });
+  assert.equal(second.calls[0].url, 'https://texttospeech.googleapis.com/v1/text:synthesize');
+  assert.deepEqual(JSON.parse(second.calls[0].opts.body).voice, { languageCode: 'ja-JP', name: 'ja-JP-Neural2-B' });
+  // Empty slots keep the old behaviour: ttsProvider, with the second speaker's gender flipped.
+  const plain = await synth({ targetLang: 'en' }, { alt: true });
+  assert.equal(JSON.parse(plain.calls[0].opts.body).voice, 'en-US-GuyNeural');
+  assert.match((await synth({ voice1Provider: 'nope' })).res.error, /Unknown TTS provider/);
+});
+
 test('unknown message types are not handled, so Chrome does not wait for a reply', () => {
   const bg = loadBackground({ fetchImpl: fakeServers() });
   assert.equal(bg.onMessage({ type: 'nope' }, null, () => {}), false);

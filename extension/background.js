@@ -84,26 +84,32 @@ function getLang(s) {
 // `alt` asks for the second voice of a dialogue: the gender opposite to voiceGender.
 async function synthesize({ text, alt }) {
   const s = await getSettings();
-  const provider = s.ttsProvider === 'auto' ? (s.targetLang === 'ja' ? 'voicevox' : 'edge') : s.ttsProvider;
-  if (provider === 'edge') return synthesizeEdge(s, text, alt);
-  if (provider === 'google') return synthesizeGoogle(s, text, alt);
-  return synthesizeVoicevox(s, text, alt);
+  // Each speaker slot may name its own provider and voice (voice1* = first speaker, voice2* = second),
+  // so voices of different providers can be mixed, even with the same gender.
+  const slot = alt ? 2 : 1;
+  const choice = s[`voice${slot}Provider`] || s.ttsProvider;
+  const provider = choice === 'auto' ? (s.targetLang === 'ja' ? 'voicevox' : 'edge') : choice;
+  const voice = String(s[`voice${slot}Voice`] ?? '').trim();
+  if (provider === 'edge') return synthesizeEdge(s, text, alt, voice);
+  if (provider === 'google') return synthesizeGoogle(s, text, alt, voice);
+  if (provider === 'voicevox') return synthesizeVoicevox(s, text, alt, voice);
+  throw new Error(`Unknown TTS provider "${choice}" (use auto, voicevox, edge or google)`);
 }
 
 const genderFor = (s, alt) => ((s.voiceGender === 'male') !== Boolean(alt) ? 'male' : 'female');
 
-async function synthesizeEdge(s, text, alt) {
+async function synthesizeEdge(s, text, alt, voice) {
   const res = await fetch(`${s.edgeUrl.replace(/\/$/, '')}/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice: (!alt && s.edgeVoice) || getLang(s).voices[genderFor(s, alt)], rate: s.edgeRate }),
+    body: JSON.stringify({ text, voice: voice || (!alt && s.edgeVoice) || getLang(s).voices[genderFor(s, alt)], rate: s.edgeRate }),
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) throw new Error(`edge-tts bridge HTTP ${res.status}: ${await res.text()}`);
   return toBase64(await res.arrayBuffer());
 }
 
-async function synthesizeGoogle(s, text, alt) {
+async function synthesizeGoogle(s, text, alt, voice) {
   if (!s.googleApiKey) throw new Error('googleApiKey is empty; set a Google Cloud Text-to-Speech API key');
   const g = getLang(s).google;
   const res = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
@@ -111,7 +117,7 @@ async function synthesizeGoogle(s, text, alt) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.googleApiKey },
     body: JSON.stringify({
       input: { text },
-      voice: { languageCode: g.code, name: (!alt && s.googleVoice) || g.voices[genderFor(s, alt)] },
+      voice: { languageCode: g.code, name: voice || (!alt && s.googleVoice) || g.voices[genderFor(s, alt)] },
       audioConfig: { audioEncoding: 'MP3', speakingRate: s.googleSpeed },
     }),
     signal: AbortSignal.timeout(30000),
@@ -122,10 +128,12 @@ async function synthesizeGoogle(s, text, alt) {
   return audioContent; // already base64
 }
 
-async function synthesizeVoicevox(s, text, alt) {
+async function synthesizeVoicevox(s, text, alt, voice) {
   if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge", "google" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
-  const speaker = genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
+  const speaker = voice !== '' && Number.isFinite(Number(voice))
+    ? Number(voice)
+    : genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
 
   const q = await fetch(`${base}/audio_query?speaker=${speaker}&text=${encodeURIComponent(text)}`, {
     method: 'POST',
