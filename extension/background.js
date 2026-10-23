@@ -13,14 +13,13 @@ async function translate({ text, prev, sourceLang }) {
       prev.map((p) => `${p.src}\n=> ${p.ja}`).join('\n') +
       '\n\n'
     : '';
+  const lang = getLang(s);
   // Single user message: some Gemma chat templates have no system role.
   const prompt =
-    `You translate ${sourceLang} lecture subtitles into natural spoken Japanese (polite desu/masu style) ` +
-    `for a voice-over.\nRules:\n` +
+    `You translate ${sourceLang} lecture subtitles into ${lang.style} for a voice-over.\nRules:\n` +
     `- Be faithful: do not add, omit or reinterpret content. Keep technical terms accurate.\n` +
-    `- Translate the meaning, not word by word. In particular, "Welcome back" is a greeting to ` +
-    `returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.\n` +
-    `Output ONLY the Japanese translation of the last line, with no notes, quotes or romaji.` +
+    `- Translate the meaning, not word by word.${lang.extraRule ? ` In particular, ${lang.extraRule}` : ''}\n` +
+    `Output ONLY the ${lang.name} translation of the last line, with no notes, quotes or romaji.` +
     `\n\n${context}Translate this line:\n${text}`;
 
   let extra = {};
@@ -53,8 +52,31 @@ async function translate({ text, prev, sourceLang }) {
   return out;
 }
 
+function getLang(s) {
+  const lang = YTD_LANGS[s.targetLang];
+  if (!lang) throw new Error(`Unknown targetLang "${s.targetLang}" (use one of ${Object.keys(YTD_LANGS).join(', ')})`);
+  return lang;
+}
+
 async function synthesize({ text }) {
   const s = await getSettings();
+  const provider = s.ttsProvider === 'auto' ? (s.targetLang === 'ja' ? 'voicevox' : 'edge') : s.ttsProvider;
+  return provider === 'edge' ? synthesizeEdge(s, text) : synthesizeVoicevox(s, text);
+}
+
+async function synthesizeEdge(s, text) {
+  const res = await fetch(`${s.edgeUrl.replace(/\/$/, '')}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, voice: s.edgeVoice || getLang(s).voice, rate: s.edgeRate }),
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) throw new Error(`edge-tts bridge HTTP ${res.status}: ${await res.text()}`);
+  return toBase64(await res.arrayBuffer());
+}
+
+async function synthesizeVoicevox(s, text) {
+  if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
 
   const q = await fetch(`${base}/audio_query?speaker=${s.speaker}&text=${encodeURIComponent(text)}`, {

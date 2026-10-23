@@ -1,6 +1,39 @@
 // Shared default settings. Loaded by the service worker (importScripts),
 // the content script and the options page. Stored overrides live in chrome.storage.sync.
+
+// Target languages: how the LLM is told to write, and the default edge-tts voice.
+const YTD_LANGS = {
+  ja: {
+    name: 'Japanese',
+    style: 'natural spoken Japanese (polite desu/masu style)',
+    voice: 'ja-JP-NanamiNeural',
+    // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
+    extraRule:
+      '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
+  },
+  en: { name: 'English', style: 'natural spoken English', voice: 'en-US-AriaNeural' },
+  'zh-TW': {
+    name: 'Traditional Chinese',
+    style: 'natural spoken Mandarin as used in Taiwan, written in Traditional Chinese characters',
+    voice: 'zh-TW-HsiaoChenNeural',
+  },
+  'zh-CN': {
+    name: 'Simplified Chinese',
+    style: 'natural spoken Mandarin as used in mainland China, written in Simplified Chinese characters',
+    voice: 'zh-CN-XiaoxiaoNeural',
+  },
+  ko: {
+    name: 'Korean',
+    style: 'natural spoken Korean (polite haeyo/hapnida style)',
+    voice: 'ko-KR-SunHiNeural',
+  },
+};
+
 const YTD_DEFAULTS = {
+  targetLang: 'ja', // a key of YTD_LANGS
+  // 'auto' = VOICEVOX for Japanese, edge-tts for every other language.
+  ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge'
+
   // OpenAI-compatible chat completions endpoint (e.g. the Unsloth service).
   llmBaseUrl: 'http://127.0.0.1:8888/v1',
   llmModel: 'unsloth/gemma-4-12B-it-qat-GGUF',
@@ -15,6 +48,11 @@ const YTD_DEFAULTS = {
   speaker: 2, // VOICEVOX style id
   ttsSpeed: 1.1, // speedScale; a slightly faster voice means less slow-down of the video
 
+  // edge-tts bridge (tools/edge_tts_server.py). Empty voice = default for targetLang.
+  edgeUrl: 'http://127.0.0.1:5050',
+  edgeVoice: '',
+  edgeRate: '+0%', // e.g. '+10%' for a faster voice
+
   // Language name given to the LLM when captions come from a local file.
   localCaptionLang: 'English',
 
@@ -27,6 +65,7 @@ const YTD_DEFAULTS = {
   lowWaterSec: 10, // at a cue boundary, rebuffer if less than this is ready
   highWaterSec: 40, // resume playback once this much is ready
   targetAheadSec: 90, // the producer stops once this much is ready ahead
+  concurrency: 3, // cues translated/synthesized in parallel
 
   // Video rate control.
   minRate: 0.5,

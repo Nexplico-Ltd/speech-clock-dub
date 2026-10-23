@@ -1,15 +1,26 @@
-// Generic settings form: one input per key of YTD_DEFAULTS.
+// Generic settings form: one input per key of YTD_DEFAULTS; a few keys get a dropdown.
 const form = document.getElementById('form');
+
+const CHOICES = {
+  targetLang: Object.keys(YTD_LANGS),
+  ttsProvider: ['auto', 'voicevox', 'edge'],
+};
 
 chrome.storage.sync.get(null).then((stored) => {
   const values = { ...YTD_DEFAULTS, ...stored };
   for (const [key, def] of Object.entries(YTD_DEFAULTS)) {
     const label = document.createElement('label');
     label.textContent = key;
-    const input = document.createElement('input');
+    let input;
+    if (CHOICES[key]) {
+      input = document.createElement('select');
+      for (const c of CHOICES[key]) input.add(new Option(c, c));
+    } else {
+      input = document.createElement('input');
+      input.type = typeof def === 'number' ? 'number' : 'text';
+      if (typeof def === 'number') input.step = 'any';
+    }
     input.name = key;
-    input.type = typeof def === 'number' ? 'number' : 'text';
-    if (typeof def === 'number') input.step = 'any';
     input.value = values[key];
     label.append(input);
     form.append(label);

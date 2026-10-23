@@ -7,12 +7,13 @@
 
 ## Project
 
-Chrome MV3 extension that dubs YouTube lecture videos (mostly static slides) into Japanese.
+Chrome MV3 extension that dubs YouTube lecture videos (mostly static slides) into Japanese, English,
+Traditional/Simplified Chinese or Korean.
 The synthesized speech is the master clock; the video is the slave. The extension adjusts
 `playbackRate` and pauses/resumes the `<video>` element to follow the speech, never the other way around.
 
 Pipeline: YouTube captions -> sentence segmentation -> local LLM translation (OpenAI-compatible endpoint)
--> VOICEVOX Japanese TTS -> Web Audio queue with high/low watermarks.
+-> TTS (VOICEVOX for Japanese, edge-tts via a local bridge for other languages) -> Web Audio queue with high/low watermarks.
 
 ## Layout
 
@@ -22,3 +23,4 @@ Pipeline: YouTube captions -> sentence segmentation -> local LLM translation (Op
 - `extension/content.js` - captions -> cues, production loop, playback scheduler, HUD
 - `extension/background.js` - service worker; bridges to the LLM and TTS HTTP servers
 - `extension/options.html`, `extension/options.js` - settings UI
+- `tools/edge_tts_server.py` - local HTTP bridge around edge-tts (run with `.venv/bin/python`)

@@ -1,13 +1,14 @@
-# YouTube Japanese Dub
+# YouTube Dub
 
-A Chrome (MV3) extension that dubs YouTube lecture videos into Japanese. It is designed for
+A Chrome (MV3) extension that dubs YouTube lecture videos into Japanese, English, Traditional
+Chinese, Simplified Chinese or Korean. It is designed for
 videos that are essentially slideshows: instead of squeezing the translated speech to fit the
 picture, **the picture follows the speech**.
 
 ## How it works
 
 ```
-YouTube captions -> sentence cues -> LLM translation -> VOICEVOX TTS -> Web Audio queue
+YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts) -> Web Audio queue
                                                                             |
                               <video> playbackRate / pause / play  <--------+
 ```
@@ -18,7 +19,9 @@ YouTube captions -> sentence cues -> LLM translation -> VOICEVOX TTS -> Web Audi
 - If the speech outlasts the cue's video segment, the video is paused (frozen slide) until the
   speech ends. If the speech is shorter, the video plays on at a faster rate to the next cue.
 - Long silent gaps between cues are crossed at `gapRate`.
-- A producer loop translates and synthesizes cues ahead of playback. At a cue boundary, if less
+- A producer loop translates and synthesizes cues ahead of playback. Translations run in order (each
+  sees the previous ones as context); speech synthesis runs up to `concurrency` cues in parallel,
+  which matters for cloud TTS where each request takes seconds. At a cue boundary, if less
   than `lowWaterSec` of audio is ready, the video pauses and resumes only once `highWaterSec`
   is ready (hysteresis). Because the video is the slave, an underflow never causes desync; it
   only pauses the video. Playback is never interrupted in the middle of a sentence.
@@ -45,14 +48,44 @@ YouTube captions -> sentence cues -> LLM translation -> VOICEVOX TTS -> Web Audi
    Each voice character has its own terms of use; check them before publishing dubbed videos.
    `speaker` is the VOICEVOX style id (`GET /speakers` lists them).
 
+3. **edge-tts bridge** (only for non-Japanese targets, or Japanese if you prefer it over VOICEVOX).
+   edge-tts uses Microsoft's online speech service through an unofficial API, so **the translated
+   text is sent to Microsoft**, it needs internet access, and it may break if the service changes.
+   A small local HTTP bridge exposes it to the extension:
+
+   ```
+   python3 -m venv .venv && .venv/bin/pip install edge-tts
+   .venv/bin/python tools/edge_tts_server.py        # listens on 127.0.0.1:5050
+   ```
+
+   `--port` changes the port (then update `edgeUrl`). Expect 2-3 s per sentence; the parallel
+   producer hides this once the buffer has filled, but the first start takes longer than with VOICEVOX.
+
 Only `localhost` / `127.0.0.1` are in `host_permissions`. If your LLM runs on another host, add
 it to `host_permissions` in `extension/manifest.json`.
+
+## Target languages
+
+Set `targetLang` in the options page:
+
+| `targetLang` | Language | Default edge-tts voice |
+| --- | --- | --- |
+| `ja` | Japanese | `ja-JP-NanamiNeural` (VOICEVOX is used by default) |
+| `en` | English | `en-US-AriaNeural` |
+| `zh-TW` | Traditional Chinese (Taiwan) | `zh-TW-HsiaoChenNeural` |
+| `zh-CN` | Simplified Chinese | `zh-CN-XiaoxiaoNeural` |
+| `ko` | Korean | `ko-KR-SunHiNeural` |
+
+`ttsProvider` is `auto` by default: VOICEVOX for `ja`, edge-tts otherwise. `edgeVoice` overrides the
+voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
+To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.
 
 ## Install (development)
 
 1. Open `chrome://extensions`, enable Developer mode, click "Load unpacked", select `extension/`.
 2. Open the extension's options page and adjust the settings.
-3. Open a YouTube video that has captions and click **JA dub** at the top left of the player.
+3. Open a YouTube video that has captions and click **Dub (xx)** at the top left of the player.
+   Reload the YouTube tab after every extension reload.
 
 ## Files
 
@@ -62,8 +95,9 @@ it to `host_permissions` in `extension/manifest.json`.
 | `extension/defaults.js` | Default settings shared by all contexts |
 | `extension/page-hook.js` | MAIN-world script; fetches caption JSON through the player API |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
-| `extension/background.js` | Service worker; LLM and VOICEVOX HTTP bridge |
+| `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |
+| `tools/edge_tts_server.py` | Local HTTP bridge around `edge-tts` |
 
 ## Known limitations / TODO
 
@@ -73,7 +107,7 @@ it to `host_permissions` in `extension/manifest.json`.
   fetch return an empty body. In that case use the **Load captions** button to supply an
   SRT / WebVTT / JSON3 file, e.g. one created with
   `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>`.
-  Set `localCaptionLang` (a language name such as `English`) in the options page. The loaded file
+  Set `localCaptionLang` (the *source* language name such as `English`) in the options page. The loaded file
   is dropped when you navigate to another video. Rolling-style auto-caption VTT files are not
   de-duplicated; use manual subtitles for this path.
 - Translation is one cue at a time with the previous `contextCues` translations as context.

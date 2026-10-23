@@ -17,6 +17,7 @@
     gain: null,
     cues: [], // { start, end, text } in video seconds
     ja: [], // translated text per cue (kept even after audio is freed)
+    jaP: [], // in-flight/finished translation promises per cue
     items: [], // { buffer, dur } | { failed: true, dur: 0 } per cue
     lang: 'English',
     idx: 0, // cue currently being scheduled
@@ -192,18 +193,33 @@
     return sum;
   }
 
+  // Translations run strictly in order (each one sees the previous translations as context)
+  // while speech synthesis of earlier cues proceeds in parallel.
+  function translateCue(i) {
+    if (state.ja[i] !== undefined) return Promise.resolve(state.ja[i]);
+    if (state.jaP[i]) return state.jaP[i];
+    const p = (async () => {
+      await state.jaP[i - 1]?.catch(() => {});
+      const prev = [];
+      for (let k = Math.max(0, i - S.contextCues); k < i; k++) {
+        if (state.ja[k] !== undefined) prev.push({ src: state.cues[k].text, ja: state.ja[k] });
+      }
+      state.ja[i] = await retry(() =>
+        sendBg({ type: 'translate', text: state.cues[i].text, prev, sourceLang: state.lang }),
+      );
+      return state.ja[i];
+    })();
+    state.jaP[i] = p;
+    p.catch(() => {
+      if (state.jaP[i] === p) state.jaP[i] = undefined; // allow a later retry
+    });
+    return p;
+  }
+
   async function produceItem(i) {
     try {
-      if (state.ja[i] === undefined) {
-        const prev = [];
-        for (let k = Math.max(0, i - S.contextCues); k < i; k++) {
-          if (state.ja[k] !== undefined) prev.push({ src: state.cues[k].text, ja: state.ja[k] });
-        }
-        state.ja[i] = await retry(() =>
-          sendBg({ type: 'translate', text: state.cues[i].text, prev, sourceLang: state.lang }),
-        );
-      }
-      const b64 = await retry(() => sendBg({ type: 'synthesize', text: state.ja[i] }));
+      const text = await translateCue(i);
+      const b64 = await retry(() => sendBg({ type: 'synthesize', text }));
       const buffer = await state.ctx.decodeAudioData(b64ToArrayBuffer(b64));
       state.items[i] = { buffer, dur: buffer.duration };
       state.failStreak = 0;
@@ -213,22 +229,31 @@
       state.failStreak++;
       state.lastError = err.message;
     }
+    // A dead LLM or TTS server would otherwise make every cue silently skip.
+    if (state.failStreak >= 3 && state.active) {
+      const msg = state.lastError;
+      stop();
+      setStatus(`Error: translation/TTS failed 3 times in a row (${msg})`);
+    }
   }
 
+  // Keep up to S.concurrency cues in flight (cloud TTS has a per-request latency of seconds).
   async function produceLoop(gen) {
+    const inflight = new Set();
     while (state.active && gen === state.gen) {
-      const next = nextMissing(state.idx);
-      if (next < 0 || readyAhead() >= S.targetAheadSec) {
-        await sleep(400);
+      let next = -1;
+      for (let i = Math.max(0, state.idx); i < state.cues.length; i++) {
+        if (!state.items[i] && !inflight.has(i)) {
+          next = i;
+          break;
+        }
+      }
+      if (next < 0 || inflight.size >= S.concurrency || readyAhead() >= S.targetAheadSec) {
+        await sleep(100);
         continue;
       }
-      await produceItem(next);
-      // A dead LLM or TTS server would otherwise make every cue silently skip.
-      if (state.failStreak >= 3 && state.active && gen === state.gen) {
-        const msg = state.lastError;
-        stop();
-        setStatus(`Error: translation/TTS failed 3 times in a row (${msg})`);
-      }
+      inflight.add(next);
+      produceItem(next).finally(() => inflight.delete(next));
     }
   }
 
@@ -409,6 +434,7 @@
 
     state.cues = cues;
     state.ja = [];
+    state.jaP = [];
     state.items = [];
     state.lang = cap.local
       ? S.localCaptionLang
@@ -528,7 +554,7 @@
   }
 
   function setButton(on) {
-    if (btn) btn.textContent = on ? 'JA dub: on' : 'JA dub: off';
+    if (btn) btn.textContent = `Dub (${S.targetLang}): ${on ? 'on' : 'off'}`;
   }
 
   function setStatus(text) {
@@ -544,6 +570,15 @@
     const mode = state.buffering ? 'buffering' : state.phase;
     setStatus(`${mode} · cue ${state.idx + 1}/${state.cues.length} · ready ${readyAhead().toFixed(0)}s`);
   }
+
+  // Keep settings fresh so the button shows the current target language.
+  const refreshSettings = () =>
+    chrome.storage.sync.get(null).then((v) => {
+      if (!state.active) S = { ...YTD_DEFAULTS, ...v };
+      setButton(state.active);
+    });
+  refreshSettings();
+  chrome.storage.onChanged.addListener(refreshSettings);
 
   setInterval(ensureHud, 1000);
   // Leaving the watch page (SPA navigation) invalidates the cues.
