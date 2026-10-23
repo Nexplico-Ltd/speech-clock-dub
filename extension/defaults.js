@@ -48,7 +48,7 @@ const YTD_DEFAULTS = {
   voicevoxUrl: 'http://localhost:50021',
   speakerFemale: 2, // VOICEVOX style id (四国めたん ノーマル)
   speakerMale: 11, // VOICEVOX style id (玄野武宏 ノーマル); GET /speakers lists them
-  ttsSpeed: 1.1, // speedScale; a slightly faster voice means less slow-down of the video
+  ttsSpeed: 1.25, // speedScale; a faster voice means less slow-down of the video
 
   // edge-tts bridge (tools/edge_tts_server.py). Empty voice = default for targetLang and voiceGender.
   edgeUrl: 'http://127.0.0.1:5050',
