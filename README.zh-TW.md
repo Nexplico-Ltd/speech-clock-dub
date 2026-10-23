@@ -56,7 +56,9 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
    `--port` 可變更連接埠（之後請同步更新 `edgeUrl`）。每句約需 2-3 秒；緩衝填滿之後，平行的 producer 會把這段延遲遮掉，但第一次開始播放會比 VOICEVOX 久。
 
-`host_permissions` 中只有 `localhost` / `127.0.0.1`。若你的 LLM 跑在其他主機上，請把它加到 `extension/manifest.json` 的 `host_permissions`。
+4. **Google Cloud Text-to-Speech**（選用，可取代 VOICEVOX 或 edge-tts）。這是 Google 的付費線上服務（每月有免費額度，費用請查閱 Google 的說明）。**翻譯後的文字會傳送給 Google。** 請在 Google Cloud 專案中啟用 Cloud Text-to-Speech API 並建立 API 金鑰，然後在選項頁面把 `ttsProvider` 設為 `google`，並把金鑰貼到 `googleApiKey`。不需要本機伺服器。金鑰與 LLM 金鑰一樣存放在 `chrome.storage.sync`，請在 Google Cloud 主控台把它限制為只能使用 Text-to-Speech API。
+
+`host_permissions` 中只有 `localhost` / `127.0.0.1` 和 `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）。若你的 LLM 跑在其他主機上，請把它加到 `extension/manifest.json` 的 `host_permissions`。
 
 ## 目標語言
 
@@ -81,7 +83,7 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` 預設為 `auto`：`ja` 使用 VOICEVOX，其他語言使用 edge-tts。`edgeVoice` 可覆寫 edge-tts 的聲音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可調整語速。若要新增語言，請在 `extension/defaults.js` 的 `YTD_LANGS` 加入一個項目。
+`ttsProvider` 預設為 `auto`：`ja` 使用 VOICEVOX，其他語言使用 edge-tts；設為 `google` 則使用 Google Cloud Text-to-Speech（預設聲音：`ja-JP-Neural2-B/C`、`en-US-Neural2-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Neural2-A/C`；`googleVoice` 可覆寫聲音，`googleSpeed` 可設定語速）。`edgeVoice` 可覆寫 edge-tts 的聲音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可調整語速。若要新增語言，請在 `extension/defaults.js` 的 `YTD_LANGS` 加入一個項目。
 
 `speakerVoices`（預設 `off`）適用於訪談、Podcast 之類的對話。許多手動字幕會在換人說話時，在行首加上 `- ` 或 `>>`。設為 `alternate` 後，這些標記會從文字中移除，並在每次換人時切換聲音：第一位說話者使用 `voiceGender` 的聲音，另一位使用相反性別的聲音。標記中沒有姓名，所以只適用於兩個人；自動產生的字幕通常也沒有這些標記。
 

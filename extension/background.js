@@ -85,7 +85,9 @@ function getLang(s) {
 async function synthesize({ text, alt }) {
   const s = await getSettings();
   const provider = s.ttsProvider === 'auto' ? (s.targetLang === 'ja' ? 'voicevox' : 'edge') : s.ttsProvider;
-  return provider === 'edge' ? synthesizeEdge(s, text, alt) : synthesizeVoicevox(s, text, alt);
+  if (provider === 'edge') return synthesizeEdge(s, text, alt);
+  if (provider === 'google') return synthesizeGoogle(s, text, alt);
+  return synthesizeVoicevox(s, text, alt);
 }
 
 const genderFor = (s, alt) => ((s.voiceGender === 'male') !== Boolean(alt) ? 'male' : 'female');
@@ -101,8 +103,27 @@ async function synthesizeEdge(s, text, alt) {
   return toBase64(await res.arrayBuffer());
 }
 
+async function synthesizeGoogle(s, text, alt) {
+  if (!s.googleApiKey) throw new Error('googleApiKey is empty; set a Google Cloud Text-to-Speech API key');
+  const g = getLang(s).google;
+  const res = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': s.googleApiKey },
+    body: JSON.stringify({
+      input: { text },
+      voice: { languageCode: g.code, name: (!alt && s.googleVoice) || g.voices[genderFor(s, alt)] },
+      audioConfig: { audioEncoding: 'MP3', speakingRate: s.googleSpeed },
+    }),
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) throw new Error(`Google TTS HTTP ${res.status}: ${await res.text()}`);
+  const { audioContent } = await res.json();
+  if (!audioContent) throw new Error('Google TTS returned no audio');
+  return audioContent; // already base64
+}
+
 async function synthesizeVoicevox(s, text, alt) {
-  if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge" or "auto"');
+  if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge", "google" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
   const speaker = genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
 

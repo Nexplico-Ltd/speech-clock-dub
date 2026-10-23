@@ -17,8 +17,10 @@ test('manifest is MV3 and every referenced file exists', () => {
   for (const f of files) assert.ok(fs.existsSync(path.join(EXT, f)), `missing ${f}`);
 });
 
-test('manifest only grants localhost host permissions', () => {
-  for (const p of manifest.host_permissions) assert.match(p, /^http:\/\/(localhost|127\.0\.0\.1)\//);
+test('manifest only grants localhost and the Google Cloud TTS host permissions', () => {
+  for (const p of manifest.host_permissions) {
+    assert.match(p, /^(http:\/\/(localhost|127\.0\.0\.1)|https:\/\/texttospeech\.googleapis\.com)\//);
+  }
 });
 
 test('the page hook runs in the MAIN world and the content script in the isolated world', () => {
@@ -45,7 +47,7 @@ test('every target language has a style and a voice per gender', () => {
 test('default settings are consistent', () => {
   assert.ok(YTD_DEFAULTS.targetLang in YTD_LANGS);
   assert.ok(['female', 'male'].includes(YTD_DEFAULTS.voiceGender));
-  assert.ok(['auto', 'voicevox', 'edge'].includes(YTD_DEFAULTS.ttsProvider));
+  assert.ok(['auto', 'voicevox', 'edge', 'google'].includes(YTD_DEFAULTS.ttsProvider));
   assert.ok(['off', 'translated', 'both'].includes(YTD_DEFAULTS.subtitles));
   assert.ok(YTD_DEFAULTS.lowWaterSec < YTD_DEFAULTS.highWaterSec);
   assert.ok(['on', 'off'].includes(YTD_DEFAULTS.asrPunctuation));

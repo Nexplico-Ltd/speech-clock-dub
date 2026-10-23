@@ -56,7 +56,9 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
    `--port` でポートを変えられます（その場合は `edgeUrl` も更新してください）。1 文あたり 2〜3 秒かかりますが、バッファが溜まれば並列プロデューサーが隠してくれます。ただし、最初の再生開始までは VOICEVOX より時間がかかります。
 
-`host_permissions` に入っているのは `localhost` / `127.0.0.1` だけです。LLM を別のホストで動かす場合は、`extension/manifest.json` の `host_permissions` に追加してください。
+4. **Google Cloud Text-to-Speech**（任意。VOICEVOX や edge-tts の代わりに使えます）。Google の有料オンラインサービスです（毎月の無料枠がありますが、料金は Google の案内で確認してください）。**翻訳したテキストが Google に送信されます。** Google Cloud のプロジェクトで Cloud Text-to-Speech API を有効にして API キーを作り、オプションページで `ttsProvider` を `google` にして、キーを `googleApiKey` に貼り付けます。ローカルサーバーは不要です。キーは LLM のキーと同様に `chrome.storage.sync` に保存されるので、Google Cloud コンソールで Text-to-Speech API だけに制限してください。
+
+`host_permissions` に入っているのは `localhost` / `127.0.0.1` と `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）だけです。LLM を別のホストで動かす場合は、`extension/manifest.json` の `host_permissions` に追加してください。
 
 ## ターゲット言語
 
@@ -81,7 +83,7 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` の既定は `auto` で、`ja` は VOICEVOX、それ以外は edge-tts を使います。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
+`ttsProvider` の既定は `auto` で、`ja` は VOICEVOX、それ以外は edge-tts を使います。`google` にすると Google Cloud Text-to-Speech を使います（既定の声: `ja-JP-Neural2-B/C`、`en-US-Neural2-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Neural2-A/C`。`googleVoice` で声を、`googleSpeed` で話速を変えられます）。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
 
 `speakerVoices`（既定は `off`）は、インタビューやポッドキャストのような対話向けです。手動字幕の多くは、話者の交代を行頭の `- ` や `>>` で示しています。`alternate` にすると、この印を本文から取り除き、話者が替わるたびに声を切り替えます。最初の話者には `voiceGender` の声、もう一人には反対の性別の声を使います。印には名前がないため、対応できるのは 2 人までです。また、自動生成字幕には通常この印がありません。
 

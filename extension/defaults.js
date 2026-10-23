@@ -7,25 +7,34 @@ const YTD_LANGS = {
     name: 'Japanese',
     style: 'natural spoken Japanese (polite desu/masu style)',
     voices: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
+    google: { code: 'ja-JP', voices: { female: 'ja-JP-Neural2-B', male: 'ja-JP-Neural2-C' } },
     // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
     extraRule:
       '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
   },
-  en: { name: 'English', style: 'natural spoken English', voices: { female: 'en-US-AriaNeural', male: 'en-US-GuyNeural' } },
+  en: {
+    name: 'English',
+    style: 'natural spoken English',
+    voices: { female: 'en-US-AriaNeural', male: 'en-US-GuyNeural' },
+    google: { code: 'en-US', voices: { female: 'en-US-Neural2-F', male: 'en-US-Neural2-D' } },
+  },
   'zh-TW': {
     name: 'Traditional Chinese',
     style: 'natural spoken Mandarin as used in Taiwan, written in Traditional Chinese characters',
     voices: { female: 'zh-TW-HsiaoChenNeural', male: 'zh-TW-YunJheNeural' },
+    google: { code: 'cmn-TW', voices: { female: 'cmn-TW-Wavenet-A', male: 'cmn-TW-Wavenet-B' } },
   },
   'zh-CN': {
     name: 'Simplified Chinese',
     style: 'natural spoken Mandarin as used in mainland China, written in Simplified Chinese characters',
     voices: { female: 'zh-CN-XiaoxiaoNeural', male: 'zh-CN-YunxiNeural' },
+    google: { code: 'cmn-CN', voices: { female: 'cmn-CN-Wavenet-A', male: 'cmn-CN-Wavenet-B' } },
   },
   ko: {
     name: 'Korean',
     style: 'natural spoken Korean (polite haeyo/hapnida style)',
     voices: { female: 'ko-KR-SunHiNeural', male: 'ko-KR-InJoonNeural' },
+    google: { code: 'ko-KR', voices: { female: 'ko-KR-Neural2-A', male: 'ko-KR-Neural2-C' } },
   },
 };
 
@@ -37,8 +46,9 @@ const YTD_DEFAULTS = {
   speakerVoices: 'off', // 'off' | 'alternate' (captions with "- " / ">>" markers) | 'llm' (experimental: the LLM labels who speaks)
   subtitles: 'off', // on-screen subtitles: 'off' | 'translated' | 'both' (translation + original)
   subtitleMaxLines: 2, // longer text is shown in pages of this many lines; 0 = no limit
-  // 'auto' = VOICEVOX for Japanese, edge-tts for every other language.
-  ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge'
+  // 'auto' = VOICEVOX for Japanese, edge-tts for every other language. 'google' = Google Cloud
+  // Text-to-Speech (a paid online service: the translated text is sent to Google).
+  ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge' | 'google'
 
   // OpenAI-compatible chat completions endpoint (e.g. the Unsloth service).
   llmBaseUrl: 'http://127.0.0.1:8888/v1',
@@ -59,6 +69,11 @@ const YTD_DEFAULTS = {
   edgeUrl: 'http://127.0.0.1:5050',
   edgeVoice: '',
   edgeRate: '+0%', // e.g. '+10%' for a faster voice
+
+  // Google Cloud Text-to-Speech (ttsProvider 'google'). Empty voice = default for targetLang and voiceGender.
+  googleApiKey: '',
+  googleVoice: '',
+  googleSpeed: 1.15, // speakingRate, 0.25 to 4
 
   // Language name given to the LLM when captions come from a local file.
   localCaptionLang: 'English',

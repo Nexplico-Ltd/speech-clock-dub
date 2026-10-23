@@ -81,8 +81,16 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
    `--port` changes the port (then update `edgeUrl`). Expect 2-3 s per sentence; the parallel
    producer hides this once the buffer has filled, but the first start takes longer than with VOICEVOX.
 
-Only `localhost` / `127.0.0.1` are in `host_permissions`. If your LLM runs on another host, add
-it to `host_permissions` in `extension/manifest.json`.
+4. **Google Cloud Text-to-Speech** (optional, instead of VOICEVOX or edge-tts). This is Google's paid
+   online service (it has a free monthly quota; check Google's pricing). **The translated text is sent
+   to Google.** Enable the Cloud Text-to-Speech API in a Google Cloud project, create an API key, and in
+   the options page set `ttsProvider` to `google` and paste the key into `googleApiKey`. No local
+   server is needed. The key is stored in `chrome.storage.sync` like the LLM key, so restrict it to the
+   Text-to-Speech API in the Google Cloud console.
+
+Only `localhost` / `127.0.0.1` and `texttospeech.googleapis.com` (Google Cloud Text-to-Speech) are in
+`host_permissions`. If your LLM runs on another host, add it to `host_permissions` in
+`extension/manifest.json`.
 
 ## Target languages
 
@@ -107,7 +115,10 @@ Set `targetLang` in the options page:
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` is `auto` by default: VOICEVOX for `ja`, edge-tts otherwise. `edgeVoice` overrides the
+`ttsProvider` is `auto` by default: VOICEVOX for `ja`, edge-tts otherwise; `google` forces Google Cloud
+Text-to-Speech (default voices: `ja-JP-Neural2-B/C`, `en-US-Neural2-F/D`, `cmn-TW-Wavenet-A/B`,
+`cmn-CN-Wavenet-A/B`, `ko-KR-Neural2-A/C`; `googleVoice` overrides the voice and `googleSpeed` sets the
+speaking rate). `edgeVoice` overrides the
 edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.
 

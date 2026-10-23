@@ -38,13 +38,14 @@ Features
 - Optional on-screen translated subtitles.
 - Optional alternating voices for dialogue, from caption speaker markers or labelled by the LLM
   (experimental).
-- Everything runs against servers you choose. Out of the box the extension can reach only localhost.
+- Optional Google Cloud Text-to-Speech as a voice provider (the user's own API key).
+- Everything runs against servers you choose. Out of the box the extension talks only to localhost.
 
 Privacy
 
 The extension has no server and no analytics. Caption text goes only to the servers you configure. The
-optional edge-tts bridge sends translated text to Microsoft's speech service, which is stated in the
-setup instructions. Full policy:
+optional edge-tts bridge and the optional Google provider send translated text to Microsoft's and
+Google's speech services, which is stated in the setup instructions. Full policy:
 https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 Open source (Apache-2.0): https://github.com/Nexplico-Ltd/speech-clock-dub
@@ -62,7 +63,10 @@ speech servers, and keep the video in step with the generated speech.
 - **`storage`**: saves the user's settings (server addresses, languages, voices) and a small per-video
   cache of punctuation flags.
 - **Host permission `http://localhost/*` and `http://127.0.0.1/*`**: the extension's background service
-  worker calls the user's local LLM, VOICEVOX and edge-tts bridge servers. No other hosts are requested.
+  worker calls the user's local LLM, VOICEVOX and edge-tts bridge servers.
+- **Host permission `https://texttospeech.googleapis.com/*`**: used only when the user selects the Google
+  provider and enters their own API key; the service worker sends the translated text to Google Cloud
+  Text-to-Speech. Nothing is sent there by default. No other hosts are requested.
 - **Content script on `https://www.youtube.com/*`**: reads the caption track of the video being dubbed,
   controls the video's playback rate and pause state, and draws the Dub / Sub buttons and subtitles on
   the player.

@@ -7,7 +7,7 @@ const CHOICES = {
   speakerVoices: ['off', 'alternate', 'llm'],
   subtitles: ['off', 'translated', 'both'],
   asrPunctuation: ['on', 'off'],
-  ttsProvider: ['auto', 'voicevox', 'edge'],
+  ttsProvider: ['auto', 'voicevox', 'edge', 'google'],
 };
 
 // Secrets are masked at all times, so the key is never visible on screen after saving.

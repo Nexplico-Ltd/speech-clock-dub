@@ -10,6 +10,7 @@ function fakeServers() {
     if (url.includes('/chat/completions')) return response({ choices: [{ message: { content: '訳文' } }] });
     if (url.includes('/audio_query')) return response({ accent_phrases: [], speedScale: 1 });
     if (url.includes('/synthesis')) return response(WAV);
+    if (url.includes('texttospeech.googleapis.com')) return response({ audioContent: MP3.toString('base64') });
     if (url.includes('/tts')) return response(MP3);
     throw new Error(`unexpected fetch ${url}`);
   };
@@ -107,6 +108,20 @@ test('ttsProvider can be forced; VOICEVOX refuses non-Japanese targets', async (
   const { res, calls } = await synth({ ttsProvider: 'edge', targetLang: 'ja' });
   assert.equal(res.ok, true);
   assert.equal(JSON.parse(calls[0].opts.body).voice, 'ja-JP-NanamiNeural');
+});
+
+test('google TTS sends the key in a header and picks the voice for language and gender', async () => {
+  const { res, calls } = await synth({ ttsProvider: 'google', targetLang: 'ko', voiceGender: 'male', googleApiKey: 'gk', googleSpeed: 1.3 });
+  assert.equal(res.ok, true);
+  assert.equal(calls[0].url, 'https://texttospeech.googleapis.com/v1/text:synthesize');
+  assert.equal(calls[0].opts.headers['x-goog-api-key'], 'gk');
+  const body = JSON.parse(calls[0].opts.body);
+  assert.deepEqual(body.voice, { languageCode: 'ko-KR', name: 'ko-KR-Neural2-C' });
+  assert.equal(body.audioConfig.speakingRate, 1.3);
+  assert.equal(Buffer.from(res.result, 'base64').equals(MP3), true);
+  const alt = await synth({ ttsProvider: 'google', targetLang: 'en', googleApiKey: 'gk', googleVoice: 'en-GB-Neural2-A' }, { alt: true });
+  assert.equal(JSON.parse(alt.calls[0].opts.body).voice.name, 'en-US-Neural2-D', 'alt ignores the fixed voice');
+  assert.match((await synth({ ttsProvider: 'google' })).res.error, /googleApiKey is empty/);
 });
 
 test('unknown message types are not handled, so Chrome does not wait for a reply', () => {

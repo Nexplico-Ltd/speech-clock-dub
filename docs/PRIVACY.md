@@ -32,19 +32,22 @@ configure on the options page:
 | LLM base URL | Translation, caption punctuation and speaker labelling | `http://127.0.0.1:8888/v1` |
 | VOICEVOX URL | Japanese speech synthesis | `http://localhost:50021` |
 | edge-tts bridge URL | Speech synthesis for other languages | `http://127.0.0.1:5050` |
+| Google Cloud Text-to-Speech (only if `ttsProvider` is `google`) | Speech synthesis | `https://texttospeech.googleapis.com` |
 
-The extension's host permissions cover only `localhost` and `127.0.0.1`, so out of the box it cannot talk
-to remote servers. What those servers do with the text is governed by whoever runs them:
+The extension's host permissions cover `localhost`, `127.0.0.1` and `texttospeech.googleapis.com`. Out of
+the box nothing is sent to the last one: it is used only if you set `ttsProvider` to `google`. What those servers do with the text is governed by whoever runs them:
 
 - If you point the LLM base URL at a hosted service, the caption text and your API key are sent to that
   service and are subject to its privacy policy.
 - The optional edge-tts bridge in this repository (`tools/edge_tts_server.py`) forwards the translated text
   to Microsoft's online speech service to synthesize audio. That text is subject to Microsoft's terms.
+- If you choose the Google provider, the translated text and your Google API key are sent directly from
+  the extension to Google Cloud Text-to-Speech and are subject to Google's terms and privacy policy.
 - VOICEVOX runs locally and does not send text anywhere on its own.
 
 ## What the extension stores
 
-- **Settings**, including the LLM API key if you enter one, are stored with `chrome.storage.sync`. If Chrome
+- **Settings**, including the LLM and Google API keys if you enter them, are stored with `chrome.storage.sync`. If Chrome
   Sync is enabled for your Google account, Chrome syncs them across your signed-in browsers. The API key
   is stored unencrypted by the extension; use a key with limited scope, or leave the field empty for
   local servers that do not need one.
@@ -57,8 +60,8 @@ dubbed.
 ## Your choices
 
 You can clear everything at any time by removing the extension, or by clearing its storage from
-`chrome://extensions`. To keep all data on your computer, use only local servers and do not run the
-edge-tts bridge.
+`chrome://extensions`. To keep all data on your computer, use only local servers, do not run the
+edge-tts bridge and do not select the Google provider.
 
 ## Changes and contact
 

@@ -56,7 +56,9 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
    `--port`로 포트를 바꿀 수 있습니다(그 경우 `edgeUrl`도 바꾸세요). 문장당 2~3초가 걸리지만, 버퍼가 차고 나면 병렬 producer가 이를 가려 줍니다. 다만 처음 재생을 시작할 때까지는 VOICEVOX보다 오래 걸립니다.
 
-`host_permissions`에는 `localhost` / `127.0.0.1`만 들어 있습니다. LLM이 다른 호스트에서 실행된다면 `extension/manifest.json`의 `host_permissions`에 추가하세요.
+4. **Google Cloud Text-to-Speech**(선택. VOICEVOX나 edge-tts 대신 사용할 수 있습니다). Google의 유료 온라인 서비스입니다(매월 무료 할당량이 있으니 요금은 Google 안내를 확인하세요). **번역된 텍스트가 Google로 전송됩니다.** Google Cloud 프로젝트에서 Cloud Text-to-Speech API를 활성화하고 API 키를 만든 뒤, 옵션 페이지에서 `ttsProvider`를 `google`로 바꾸고 키를 `googleApiKey`에 붙여 넣습니다. 로컬 서버는 필요 없습니다. 키는 LLM 키와 마찬가지로 `chrome.storage.sync`에 저장되므로, Google Cloud 콘솔에서 Text-to-Speech API로만 사용하도록 제한하세요.
+
+`host_permissions`에는 `localhost` / `127.0.0.1`과 `texttospeech.googleapis.com`(Google Cloud Text-to-Speech)만 들어 있습니다. LLM이 다른 호스트에서 실행된다면 `extension/manifest.json`의 `host_permissions`에 추가하세요.
 
 ## 대상 언어
 
@@ -81,7 +83,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider`의 기본값은 `auto`이며, `ja`는 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
+`ttsProvider`의 기본값은 `auto`이며, `ja`는 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `google`로 바꾸면 Google Cloud Text-to-Speech를 사용합니다(기본 음성: `ja-JP-Neural2-B/C`, `en-US-Neural2-F/D`, `cmn-TW-Wavenet-A/B`, `cmn-CN-Wavenet-A/B`, `ko-KR-Neural2-A/C`. `googleVoice`로 음성을, `googleSpeed`로 말하기 속도를 바꿀 수 있습니다). `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
 
 `speakerVoices`(기본값 `off`)는 인터뷰나 팟캐스트 같은 대화용입니다. 수동 자막 중에는 화자가 바뀔 때 줄 맨 앞에 `- ` 또는 `>>`를 붙이는 경우가 많습니다. `alternate`로 설정하면 이 표시를 본문에서 제거하고, 화자가 바뀔 때마다 음성을 바꿉니다. 첫 번째 화자는 `voiceGender`의 음성, 다른 화자는 반대 성별의 음성을 씁니다. 표시에는 이름이 없으므로 화자가 두 명일 때만 동작하며, 자동 생성 자막에는 보통 이 표시가 없습니다.
 
