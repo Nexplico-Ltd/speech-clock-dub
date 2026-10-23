@@ -85,7 +85,7 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
 ## 画面上の字幕
 
-プレイヤーの **Sub** ボタンで、`off` -> `translated` -> `both`（訳＋原文）と切り替わります。選択は `subtitles` 設定（既定は `off`）に保存されます。いま喋っている cue のテキストがプレイヤー下部に表示され、cue の間は非表示になります。ユーザーが一時停止している間は表示されたままです。フォントはプレイヤーの幅に合わせて拡縮するので、全画面でも使えます。YouTube 自身の字幕行より上に表示されるため、YouTube の字幕がオンでも重なりません。
+プレイヤーの **Sub** ボタンで、`off` -> `translated` -> `both`（訳＋原文）と切り替わります。選択は `subtitles` 設定（既定は `off`）に保存されます。いま喋っている cue のテキストがプレイヤー下部に表示され、cue の間は非表示になります。ユーザーが一時停止している間は表示されたままです。フォントはプレイヤーの幅に合わせて拡縮するので、全画面でも使えます。YouTube 自身の字幕行より上に表示されるため、YouTube の字幕がオンでも重なりません。 長い文は、最大 `subtitleMaxLines` 行（既定 2、`0` で無制限）のページに分けて表示され、ページは音声の進みに合わせて切り替わります。そのため、字幕が映像を大きく隠すことはありません。`both` では、訳と原文をそれぞれ別に制限します。
 
 ## インストール（開発用）
 
@@ -110,6 +110,7 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 | `extension/defaults.js` | すべてのコンテキストで共有する既定設定 |
 | `extension/page-hook.js` | MAIN ワールドのスクリプト。プレイヤー API 経由で字幕 JSON を取得 |
 | `extension/asr.js` | ASR 字幕のヘルパー。単語の平坦化、句読点の窓、突き合わせ、文単位の cue |
+| `extension/subtitle.js` | 字幕のページ分割ヘルパー。長い文を数行ずつのページに分ける |
 | `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
 | `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |
 | `extension/options.html`, `options.js` | 設定 UI |

@@ -85,7 +85,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
 ## 화면 자막
 
-플레이어의 **Sub** 버튼을 누르면 `off` -> `translated` -> `both`(번역 + 원문) 순으로 바뀝니다. 선택은 `subtitles` 설정(기본값 `off`)에 저장됩니다. 지금 말하고 있는 cue의 텍스트가 플레이어 아래쪽에 표시되고 cue 사이에는 숨겨지며, 사용자가 일시정지한 동안에는 계속 보입니다. 글꼴은 플레이어 너비에 맞춰 조절되므로 전체 화면에서도 사용할 수 있습니다. YouTube 자체 자막 줄보다 위에 표시되므로 YouTube 자막을 켜도 겹치지 않습니다.
+플레이어의 **Sub** 버튼을 누르면 `off` -> `translated` -> `both`(번역 + 원문) 순으로 바뀝니다. 선택은 `subtitles` 설정(기본값 `off`)에 저장됩니다. 지금 말하고 있는 cue의 텍스트가 플레이어 아래쪽에 표시되고 cue 사이에는 숨겨지며, 사용자가 일시정지한 동안에는 계속 보입니다. 글꼴은 플레이어 너비에 맞춰 조절되므로 전체 화면에서도 사용할 수 있습니다. YouTube 자체 자막 줄보다 위에 표시되므로 YouTube 자막을 켜도 겹치지 않습니다. 긴 문장은 최대 `subtitleMaxLines`줄(기본값 2, `0`이면 제한 없음)씩 페이지로 나눠 표시되며, 페이지는 음성의 진행에 맞춰 넘어갑니다. 그래서 자막이 영상을 크게 가리지 않습니다. `both`에서는 번역과 원문을 각각 따로 제한합니다.
 
 ## 설치(개발용)
 
@@ -110,6 +110,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 | `extension/defaults.js` | 모든 컨텍스트가 공유하는 기본 설정 |
 | `extension/page-hook.js` | MAIN 월드 스크립트. 플레이어 API로 자막 JSON을 가져옴 |
 | `extension/asr.js` | ASR 자막 헬퍼. 단어 평탄화, 구두점 창, 정렬, 문장 단위 cue |
+| `extension/subtitle.js` | 자막 페이지 나누기 헬퍼. 긴 문장을 몇 줄씩의 페이지로 나눔 |
 | `extension/content.js` | cue 생성, 선행 생성 루프, 재생 스케줄러, HUD |
 | `extension/background.js` | 서비스 워커. LLM, VOICEVOX, edge-tts HTTP 브리지 |
 | `extension/options.html`, `options.js` | 설정 UI |

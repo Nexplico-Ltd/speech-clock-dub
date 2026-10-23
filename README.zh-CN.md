@@ -85,7 +85,7 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 
 ## 屏幕字幕
 
-播放器中的 **Sub** 按钮会依次切换 `off` -> `translated` -> `both`（译文加原文）。选择会保存在 `subtitles` 设置中（默认 `off`）。正在朗读的 cue 的文字会显示在播放器下方，cue 之间会隐藏；用户暂停时则保持显示。字体大小会随播放器宽度缩放，所以全屏也适用。它显示在 YouTube 自带的字幕行上方，因此即使开启了 YouTube 字幕也不会重叠。
+播放器中的 **Sub** 按钮会依次切换 `off` -> `translated` -> `both`（译文加原文）。选择会保存在 `subtitles` 设置中（默认 `off`）。正在朗读的 cue 的文字会显示在播放器下方，cue 之间会隐藏；用户暂停时则保持显示。字体大小会随播放器宽度缩放，所以全屏也适用。它显示在 YouTube 自带的字幕行上方，因此即使开启了 YouTube 字幕也不会重叠。 较长的句子会分成每页最多 `subtitleMaxLines` 行（默认 2，`0` 表示不限制）的页面显示，页面会随语音的进度切换，因此字幕不会大面积遮住视频。在 `both` 模式下，译文与原文各自分开限制。
 
 ## 安装（开发用）
 
@@ -110,6 +110,7 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 | `extension/defaults.js` | 所有上下文共用的默认设置 |
 | `extension/page-hook.js` | MAIN world 脚本；通过播放器 API 获取字幕 JSON |
 | `extension/asr.js` | ASR 字幕辅助函数：单词展平、标点窗口、对齐、以句子为单位的 cue |
+| `extension/subtitle.js` | 字幕分页辅助函数：把较长的文字分成几行一页 |
 | `extension/content.js` | cue 的构建、预生成循环、播放调度器、HUD |
 | `extension/background.js` | Service worker；与 LLM、VOICEVOX、edge-tts 的 HTTP 桥接 |
 | `extension/options.html`, `options.js` | 设置界面 |

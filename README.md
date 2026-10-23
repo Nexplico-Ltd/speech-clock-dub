@@ -117,7 +117,7 @@ The **Sub** button in the player cycles `off` -> `translated` -> `both` (transla
 line). The choice is saved in the `subtitles` setting (default `off`). The text of the cue being
 spoken is shown near the bottom of the player and hidden between cues, while paused-by-the-user it
 stays visible. The font scales with the player width, so it also works in fullscreen. It sits above
-YouTube's own caption line, so it does not overlap if YouTube captions are switched on.
+YouTube's own caption line, so it does not overlap if YouTube captions are switched on. Long sentences are shown in pages of at most `subtitleMaxLines` lines (default 2; `0` means no limit), which advance with the speech, so the overlay never covers more of the video than that. In `both` mode the translation and the original are limited separately.
 
 ## Install (development)
 
@@ -144,6 +144,7 @@ Videos with manual captions work better. The videos are not part of this project
 | `extension/defaults.js` | Default settings shared by all contexts |
 | `extension/page-hook.js` | MAIN-world script; fetches caption JSON through the player API |
 | `extension/asr.js` | ASR caption helpers: word flattening, punctuation windows, alignment, sentence-based cues |
+| `extension/subtitle.js` | Subtitle paging helpers: splitting long text into pages of a few lines |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |
