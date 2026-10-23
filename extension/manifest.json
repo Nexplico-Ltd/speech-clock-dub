@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Japanese Dub",
+  "version": "0.1.0",
+  "description": "Dubs YouTube lecture videos into Japanese. The video follows the voice, not the other way around.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["page-hook.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["defaults.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}
