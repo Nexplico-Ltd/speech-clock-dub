@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Japanese Dub",
+  "name": "Speech Clock Dub",
   "version": "0.4.1",
-  "description": "Dubs YouTube lecture videos into Japanese. The video follows the voice, not the other way around.",
+  "description": "Dubs YouTube lecture videos into Japanese, English, Chinese or Korean. The video follows the voice, not the other way around.",
   "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
   "permissions": ["storage"],
   "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
