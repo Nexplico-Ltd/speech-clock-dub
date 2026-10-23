@@ -59,3 +59,10 @@ export function loadAsr() {
   vm.runInContext(fs.readFileSync(path.join(EXT, 'asr.js'), 'utf8'), context);
   return vm.runInContext('YTD_ASR', context);
 }
+
+/** Evaluates extension/subtitle.js and returns its YTD_SUB helpers. */
+export function loadSubtitle() {
+  const context = vm.createContext({ Intl });
+  vm.runInContext(fs.readFileSync(path.join(EXT, 'subtitle.js'), 'utf8'), context);
+  return vm.runInContext('YTD_SUB', context);
+}

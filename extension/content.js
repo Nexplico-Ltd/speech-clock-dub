@@ -39,6 +39,10 @@
     starting: false, // start() is running (loading captions, segmenting)
     cancel: false, // the user clicked the button while starting
     pausedBySeg: false, // we paused the video while segmenting captions
+    speechStart: 0, // ctx.currentTime when the current cue's speech started
+    speechDur: 0, // its duration in seconds
+    subKey: '', // what the cached subtitle pages were computed for
+    subPages: null,
   };
 
   // Punctuation flags per video, so toggling the dub off and on does not redo the LLM pass.
@@ -270,6 +274,8 @@
     };
     state.source = src;
     src.start();
+    state.speechStart = state.ctx.currentTime;
+    state.speechDur = item.dur;
     // Make the remaining part of the cue last as long as the speech.
     const remaining = Math.max(cue.end - v.currentTime, 0.1);
     v.playbackRate = clamp(remaining / item.dur, S.minRate, S.maxRate);
@@ -555,7 +561,7 @@
   // ---------- HUD ----------
 
   const SUB_MODES = ['off', 'translated', 'both'];
-  let hud, btn, statusEl, subBtn, subEl;
+  let hud, btn, statusEl, subBtn, subEl, subJa, subSrc, subMeasure;
 
   function ensureHud() {
     if (hud?.isConnected) return;
@@ -609,13 +615,25 @@
     // Translated subtitle overlay (pointer-events:none so it never blocks the player).
     subEl = document.createElement('div');
     subEl.style.cssText =
-      'position:absolute;left:50%;bottom:12%;transform:translateX(-50%);max-width:80%;z-index:59;' +
+      'position:absolute;left:50%;bottom:12%;transform:translateX(-50%);z-index:59;' +
+      // An explicit width: with left:50% the available width would be only half of the player.
+      'box-sizing:border-box;width:max-content;max-width:80%;' +
       'pointer-events:none;text-align:center;color:#fff;background:rgba(0,0,0,.65);padding:4px 10px;' +
       'border-radius:6px;line-height:1.4;white-space:pre-wrap;text-shadow:0 1px 2px #000;';
     subEl.hidden = true;
+    subJa = document.createElement('div');
+    subSrc = document.createElement('div');
+    subSrc.style.cssText = 'font-size:.85em;opacity:.85;';
+    subEl.append(subJa, subSrc);
+
+    // Invisible twin of the overlay, used to measure how many lines a text takes.
+    subMeasure = document.createElement('div');
+    subMeasure.style.cssText =
+      'position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none;text-align:center;' +
+      'line-height:1.4;white-space:pre-wrap;padding:0;';
 
     hud.append(btn, loadBtn, fileInput, subBtn, statusEl);
-    player.append(hud, subEl);
+    player.append(hud, subEl, subMeasure);
     btn.addEventListener('click', async () => {
       if (state.active) return stop();
       if (state.starting) {
@@ -648,18 +666,42 @@
     if (subBtn) subBtn.textContent = `Sub: ${S.subtitles}`;
   }
 
-  // Show the translation (and optionally the original) of the cue being spoken.
+  // Show the translation (and optionally the original) of the cue being spoken. Text longer than
+  // S.subtitleMaxLines lines is split into pages that follow the progress of the speech, so the
+  // overlay never covers more of the video than that.
   function updateSubtitle() {
     if (!subEl) return;
     const text = state.active && state.phase === 'speaking' && S.subtitles !== 'off' ? state.ja[state.idx] : '';
     const cue = state.cues[state.idx];
-    const shown = !text ? '' : S.subtitles === 'both' && cue ? `${text}\n${cue.text}` : text;
-    if (subEl.textContent !== shown) {
-      subEl.textContent = shown;
-      const w = document.getElementById('movie_player')?.clientWidth ?? 800;
-      subEl.style.fontSize = `${clamp(w * 0.026, 14, 40)}px`;
+    if (!text) {
+      subEl.hidden = true;
+      state.subKey = '';
+      return;
     }
-    subEl.hidden = !shown;
+
+    const width = document.getElementById('movie_player')?.clientWidth ?? 800;
+    const both = S.subtitles === 'both' && !!cue;
+    const key = `${state.idx}|${both}|${S.subtitleMaxLines}|${width}`;
+    if (state.subKey !== key) {
+      state.subKey = key;
+      const fontPx = clamp(width * 0.026, 14, 40);
+      subEl.style.fontSize = `${fontPx}px`;
+      // A text fits when it needs at most subtitleMaxLines lines at the width the overlay gets.
+      const fitsAt = (scale) => (t) => {
+        subMeasure.style.fontSize = `${fontPx * scale}px`;
+        subMeasure.style.width = `${width * 0.8 - 20}px`;
+        subMeasure.textContent = t;
+        return !S.subtitleMaxLines || subMeasure.scrollHeight <= fontPx * scale * 1.4 * S.subtitleMaxLines + 1;
+      };
+      state.subPages = { ja: YTD_SUB.paginate(text, fitsAt(1)), src: both ? YTD_SUB.paginate(cue.text, fitsAt(0.85)) : null };
+    }
+
+    const progress = state.speechDur > 0 ? clamp((state.ctx.currentTime - state.speechStart) / state.speechDur, 0, 1) : 0;
+    const { ja, src } = state.subPages;
+    subJa.textContent = ja[YTD_SUB.pageAt(ja, progress)];
+    subSrc.textContent = src ? src[YTD_SUB.pageAt(src, progress)] : '';
+    subSrc.hidden = !src;
+    subEl.hidden = false;
   }
 
   function setStatus(text) {

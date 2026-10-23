@@ -27,7 +27,9 @@ test('the page hook runs in the MAIN world and the content script in the isolate
   assert.equal(hook.world, 'MAIN');
   assert.notEqual(content.world, 'MAIN');
   assert.ok(content.js.indexOf('defaults.js') < content.js.indexOf('content.js'), 'defaults.js must load first');
-  assert.ok(content.js.indexOf('asr.js') < content.js.indexOf('content.js'), 'asr.js must load before content.js');
+  for (const helper of ['asr.js', 'subtitle.js']) {
+    assert.ok(content.js.indexOf(helper) < content.js.indexOf('content.js'), `${helper} must load before content.js`);
+  }
 });
 
 test('every target language has a style and a voice per gender', () => {
@@ -47,6 +49,7 @@ test('default settings are consistent', () => {
   assert.ok(['off', 'translated', 'both'].includes(YTD_DEFAULTS.subtitles));
   assert.ok(YTD_DEFAULTS.lowWaterSec < YTD_DEFAULTS.highWaterSec);
   assert.ok(['on', 'off'].includes(YTD_DEFAULTS.asrPunctuation));
+  assert.ok(Number.isInteger(YTD_DEFAULTS.subtitleMaxLines) && YTD_DEFAULTS.subtitleMaxLines >= 0);
   assert.ok(YTD_DEFAULTS.asrStrideWords < YTD_DEFAULTS.asrWindowWords, 'ASR windows must overlap');
   assert.ok(YTD_DEFAULTS.minRate < 1 && YTD_DEFAULTS.maxRate > 1);
   assert.doesNotThrow(() => JSON.parse(YTD_DEFAULTS.llmExtraBody), 'llmExtraBody must be valid JSON');
