@@ -109,6 +109,7 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 | `extension/manifest.json` | MV3 資訊清單 |
 | `extension/defaults.js` | 所有環境共用的預設設定 |
 | `extension/page-hook.js` | MAIN world 腳本；透過播放器 API 取得字幕 JSON |
+| `extension/asr.js` | ASR 字幕輔助函式：單字攤平、標點視窗、對齊、以句子為單位的 cue |
 | `extension/content.js` | cue 的建立、預先生成迴圈、播放排程器、HUD |
 | `extension/background.js` | Service worker；與 LLM、VOICEVOX、edge-tts 的 HTTP 橋接 |
 | `extension/options.html`, `options.js` | 設定介面 |
@@ -129,13 +130,12 @@ npm test                                                  # 擴充功能測試�
 
 ## 已知限制 / TODO
 
-- 自動產生（ASR）的字幕會依單字的絕對時間逐字去除重複。這是盡力而為的做法，尚未在很多真實的字幕軌上測試過；手動字幕效果最好。
+- 自動產生（ASR）的字幕沒有標點。當 `asrPunctuation` 為 `on`（預設）時，LLM 會先把單字序列分成彼此重疊的視窗來還原標點，讓 cue 在句子邊界結束。這大約每分鐘影片需要 1.2 秒（在 16 GB GPU 上以本機 12B 模型實測），期間影片會暫停並顯示進度。字幕來自 YouTube 時，結果會依影片儲存，之後再開始就不用等。在一支 43 分鐘的課程上，74% 的 cue 結束於句尾（沒有這個步驟時，70% 會因長度上限而在句子中途被切斷）。模型改動了單字的視窗（該測試中 52 個有 3 個）會退回依長度切分。若要略過這個步驟，請把 `asrPunctuation` 設為 `off`。手動字幕仍然效果最好。
 - YouTube 可能要求 `timedtext` 端點提供 PO token，使字幕請求回傳空內容。這時請用 **Load captions** 按鈕提供 SRT / WebVTT / JSON3 檔案，例如用 `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>` 產生。請在選項頁面設定 `localCaptionLang`（*來源*語言的名稱，例如 `English`）。切換到其他影片時，載入的檔案會被丟棄。滾動式（rolling）的自動字幕 VTT 不會去除重複；這條路徑請使用手動字幕。
 - 翻譯一次處理一個 cue，並以前面 `contextCues` 句的譯文作為上下文。支援批次翻譯與術語表可改善用語一致性。
 - 只會使用符合偏好順序的第一條字幕軌，沒有語言選擇介面。
 - 比播放位置更早 4 個以上的 cue，其解碼後的音訊會被釋放；往回拖曳時會重新合成。
-- 測試涵蓋設定、資訊清單、service worker 與 edge-tts 橋接程式。content script（cue 建立、排程器、HUD）與 page hook 目前還沒有自動化測試，是在瀏覽器中手動檢查。
-
+- 測試涵蓋設定、資訊清單、service worker、ASR 輔助函式與 edge-tts 橋接程式。content script（cue 建立、排程器、HUD）與 page hook 目前還沒有自動化測試，是在瀏覽器中手動檢查。
 ## 授權
 
 Copyright 2026 Nexplico-Ltd. 依 Apache License 2.0 授權，詳見 [LICENSE](LICENSE) 與 [NOTICE](NOTICE)。這僅適用於本儲存庫中的程式碼。它所串接的服務與模型各有自己的條款：VOICEVOX 及其每個聲音角色、edge-tts 背後的 Microsoft 線上語音服務，以及你所執行的 LLM（例如 Gemma）。公開配音後的影片之前請先確認。

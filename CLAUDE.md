@@ -23,6 +23,7 @@ Pipeline: YouTube captions -> sentence segmentation -> local LLM translation (Op
 - `extension/manifest.json` - MV3 manifest
 - `extension/defaults.js` - shared default settings (loaded by background, content script and options page)
 - `extension/page-hook.js` - runs in the page's MAIN world; reads caption tracks from the YouTube player
+- `extension/asr.js` - pure helpers for auto-generated captions (word flattening, LLM punctuation windows, alignment, sentence-based cues)
 - `extension/content.js` - captions -> cues, production loop, playback scheduler, HUD
 - `extension/background.js` - service worker; bridges to the LLM and TTS HTTP servers
 - `extension/options.html`, `extension/options.js` - settings UI

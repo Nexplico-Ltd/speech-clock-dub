@@ -143,6 +143,7 @@ Videos with manual captions work better. The videos are not part of this project
 | `extension/manifest.json` | MV3 manifest |
 | `extension/defaults.js` | Default settings shared by all contexts |
 | `extension/page-hook.js` | MAIN-world script; fetches caption JSON through the player API |
+| `extension/asr.js` | ASR caption helpers: word flattening, punctuation windows, alignment, sentence-based cues |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |
@@ -164,8 +165,7 @@ test suites on each push to `main` and on every pull request.
 
 ## Known limitations / TODO
 
-- Auto-generated (ASR) captions are de-duplicated word by word using absolute word times. This is
-  best effort and has not been tested on many real tracks; manual captions work best.
+- Auto-generated (ASR) captions have no punctuation. With `asrPunctuation` set to `on` (the default) the LLM first restores punctuation in overlapping windows of words, so cues end at sentence boundaries. This takes about 1.2 s per minute of video (measured with a local 12B model on a 16 GB GPU); the video is paused and a progress count is shown meanwhile. The result is saved per video when the captions come from YouTube, so later starts do not wait. On a 43-minute lecture 74% of the cues ended at a sentence end (without this step 70% were cut mid-sentence by the length limit). Windows where the model changes the words (3 of 52 in that test) fall back to cutting by length. Set `asrPunctuation` to `off` to skip the step. Manual captions still work best.
 - YouTube may require a PO token for the `timedtext` endpoint, which can make the caption
   fetch return an empty body. In that case use the **Load captions** button to supply an
   SRT / WebVTT / JSON3 file, e.g. one created with
@@ -177,10 +177,9 @@ test suites on each push to `main` and on every pull request.
   Batching and glossary support would improve terminology consistency.
 - Only the first caption track matching the preference order is used; there is no language picker.
 - Decoded audio for cues more than 4 behind the playhead is freed; seeking back re-synthesizes them.
-- The tests cover the settings, the manifest, the service worker and the edge-tts bridge. The content
+- The tests cover the settings, the manifest, the service worker, the ASR helpers and the edge-tts bridge. The content
   script (cue building, scheduler, HUD) and the page hook have no automated tests yet; they are
   checked by hand in a browser.
-
 ## License
 
 Copyright 2026 Nexplico-Ltd. Licensed under the Apache License 2.0, see [LICENSE](LICENSE) and

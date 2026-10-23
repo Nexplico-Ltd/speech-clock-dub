@@ -109,6 +109,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 | `extension/manifest.json` | MV3 매니페스트 |
 | `extension/defaults.js` | 모든 컨텍스트가 공유하는 기본 설정 |
 | `extension/page-hook.js` | MAIN 월드 스크립트. 플레이어 API로 자막 JSON을 가져옴 |
+| `extension/asr.js` | ASR 자막 헬퍼. 단어 평탄화, 구두점 창, 정렬, 문장 단위 cue |
 | `extension/content.js` | cue 생성, 선행 생성 루프, 재생 스케줄러, HUD |
 | `extension/background.js` | 서비스 워커. LLM, VOICEVOX, edge-tts HTTP 브리지 |
 | `extension/options.html`, `options.js` | 설정 UI |
@@ -129,13 +130,12 @@ GitHub Actions(`.github/workflows/ci.yml`)가 `main`에 push할 때와 모든 �
 
 ## 알려진 제한 사항 / TODO
 
-- 자동 생성(ASR) 자막은 단어의 절대 시각을 이용해 단어 단위로 중복을 제거합니다. 최선의 노력 방식이며 실제 트랙에서는 많이 검증하지 못했습니다. 수동 자막이 가장 안정적입니다.
+- 자동 생성(ASR) 자막에는 구두점이 없습니다. `asrPunctuation`이 `on`(기본값)이면 LLM이 먼저 단어 열을 서로 겹치는 창으로 나눠 구두점을 복원하므로, cue가 문장 경계에서 끝납니다. 영상 1분당 약 1.2초가 걸리며(16 GB GPU의 로컬 12B 모델에서 측정), 그동안 영상은 일시정지되고 진행 상황이 표시됩니다. 자막이 YouTube에서 올 때는 결과가 영상별로 저장되므로 다음부터는 기다리지 않습니다. 43분짜리 강의에서 cue의 74%가 문장 끝에서 끝났습니다(이 단계가 없으면 70%가 길이 제한 때문에 문장 중간에서 잘렸습니다). 모델이 단어를 바꿔 버린 창(이 테스트에서는 52개 중 3개)은 길이로 자르는 방식으로 되돌아갑니다. 이 단계를 건너뛰려면 `asrPunctuation`을 `off`로 하세요. 수동 자막이 가장 안정적입니다.
 - YouTube가 `timedtext` 엔드포인트에 PO 토큰을 요구하여 자막 요청이 빈 응답을 돌려줄 수 있습니다. 그럴 때는 **Load captions** 버튼으로 SRT / WebVTT / JSON3 파일을 제공하세요. 예를 들어 `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>`로 만들 수 있습니다. 옵션 페이지에서 `localCaptionLang`(`English` 같은 *원본* 언어 이름)을 설정하세요. 불러온 파일은 다른 영상으로 이동하면 버려집니다. 롤링 방식의 자동 자막 VTT는 중복을 제거하지 않으므로, 이 경로에서는 수동 자막을 사용하세요.
 - 번역은 cue 하나씩 진행하며, 앞선 `contextCues`개의 번역을 문맥으로 넘깁니다. 묶음 번역과 용어집을 지원하면 용어 일관성이 좋아질 것입니다.
 - 우선순위에 맞는 첫 번째 자막 트랙만 사용합니다. 언어를 고르는 UI는 없습니다.
 - 재생 위치보다 4개 넘게 앞선 cue의 디코딩된 오디오는 해제됩니다. 뒤로 탐색하면 다시 합성됩니다.
-- 테스트는 설정, 매니페스트, 서비스 워커, edge-tts 브리지를 다룹니다. content script(cue 생성, 스케줄러, HUD)와 page hook에는 아직 자동 테스트가 없으며, 브라우저에서 직접 확인합니다.
-
+- 테스트는 설정, 매니페스트, 서비스 워커, ASR 헬퍼, edge-tts 브리지를 다룹니다. content script(cue 생성, 스케줄러, HUD)와 page hook에는 아직 자동 테스트가 없으며, 브라우저에서 직접 확인합니다.
 ## 라이선스
 
 Copyright 2026 Nexplico-Ltd. Apache License 2.0에 따라 제공됩니다. [LICENSE](LICENSE)와 [NOTICE](NOTICE)를 참고하세요. 이 라이선스는 이 저장소의 코드에만 적용됩니다. 연동하는 서비스와 모델에는 각각 별도의 약관이 있습니다. VOICEVOX와 각 음성 캐릭터, edge-tts 뒤에 있는 Microsoft 온라인 음성 서비스, 그리고 실행하는 LLM(예: Gemma)입니다. 더빙한 영상을 공개하기 전에 확인하세요.

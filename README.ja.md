@@ -109,6 +109,7 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 | `extension/manifest.json` | MV3 マニフェスト |
 | `extension/defaults.js` | すべてのコンテキストで共有する既定設定 |
 | `extension/page-hook.js` | MAIN ワールドのスクリプト。プレイヤー API 経由で字幕 JSON を取得 |
+| `extension/asr.js` | ASR 字幕のヘルパー。単語の平坦化、句読点の窓、突き合わせ、文単位の cue |
 | `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
 | `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |
 | `extension/options.html`, `options.js` | 設定 UI |
@@ -129,13 +130,12 @@ GitHub Actions（`.github/workflows/ci.yml`）が、`main` への push と、す
 
 ## 既知の制限 / TODO
 
-- 自動生成（ASR）字幕は、単語の絶対時刻を使って単語単位で重複を除去します。ベストエフォートで、多くの実際のトラックでは未検証です。手動字幕がもっとも確実です。
+- 自動生成（ASR）字幕には句読点がありません。`asrPunctuation` が `on`（既定）のとき、LLM が単語列を重なりのある窓に分けて先に句読点を復元し、cue が文の境界で終わるようにします。動画 1 分あたり約 1.2 秒かかり（16 GB の GPU 上のローカル 12B モデルでの実測）、その間は映像を一時停止して進捗を表示します。字幕が YouTube から来る場合、結果は動画ごとに保存されるので、2 回目以降は待ちません。43 分の講義では、文末で終わる cue が 74% になりました（この手順がないと、70% が長さの上限で文の途中で切られていました）。モデルが単語を変えてしまった窓（このテストでは 52 窓中 3 窓）は、長さで区切る方式に戻ります。この手順を省くには `asrPunctuation` を `off` にします。手動字幕がもっとも確実です。
 - YouTube が `timedtext` エンドポイントに PO トークンを要求し、字幕の取得が空の応答になることがあります。その場合は **Load captions** ボタンで SRT / WebVTT / JSON3 ファイルを渡してください。たとえば `yt-dlp --skip-download --write-subs --sub-langs en --convert-subs srt <url>` で作れます。オプションページで `localCaptionLang`（`English` などの*元の*言語名）を設定してください。読み込んだファイルは、別の動画に移動すると破棄されます。ローリング形式の自動字幕 VTT は重複を除去しないので、この経路では手動字幕を使ってください。
 - 翻訳は 1 cue ずつで、直前の `contextCues` 件の訳を文脈として渡します。まとめて翻訳する方式や用語集に対応すると、用語の一貫性が良くなります。
 - 優先順位に合った最初の字幕トラックだけを使います。言語を選ぶ UI はありません。
 - 再生位置より 4 つ以上前の cue のデコード済み音声は解放されます。後ろへシークすると再合成されます。
-- テストが対象とするのは、設定、マニフェスト、サービスワーカー、edge-tts ブリッジです。content script（cue の生成、スケジューラ、HUD）と page hook には、まだ自動テストがありません。ブラウザで手動確認しています。
-
+- テストが対象とするのは、設定、マニフェスト、サービスワーカー、ASR ヘルパー、edge-tts ブリッジです。content script（cue の生成、スケジューラ、HUD）と page hook には、まだ自動テストがありません。ブラウザで手動確認しています。
 ## ライセンス
 
 Copyright 2026 Nexplico-Ltd. Apache License 2.0 の下で提供されます。[LICENSE](LICENSE) と [NOTICE](NOTICE) を参照してください。これはこのリポジトリのコードにだけ適用されます。連携するサービスやモデルには、それぞれ別の利用規約があります。VOICEVOX と各声のキャラクター、edge-tts の裏にある Microsoft のオンライン音声サービス、実行する LLM（たとえば Gemma）です。吹き替えた動画を公開する前に確認してください。
