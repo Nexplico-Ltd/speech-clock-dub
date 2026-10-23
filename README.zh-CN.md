@@ -93,6 +93,15 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 2. 打开扩展程序的选项页面并调整设置。
 3. 打开一个有字幕的 YouTube 视频，点击播放器左上角的 **Dub (xx)**（**Sub** 用来切换屏幕上的翻译字幕）。每次重新加载扩展程序之后，也要刷新 YouTube 标签页。
 
+## 示例课程视频
+
+这个扩展程序面向以幻灯片为主的讲课视频。以下两个播放列表可以拿来试用：
+
+- Adi Teman 的 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313，共 66 个视频）。我们检查过的课程都有手动的英文字幕，是支持最完善的情况。
+- Tony Chan Carusone 教授的 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics 频道上 37 个研究生水平的视频）。这些视频只有自动生成的英文字幕，这是测试最少的路径（见下方的“已知限制 / TODO”）。
+
+有手动字幕的视频效果更好。这些视频不属于本项目，本项目与其作者也没有关联。请尊重作者的权利，未经许可不要重新发布配音后的副本。
+
 ## 文件
 
 | 文件 | 用途 |

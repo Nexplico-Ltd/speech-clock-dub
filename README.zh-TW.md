@@ -93,6 +93,15 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 2. 開啟擴充功能的選項頁面並調整設定。
 3. 開啟一支有字幕的 YouTube 影片，按下播放器左上角的 **Dub (xx)**（**Sub** 用來切換畫面上的翻譯字幕）。每次重新載入擴充功能之後，也要重新整理 YouTube 分頁。
 
+## 範例講課影片
+
+這個擴充功能是為以投影片為主的講課影片設計的。以下兩個播放清單可以拿來試用：
+
+- Adi Teman 的 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313，共 66 支影片）。我們檢查過的課程都有手動的英文字幕，是支援最完整的情況。
+- Tony Chan Carusone 教授的 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics 頻道上 37 支研究所等級的影片）。這些影片只有自動產生的英文字幕，這是測試最少的路徑（請見下方的「已知限制 / TODO」）。
+
+有手動字幕的影片效果更好。這些影片不屬於本專案，本專案與其作者也沒有關係。請尊重作者的權利，未經許可不要重新發布配音後的副本。
+
 ## 檔案
 
 | 檔案 | 用途 |

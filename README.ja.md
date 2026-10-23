@@ -93,6 +93,15 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 2. 拡張機能のオプションページを開き、設定を調整します。
 3. 字幕付きの YouTube 動画を開き、プレイヤー左上の **Dub (xx)** を押します（**Sub** で画面上の翻訳表示を切り替えます）。拡張機能を再読み込みしたら、YouTube のタブも毎回再読み込みしてください。
 
+## 試せる講義の例
+
+この拡張機能は、スライド中心の講義向けです。試せる再生リストを 2 つ挙げます。
+
+- Adi Teman 氏の [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313、66 本）。確認した講義には手動の英語字幕があり、もっとも対応が進んでいるケースです。
+- Tony Chan Carusone 教授の [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics チャンネルの大学院レベルの動画 37 本）。これらの動画には自動生成の英語字幕しかなく、最もテストが少ない経路です（下の「既知の制限 / TODO」を参照）。
+
+手動字幕のある動画のほうが、うまく動きます。これらの動画はこのプロジェクトの一部ではなく、制作者とも無関係です。制作者の権利を尊重し、許可なく吹き替えたコピーを再公開しないでください。
+
 ## ファイル
 
 | ファイル | 役割 |
