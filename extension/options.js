@@ -5,6 +5,7 @@ const CHOICES = {
   targetLang: Object.keys(YTD_LANGS),
   voiceGender: ['female', 'male'],
   subtitles: ['off', 'translated', 'both'],
+  asrPunctuation: ['on', 'off'],
   ttsProvider: ['auto', 'voicevox', 'edge'],
 };
 

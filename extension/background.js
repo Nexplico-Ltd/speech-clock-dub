@@ -22,6 +22,24 @@ async function translate({ text, prev, sourceLang }) {
     `Output ONLY the ${lang.name} translation of the last line, with no notes, quotes or romaji.` +
     `\n\n${context}Translate this line:\n${text}`;
 
+  return chat(s, prompt, { temperature: 0.2, maxTokens: 512 });
+}
+
+// Restores punctuation and capitalization in a window of ASR words (see extension/asr.js).
+async function punctuate({ text, sourceLang }) {
+  const s = await getSettings();
+  const prompt =
+    `Add punctuation and capitalization to this ${sourceLang} speech-recognition transcript of a lecture.\n` +
+    `Rules:\n` +
+    `- Do not add, remove, reorder or change any word. Only insert punctuation marks and fix capitalization.\n` +
+    `- End every sentence with a period, question mark or exclamation mark.\n` +
+    `- Output ONLY the corrected text on a single line, with no notes.\n\n` +
+    `Transcript:\n${text}`;
+  return chat(s, prompt, { temperature: 0, maxTokens: 1024 });
+}
+
+// One chat completion against the OpenAI-compatible endpoint; returns the reply text.
+async function chat(s, prompt, { temperature, maxTokens }) {
   let extra = {};
   try {
     extra = JSON.parse(s.llmExtraBody || '{}');
@@ -38,8 +56,8 @@ async function translate({ text, prev, sourceLang }) {
     body: JSON.stringify({
       model: s.llmModel,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: 512, // guard against runaway output
+      temperature,
+      max_tokens: maxTokens, // guard against runaway output
       stream: false,
       ...extra,
     }),
@@ -48,7 +66,7 @@ async function translate({ text, prev, sourceLang }) {
   if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${await res.text()}`);
   const json = await res.json();
   const out = json.choices?.[0]?.message?.content?.trim();
-  if (!out) throw new Error('LLM returned an empty translation');
+  if (!out) throw new Error('LLM returned an empty reply');
   return out;
 }
 
@@ -108,7 +126,13 @@ function toBase64(buf) {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   const job =
-    msg.type === 'translate' ? translate(msg) : msg.type === 'synthesize' ? synthesize(msg) : null;
+    msg.type === 'translate'
+      ? translate(msg)
+      : msg.type === 'punctuate'
+        ? punctuate(msg)
+        : msg.type === 'synthesize'
+          ? synthesize(msg)
+          : null;
   if (!job) return false;
   job.then(
     (result) => sendResponse({ ok: true, result }),

@@ -114,3 +114,18 @@ test('unknown message types are not handled, so Chrome does not wait for a reply
   assert.equal(bg.onMessage({ type: 'nope' }, null, () => {}), false);
   assert.equal(bg.onMessage({ type: 'translate', text: 'x', prev: [], sourceLang: 'English' }, null, () => {}), true);
 });
+
+test('punctuate asks the model to restore punctuation without changing any word', async () => {
+  const bg = loadBackground({
+    fetchImpl: () => response({ choices: [{ message: { content: 'Hello, world.' } }] }),
+  });
+  const res = await bg.send({ type: 'punctuate', text: 'hello world', sourceLang: 'English' });
+  assert.equal(res.ok, true);
+  assert.equal(res.result, 'Hello, world.');
+  const body = JSON.parse(bg.calls[0].opts.body);
+  assert.equal(body.temperature, 0);
+  assert.equal(body.chat_template_kwargs.enable_thinking, false);
+  assert.match(body.messages[0].content, /Do not add, remove, reorder or change any word/);
+  assert.match(body.messages[0].content, /English/);
+  assert.ok(body.messages[0].content.endsWith('hello world'));
+});

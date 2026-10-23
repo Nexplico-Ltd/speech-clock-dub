@@ -36,7 +36,13 @@
     failStreak: 0, // consecutive failed cues
     lastError: '',
     lastT: 0, // previous video.currentTime seen by the scheduler
+    starting: false, // start() is running (loading captions, segmenting)
+    cancel: false, // the user clicked the button while starting
+    pausedBySeg: false, // we paused the video while segmenting captions
   };
+
+  // Punctuation flags per video, so toggling the dub off and on does not redo the LLM pass.
+  const asrCache = new Map();
 
   // ---------- messaging ----------
 
@@ -90,30 +96,6 @@
     });
   }
 
-  // ASR captions repeat earlier words in rolling windows. Flatten them to words with absolute
-  // times and keep each word once (start times must strictly increase). Best effort: untested
-  // against a wide range of real ASR tracks.
-  function asrWords(events) {
-    const words = [];
-    let last = -1;
-    for (const e of events) {
-      if (!e.segs) continue;
-      for (const s of e.segs) {
-        const text = s.utf8.replace(/\s+/g, ' ').trim();
-        if (!text) continue;
-        const start = (e.tStartMs + (s.tOffsetMs ?? 0)) / 1000;
-        if (start <= last) continue;
-        last = start;
-        words.push({ start, text });
-      }
-    }
-    return words.map((w, i) => ({
-      start: w.start,
-      end: Math.min(words[i + 1]?.start ?? Infinity, w.start + 0.8),
-      text: w.text,
-    }));
-  }
-
   // Parse a local SRT / WebVTT / JSON3 caption file into json3-style events.
   function parseCaptionFile(name, text) {
     if (/\.json3?$/i.test(name)) return JSON.parse(text).events ?? [];
@@ -140,7 +122,7 @@
   function buildCues(events, kind) {
     const frags =
       kind === 'asr'
-        ? asrWords(events)
+        ? YTD_ASR.words(events)
         : events
             .filter((e) => e.segs)
             .map((e) => ({
@@ -409,6 +391,62 @@
 
   // ---------- lifecycle ----------
 
+  // Restores punctuation in ASR captions with the LLM, then cuts cues at sentence ends. Windows
+  // overlap and only their inner part is trusted, so they can be processed in parallel.
+  async function segmentAsr(cap) {
+    const words = YTD_ASR.words(cap.events);
+    const key = `asr:${cap.videoId ?? 'local'}:${words.length}:${S.asrWindowWords}:${S.asrStrideWords}`;
+    let flags = asrCache.get(key);
+    if (!flags && cap.videoId) {
+      // Persisted from an earlier session (a few KB per video).
+      try {
+        const saved = (await chrome.storage.local.get(key))[key];
+        if (saved?.length === words.length) asrCache.set(key, (flags = YTD_ASR.decodeFlags(saved)));
+      } catch {}
+    }
+    if (!flags) {
+      // Hold the video while the LLM works (this can take a while on long videos).
+      if (!state.video.paused) {
+        state.held = true;
+        state.pausedBySeg = true;
+        state.video.pause();
+      }
+      flags = new Array(words.length).fill(null);
+      const wins = YTD_ASR.windows(words.length, S.asrWindowWords, S.asrStrideWords);
+      const margin = Math.floor((S.asrWindowWords - S.asrStrideWords) / 2);
+      let next = 0;
+      let done = 0;
+      let failed = 0;
+      const worker = async () => {
+        while (!state.cancel) {
+          const k = next++;
+          if (k >= wins.length) return;
+          const win = wins[k];
+          const input = words.slice(win.from, win.to).map((w) => w.text);
+          try {
+            const text = await retry(() => sendBg({ type: 'punctuate', text: input.join(' '), sourceLang: state.lang }));
+            const found = YTD_ASR.align(input, text);
+            if (!found) throw new Error('the model changed the words');
+            const { lo, hi } = YTD_ASR.trusted(win, k, wins.length, margin);
+            for (let i = lo; i < hi; i++) flags[i] = found[i - win.from];
+          } catch (err) {
+            failed++;
+            console.warn('[ytd] punctuation window', k, 'failed:', err.message);
+          }
+          setStatus(`Segmenting captions… ${++done}/${wins.length}`);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.max(1, S.asrConcurrency) }, worker));
+      if (state.cancel) throw new Error('cancelled');
+      if (failed) console.warn(`[ytd] ${failed}/${wins.length} windows without punctuation; cut by length instead`);
+      if (!failed) {
+        asrCache.set(key, flags);
+        if (cap.videoId) chrome.storage.local.set({ [key]: YTD_ASR.encodeFlags(flags) }).catch(() => {});
+      }
+    }
+    return YTD_ASR.cues(words, flags, S);
+  }
+
   async function start() {
     // Create the AudioContext synchronously inside the click handler (autoplay policy).
     state.ctx = new AudioContext();
@@ -416,6 +454,24 @@
     state.gain.connect(state.ctx.destination);
     state.ctx.resume();
 
+    state.starting = true;
+    state.cancel = false;
+    try {
+      await begin();
+    } catch (err) {
+      // Cancelled or failed while we were holding the video: let it run again.
+      if (state.pausedBySeg) {
+        state.held = false;
+        state.video.play().catch(() => {});
+      }
+      throw err;
+    } finally {
+      state.pausedBySeg = false;
+      state.starting = false;
+    }
+  }
+
+  async function begin() {
     S = { ...YTD_DEFAULTS, ...(await chrome.storage.sync.get(null)) };
     const v = (state.video =
       document.querySelector('video.html5-main-video') ?? document.querySelector('video'));
@@ -430,16 +486,18 @@
         throw new Error(`${err.message}. Use "Load captions" to supply an SRT/VTT/JSON3 file.`);
       }
     }
-    const cues = buildCues(cap.events, cap.kind);
+    if (state.cancel) throw new Error('cancelled');
+    state.lang = cap.local
+      ? S.localCaptionLang
+      : (new Intl.DisplayNames(['en'], { type: 'language' }).of(cap.languageCode) ?? 'English');
+    const cues =
+      cap.kind === 'asr' && S.asrPunctuation === 'on' ? await segmentAsr(cap) : buildCues(cap.events, cap.kind);
     if (!cues.length) throw new Error('No usable caption text');
 
     state.cues = cues;
     state.ja = [];
     state.jaP = [];
     state.items = [];
-    state.lang = cap.local
-      ? S.localCaptionLang
-      : (new Intl.DisplayNames(['en'], { type: 'language' }).of(cap.languageCode) ?? 'English');
     state.failStreak = 0;
     state.userPaused = false;
     state.ad = false;
@@ -529,7 +587,8 @@
       try {
         const events = parseCaptionFile(f.name, await f.text());
         if (!events.length) throw new Error('no cues found');
-        state.local = { local: true, kind: 'manual', events };
+        const asr = /\.json3?$/i.test(f.name) && events.some((e) => e.segs?.some((s) => 'acAsrConf' in s));
+        state.local = { local: true, kind: asr ? 'asr' : 'manual', events };
         setStatus(`Loaded ${events.length} caption entries from ${f.name}`);
       } catch (err) {
         setStatus(`Caption file error: ${err.message}`);
@@ -559,9 +618,18 @@
     player.append(hud, subEl);
     btn.addEventListener('click', async () => {
       if (state.active) return stop();
+      if (state.starting) {
+        state.cancel = true;
+        return;
+      }
       try {
         await start();
       } catch (err) {
+        if (err.message === 'cancelled') {
+          stop();
+          setStatus('Cancelled');
+          return;
+        }
         console.error('[ytd]', err);
         stop();
         // After the extension is reloaded, tabs keep an orphaned copy of this script.

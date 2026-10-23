@@ -59,6 +59,13 @@ const YTD_DEFAULTS = {
   // Language name given to the LLM when captions come from a local file.
   localCaptionLang: 'English',
 
+  // Auto-generated (ASR) captions have no punctuation. With 'on' the LLM restores it first, so cues
+  // end at sentence boundaries; windows overlap and are processed in parallel.
+  asrPunctuation: 'on', // 'on' | 'off'
+  asrWindowWords: 120,
+  asrStrideWords: 108, // neighbouring windows overlap by 12 words
+  asrConcurrency: 4, // parallel punctuation requests (nothing else runs while segmenting)
+
   // Segmentation.
   contextCues: 3, // previous translated cues given to the LLM as context
   maxGapSec: 1.5, // a longer gap between caption fragments ends a sentence

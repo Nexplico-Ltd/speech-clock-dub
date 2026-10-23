@@ -52,3 +52,10 @@ export function loadDefaults() {
   vm.runInContext(fs.readFileSync(path.join(EXT, 'defaults.js'), 'utf8'), context);
   return JSON.parse(vm.runInContext('JSON.stringify({ YTD_DEFAULTS, YTD_LANGS })', context));
 }
+
+/** Evaluates extension/asr.js and returns its YTD_ASR helpers. */
+export function loadAsr() {
+  const context = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(EXT, 'asr.js'), 'utf8'), context);
+  return vm.runInContext('YTD_ASR', context);
+}
