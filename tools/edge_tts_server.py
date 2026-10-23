@@ -72,7 +72,12 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=5050)
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="address to listen on; use 0.0.0.0 to serve other machines on the network (no authentication)",
+    )
     args = parser.parse_args()
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
-    print(f"edge-tts bridge on http://127.0.0.1:{args.port}")
+    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    print(f"edge-tts bridge on http://{args.host}:{args.port}")
     server.serve_forever()

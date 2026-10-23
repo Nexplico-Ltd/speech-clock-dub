@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import vm from 'node:vm';
 import { EXT, loadDefaults } from './helpers/load-background.mjs';
 
 const manifest = JSON.parse(fs.readFileSync(path.join(EXT, 'manifest.json'), 'utf8'));
@@ -62,4 +63,20 @@ test('the options page offers a dropdown for every enumerated setting', () => {
   for (const key of ['targetLang', 'voiceGender', 'ttsProvider', 'subtitles', 'asrPunctuation']) {
     assert.ok(options.includes(`${key}:`), `options.js has no dropdown for ${key}`);
   }
+});
+
+test('remote server origins are collected without ports, skipping local and invalid URLs', () => {
+  const context = vm.createContext({ URL });
+  vm.runInContext(fs.readFileSync(path.join(EXT, 'defaults.js'), 'utf8'), context);
+  const origins = (s) => JSON.parse(vm.runInContext(`JSON.stringify(ytdRemoteOrigins(${JSON.stringify(s)}))`, context));
+  assert.deepEqual(origins({ llmBaseUrl: 'http://127.0.0.1:8888/v1', voicevoxUrl: 'http://localhost:50021', edgeUrl: 'http://127.0.0.1:5050' }), []);
+  assert.deepEqual(
+    origins({ llmBaseUrl: 'http://192.168.1.20:8888/v1', voicevoxUrl: 'http://192.168.1.20:50021', edgeUrl: 'https://tts.lan:5050' }),
+    ['http://192.168.1.20/*', 'https://tts.lan/*'],
+  );
+  assert.deepEqual(origins({ llmBaseUrl: 'not a url', voicevoxUrl: 'ftp://x', edgeUrl: '' }), []);
+});
+
+test('only the server hosts the options page can ask for are optional host permissions', () => {
+  assert.deepEqual(manifest.optional_host_permissions, ['http://*/*', 'https://*/*']);
 });

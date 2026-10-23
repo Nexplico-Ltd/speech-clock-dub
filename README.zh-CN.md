@@ -58,7 +58,11 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 
 4. **Google Cloud Text-to-Speech**（可选，可代替 VOICEVOX 或 edge-tts）。这是 Google 的付费在线服务（每月有免费额度，费用请查阅 Google 的说明）。**翻译后的文本会发送给 Google。** 请在 Google Cloud 项目中启用 Cloud Text-to-Speech API 并创建 API 密钥，然后在选项页面把 `ttsProvider` 设为 `google`，并把密钥粘贴到 `googleApiKey`。不需要本地服务器。密钥与 LLM 密钥一样保存在 `chrome.storage.sync`，请在 Google Cloud 控制台把它限制为只能使用 Text-to-Speech API。
 
-`host_permissions` 中只有 `localhost` / `127.0.0.1` 和 `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）。如果你的 LLM 运行在其他主机上，请把它添加到 `extension/manifest.json` 的 `host_permissions`。
+`host_permissions` 中只有 `localhost` / `127.0.0.1` 和 `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）。其他主机上的服务器会在运行时请求许可（见下一节）。
+
+## 使用另一台机器上的服务器
+
+LLM、VOICEVOX 和 edge-tts 桥接程序可以运行在另一台电脑上，例如局域网中的 GPU 主机。请在那台机器上让服务器监听网络，并在防火墙开放端口（仅限你的局域网）：VOICEVOX 使用 `--host 0.0.0.0`，桥接程序使用 `tools/edge_tts_server.py --host 0.0.0.0`，LLM 服务器则使用它自己的主机选项。然后在选项页面的 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl` 填入如 `http://192.168.1.20:8888/v1` 的地址。点击保存时，Chrome 会针对每个主机询问一次，是否允许扩展程序连接（`optional_host_permissions`）。通信是明文 HTTP，桥接程序和 VOICEVOX 也没有认证机制，请只在你信任的网络中使用。
 
 ## 目标语言
 

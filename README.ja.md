@@ -58,7 +58,11 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
 4. **Google Cloud Text-to-Speech**（任意。VOICEVOX や edge-tts の代わりに使えます）。Google の有料オンラインサービスです（毎月の無料枠がありますが、料金は Google の案内で確認してください）。**翻訳したテキストが Google に送信されます。** Google Cloud のプロジェクトで Cloud Text-to-Speech API を有効にして API キーを作り、オプションページで `ttsProvider` を `google` にして、キーを `googleApiKey` に貼り付けます。ローカルサーバーは不要です。キーは LLM のキーと同様に `chrome.storage.sync` に保存されるので、Google Cloud コンソールで Text-to-Speech API だけに制限してください。
 
-`host_permissions` に入っているのは `localhost` / `127.0.0.1` と `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）だけです。LLM を別のホストで動かす場合は、`extension/manifest.json` の `host_permissions` に追加してください。
+`host_permissions` に入っているのは `localhost` / `127.0.0.1` と `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）だけです。別のホストのサーバーは、実行時に許可します（下の節を参照）。
+
+## 別のマシンのサーバーを使う
+
+LLM、VOICEVOX、edge-tts ブリッジは、ローカルネットワーク上の GPU マシンなど、別のコンピューターで動かせます。そのマシンで、サーバーがネットワークから届くように起動し、ファイアウォールでポートを許可します（LAN の中だけにしてください）。VOICEVOX は `--host 0.0.0.0`、ブリッジは `tools/edge_tts_server.py --host 0.0.0.0`、LLM サーバーはそれぞれのホスト指定オプションを使います。そのうえで、オプションページの `llmBaseUrl`、`voicevoxUrl`、`edgeUrl` に `http://192.168.1.20:8888/v1` のような URL を入力します。保存を押すと、Chrome がホストごとに一度だけ、拡張機能がそこへ接続してよいかを尋ねます（`optional_host_permissions`）。通信は平文の HTTP で、ブリッジと VOICEVOX には認証がないため、信頼できるネットワークでだけ使ってください。
 
 ## ターゲット言語
 

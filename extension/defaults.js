@@ -110,3 +110,20 @@ const YTD_DEFAULTS = {
   maxRate: 1.5,
   gapRate: 2, // rate used while crossing long silent gaps between cues
 };
+
+// Host permission patterns (port-less, as Chrome requires) for the configured servers that are not on this
+// machine and are not already covered by the manifest. The options page asks for them at run time.
+function ytdRemoteOrigins(settings) {
+  const origins = new Set();
+  for (const key of ['llmBaseUrl', 'voicevoxUrl', 'edgeUrl']) {
+    let url;
+    try {
+      url = new URL(settings[key]);
+    } catch {
+      continue;
+    }
+    if (!/^https?:$/.test(url.protocol) || ['localhost', '127.0.0.1'].includes(url.hostname)) continue;
+    origins.add(`${url.protocol}//${url.hostname}/*`);
+  }
+  return [...origins];
+}

@@ -66,7 +66,11 @@ speech servers, and keep the video in step with the generated speech.
   worker calls the user's local LLM, VOICEVOX and edge-tts bridge servers.
 - **Host permission `https://texttospeech.googleapis.com/*`**: used only when the user selects the Google
   provider and enters their own API key; the service worker sends the translated text to Google Cloud
-  Text-to-Speech. Nothing is sent there by default. No other hosts are requested.
+  Text-to-Speech. Nothing is sent there by default.
+- **Optional host permissions `http://*/*` and `https://*/*`**: not granted at install. When the user types
+  the address of their own LLM / VOICEVOX / edge-tts server on another machine (for example a GPU box on
+  the local network) and presses Save, the options page asks Chrome for access to that single host, so
+  the user can approve or deny it. No other hosts are requested.
 - **Content script on `https://www.youtube.com/*`**: reads the caption track of the video being dubbed,
   controls the video's playback rate and pause state, and draws the Dub / Sub buttons and subtitles on
   the player.

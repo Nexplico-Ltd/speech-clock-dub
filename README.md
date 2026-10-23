@@ -89,8 +89,18 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
    Text-to-Speech API in the Google Cloud console.
 
 Only `localhost` / `127.0.0.1` and `texttospeech.googleapis.com` (Google Cloud Text-to-Speech) are in
-`host_permissions`. If your LLM runs on another host, add it to `host_permissions` in
-`extension/manifest.json`.
+`host_permissions`. Servers on other hosts are allowed at run time, see below.
+
+## Using servers on another machine
+
+The LLM, VOICEVOX and the edge-tts bridge can run on another computer, for example a GPU box on your
+local network. On that machine, make the servers listen on the network and allow the ports in its
+firewall (only for your LAN): VOICEVOX with `--host 0.0.0.0`, the bridge with
+`tools/edge_tts_server.py --host 0.0.0.0`, and the LLM server with its own host option. Then enter the
+URLs such as `http://192.168.1.20:8888/v1` in `llmBaseUrl`, `voicevoxUrl` and `edgeUrl` on the options
+page. When you press Save, Chrome asks once per host whether the extension may reach it
+(`optional_host_permissions`). The traffic is plain HTTP and the bridge and VOICEVOX have no
+authentication, so use this only on a network you trust.
 
 ## Target languages
 

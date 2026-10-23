@@ -43,6 +43,14 @@ document.getElementById('save').addEventListener('click', async () => {
     const raw = form.elements[key].value;
     out[key] = typeof def === 'number' ? Number(raw) : raw;
   }
+  // Servers on other machines (e.g. an LLM and TTS box on the LAN) need a host permission, which Chrome
+  // only grants after a click, so ask first.
+  const msg = document.getElementById('msg');
+  const origins = ytdRemoteOrigins(out);
+  let denied = false;
+  if (origins.length && !(await chrome.permissions.contains({ origins }))) {
+    denied = !(await chrome.permissions.request({ origins }));
+  }
   await chrome.storage.sync.set(out);
-  document.getElementById('msg').textContent = 'Saved';
+  msg.textContent = denied ? `Saved, but access to ${origins.join(', ')} was not granted` : 'Saved';
 });

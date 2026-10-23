@@ -58,7 +58,11 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
 4. **Google Cloud Text-to-Speech**(선택. VOICEVOX나 edge-tts 대신 사용할 수 있습니다). Google의 유료 온라인 서비스입니다(매월 무료 할당량이 있으니 요금은 Google 안내를 확인하세요). **번역된 텍스트가 Google로 전송됩니다.** Google Cloud 프로젝트에서 Cloud Text-to-Speech API를 활성화하고 API 키를 만든 뒤, 옵션 페이지에서 `ttsProvider`를 `google`로 바꾸고 키를 `googleApiKey`에 붙여 넣습니다. 로컬 서버는 필요 없습니다. 키는 LLM 키와 마찬가지로 `chrome.storage.sync`에 저장되므로, Google Cloud 콘솔에서 Text-to-Speech API로만 사용하도록 제한하세요.
 
-`host_permissions`에는 `localhost` / `127.0.0.1`과 `texttospeech.googleapis.com`(Google Cloud Text-to-Speech)만 들어 있습니다. LLM이 다른 호스트에서 실행된다면 `extension/manifest.json`의 `host_permissions`에 추가하세요.
+`host_permissions`에는 `localhost` / `127.0.0.1`과 `texttospeech.googleapis.com`(Google Cloud Text-to-Speech)만 들어 있습니다. 다른 호스트의 서버는 실행 중에 허용합니다(아래 절 참고).
+
+## 다른 컴퓨터의 서버 사용하기
+
+LLM, VOICEVOX, edge-tts 브리지는 로컬 네트워크의 GPU 머신처럼 다른 컴퓨터에서 실행할 수 있습니다. 그 컴퓨터에서 서버가 네트워크에서 접근 가능하도록 실행하고 방화벽에서 포트를 허용하세요(LAN 안에서만). VOICEVOX는 `--host 0.0.0.0`, 브리지는 `tools/edge_tts_server.py --host 0.0.0.0`, LLM 서버는 각자의 호스트 옵션을 사용합니다. 그런 다음 옵션 페이지의 `llmBaseUrl`, `voicevoxUrl`, `edgeUrl`에 `http://192.168.1.20:8888/v1` 같은 URL을 입력합니다. 저장을 누르면 Chrome이 호스트마다 한 번, 확장 프로그램이 그곳에 접속해도 되는지 묻습니다(`optional_host_permissions`). 통신은 암호화되지 않은 HTTP이고 브리지와 VOICEVOX에는 인증이 없으므로, 신뢰할 수 있는 네트워크에서만 사용하세요.
 
 ## 대상 언어
 
