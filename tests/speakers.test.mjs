@@ -59,3 +59,14 @@ test('parseLabels returns null when a line is missing or the reply is unusable',
   assert.equal(SPK.parseLabels('1: H\n3: G', 3), null);
   assert.equal(SPK.parseLabels('I cannot tell.', 2), null);
 });
+
+test('isMonologue is true when almost every line gets the same label', () => {
+  assert.equal(SPK.isMonologue([0, ...Array(29).fill(1)]), true, 'one stray line out of 30');
+  assert.equal(SPK.isMonologue(Array(30).fill(0)), true);
+});
+
+test('isMonologue is false for a real conversation and for too few lines', () => {
+  assert.equal(SPK.isMonologue([...Array(24).fill(1), ...Array(6).fill(0)]), false);
+  assert.equal(SPK.isMonologue([0, 1, 1, 1]), false);
+  assert.equal(SPK.isMonologue([1, 1, 1]), false, 'fewer than 20 lines is not enough to tell');
+});

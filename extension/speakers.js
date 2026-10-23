@@ -76,5 +76,13 @@ const YTD_SPK = (() => {
     return out;
   }
 
-  return { split, assign, labelPrompt, parseLabels, WINDOW, CONTEXT };
+  // True when the labels look like one person talking: with enough lines, almost all of them agree. The
+  // prompt assumes a conversation, so a lecture would otherwise get a made-up host and guest.
+  function isMonologue(voices) {
+    if (voices.length < 20) return false;
+    const guest = voices.filter((v) => v === 1).length;
+    return Math.min(guest, voices.length - guest) / voices.length <= 0.1;
+  }
+
+  return { split, assign, labelPrompt, parseLabels, isMonologue, WINDOW, CONTEXT };
 })();

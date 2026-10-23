@@ -19,6 +19,8 @@
     ja: [], // translated text per cue (kept even after audio is freed)
     jaP: [], // in-flight/finished translation promises per cue
     spkP: [], // in-flight/finished speaker-labelling promises per window (speakerVoices 'llm')
+    spkWarm: null, // promise: the first two windows are labelled and checked for a monologue
+    mono: false, // the labels looked like one speaker, so every cue keeps voice 0
     items: [], // { buffer, dur } | { failed: true, dur: 0 } per cue
     lang: 'English',
     idx: 0, // cue currently being scheduled
@@ -217,6 +219,7 @@
       await before;
       const from = w * YTD_SPK.WINDOW;
       const cues = state.cues.slice(from, from + YTD_SPK.WINDOW);
+      if (!cues.length) return;
       const shown = before ? state.cues.slice(Math.max(0, from - YTD_SPK.CONTEXT), from) : [];
       const context = shown.map((c) => ({ text: c.text, voice: c.voice }));
       const prompt = YTD_SPK.labelPrompt(cues.map((c) => c.text), context);
@@ -235,9 +238,27 @@
     return state.spkP[w];
   }
 
+  // The first two windows are labelled before any speech is made, so that a lecture (one speaker) can
+  // be recognised and keep a single voice from the start.
+  function warmSpeakers() {
+    state.spkWarm ??= (async () => {
+      await labelWindow(0);
+      await labelWindow(1);
+      const first = state.cues.slice(0, 2 * YTD_SPK.WINDOW);
+      if (YTD_SPK.isMonologue(first.map((c) => c.voice))) {
+        state.mono = true;
+        state.cues.forEach((c) => (c.voice = 0));
+      }
+    })();
+    return state.spkWarm;
+  }
+
   async function produceItem(i) {
     try {
-      if (S.speakerVoices === 'llm') await labelWindow(Math.floor(i / YTD_SPK.WINDOW));
+      if (S.speakerVoices === 'llm') {
+        await warmSpeakers();
+        if (!state.mono) await labelWindow(Math.floor(i / YTD_SPK.WINDOW));
+      }
       const text = await translateCue(i);
       const b64 = await retry(() => sendBg({ type: 'synthesize', text, alt: state.cues[i].voice === 1 }));
       const buffer = await state.ctx.decodeAudioData(b64ToArrayBuffer(b64));
@@ -538,6 +559,8 @@
     state.ja = [];
     state.jaP = [];
     state.spkP = [];
+    state.spkWarm = null;
+    state.mono = false;
     state.items = [];
     state.failStreak = 0;
     state.userPaused = false;
