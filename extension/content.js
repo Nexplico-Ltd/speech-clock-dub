@@ -32,6 +32,9 @@
     origRate: 1,
     lastStatus: 0,
     local: null, // captions loaded from a local file: { local, kind, events }
+    failStreak: 0, // consecutive failed cues
+    lastError: '',
+    lastT: 0, // previous video.currentTime seen by the scheduler
   };
 
   // ---------- messaging ----------
@@ -203,9 +206,12 @@
       const b64 = await retry(() => sendBg({ type: 'synthesize', text: state.ja[i] }));
       const buffer = await state.ctx.decodeAudioData(b64ToArrayBuffer(b64));
       state.items[i] = { buffer, dur: buffer.duration };
+      state.failStreak = 0;
     } catch (err) {
       console.warn('[ytd] cue', i, 'failed:', err);
       state.items[i] = { failed: true, dur: 0 };
+      state.failStreak++;
+      state.lastError = err.message;
     }
   }
 
@@ -217,6 +223,12 @@
         continue;
       }
       await produceItem(next);
+      // A dead LLM or TTS server would otherwise make every cue silently skip.
+      if (state.failStreak >= 3 && state.active && gen === state.gen) {
+        const msg = state.lastError;
+        stop();
+        setStatus(`Error: translation/TTS failed 3 times in a row (${msg})`);
+      }
     }
   }
 
@@ -285,12 +297,18 @@
     }
     if (ad || state.userPaused) return;
 
+    // YouTube may unmute (volume key) or reload the source (position jumps back); the
+    // scheduler only ever moves forward, so treat a backward jump like a user seek.
+    if (!v.muted) v.muted = true;
+    if (v.currentTime < state.lastT - 1) onSeeking();
+    state.lastT = v.currentTime;
+
     updateStatus();
 
     if (state.idx >= state.cues.length) {
-      stopSpeech();
-      resume();
-      v.playbackRate = 1;
+      // Last cue spoken: hand the rest of the video back to its original audio and speed.
+      stop();
+      setStatus('Dub finished');
       return;
     }
     const cue = state.cues[state.idx];
@@ -360,6 +378,7 @@
     state.idx = i < 0 ? state.cues.length : i;
     state.phase = 'lead-in';
     state.buffering = true;
+    state.lastT = t;
   }
 
   // ---------- lifecycle ----------
@@ -394,6 +413,7 @@
     state.lang = cap.local
       ? S.localCaptionLang
       : (new Intl.DisplayNames(['en'], { type: 'language' }).of(cap.languageCode) ?? 'English');
+    state.failStreak = 0;
     state.userPaused = false;
     state.ad = false;
     state.held = false;
@@ -403,6 +423,7 @@
 
     const i = cues.findIndex((c) => c.end > v.currentTime);
     state.idx = i < 0 ? cues.length : i;
+    state.lastT = v.currentTime;
 
     state.origMuted = v.muted;
     state.origRate = v.playbackRate;
@@ -435,6 +456,11 @@
     v.removeEventListener('seeking', onSeeking);
     v.muted = state.origMuted;
     v.playbackRate = state.origRate;
+    // If we were the ones holding the video (buffering / freezing a slide), let it run again.
+    if (state.held && !state.userPaused) {
+      state.held = false;
+      v.play().catch(() => {});
+    }
     state.ctx.close().catch(() => {});
     setButton(false);
     setStatus('');
@@ -490,7 +516,12 @@
       } catch (err) {
         console.error('[ytd]', err);
         stop();
-        setStatus(`Error: ${err.message}`);
+        // After the extension is reloaded, tabs keep an orphaned copy of this script.
+        setStatus(
+          /context invalidated/i.test(err.message)
+            ? 'Extension was reloaded: reload this tab (F5)'
+            : `Error: ${err.message}`,
+        );
       }
     });
     setButton(state.active);
