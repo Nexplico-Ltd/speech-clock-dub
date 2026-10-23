@@ -4,7 +4,7 @@ const form = document.getElementById('form');
 const CHOICES = {
   targetLang: Object.keys(YTD_LANGS),
   voiceGender: ['female', 'male'],
-  speakerVoices: ['off', 'alternate'],
+  speakerVoices: ['off', 'alternate', 'llm'],
   subtitles: ['off', 'translated', 'both'],
   asrPunctuation: ['on', 'off'],
   ttsProvider: ['auto', 'voicevox', 'edge'],

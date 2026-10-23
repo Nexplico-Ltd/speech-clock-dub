@@ -139,3 +139,13 @@ test('alt asks for the voice of the opposite gender (second speaker of a dialogu
   // A fixed edgeVoice is the first speaker's voice; the second still uses the other gender.
   assert.equal(await edge({ edgeVoice: 'en-GB-SoniaNeural' }, { alt: true }), 'en-US-GuyNeural');
 });
+
+test('label runs the caller-built prompt deterministically through the chat endpoint', async () => {
+  const bg = loadBackground({ settings: {}, fetchImpl: fakeServers() });
+  const res = await bg.send({ type: 'label', prompt: '1. Hi.' });
+  const body = JSON.parse(bg.calls.find((c) => c.url.includes('/chat/completions')).opts.body);
+  assert.equal(res.ok, true);
+  assert.equal(body.messages[0].content, '1. Hi.');
+  assert.equal(body.temperature, 0);
+  assert.equal(body.chat_template_kwargs.enable_thinking, false);
+});

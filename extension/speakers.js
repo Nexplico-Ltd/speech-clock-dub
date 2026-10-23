@@ -1,5 +1,6 @@
 // Pure helpers for dialogue captions: many captions mark a change of speaker with a leading "- " or
-// ">>". Names are not given, so the voices simply alternate at each change. No DOM access.
+// ">>". Names are not given, so the voices simply alternate at each change. Captions without markers
+// can be labelled by an LLM instead (experimental). No DOM access.
 // Loaded before content.js.
 const YTD_SPK = (() => {
   // A marker at the start of a line, or ">>" inside a line.
@@ -35,5 +36,45 @@ const YTD_SPK = (() => {
     return cues;
   }
 
-  return { split, assign };
+  // ---- LLM labelling for captions without markers (speakerVoices 'llm') ----
+
+  const WINDOW = 15; // cues labelled per request; smaller windows measured better than larger ones
+  const CONTEXT = 6; // already-labelled cues shown before each window
+  const LABELS = ['H', 'G']; // host = voice 0, guest = voice 1
+
+  const clip = (t) => (t.length > 300 ? '\u2026' + t.slice(-300) : t);
+
+  // `lines`: texts to label; `context`: [{text, voice}] for the cues just before them.
+  function labelPrompt(lines, context) {
+    const earlier = context.length
+      ? context.map((c) => `[${LABELS[c.voice]}] ${clip(c.text)}`).join('\n')
+      : '(start of the conversation)';
+    return (
+      'Below is a transcript of a two-person conversation: an interviewer (host) and a guest, split into ' +
+      'numbered lines without speaker names. Label each line "H" (host) or "G" (guest). The host asks ' +
+      'questions, introduces topics, gives short reactions ("Right.", "Wow.", "That\'s amazing."), and ' +
+      'sometimes summarizes or comments briefly. The guest gives the long explanations and answers. Keep ' +
+      'the labels consistent with the already-labelled context.\n\n' +
+      `Earlier lines (context, not to be answered):\n${earlier}\n\n` +
+      `Lines to answer:\n${lines.map((t, k) => `${k + 1}. ${clip(t)}`).join('\n')}\n\n` +
+      `Reply with exactly ${lines.length} lines in the form "<number>: <H or G>", nothing else.`
+    );
+  }
+
+  // Returns an array of n voices (0 or 1), or null when the reply does not label every line.
+  function parseLabels(reply, n) {
+    const got = {};
+    for (const line of String(reply).split('\n')) {
+      const m = line.match(/^\W*(\d+)\W+\s*([HG])\b/i);
+      if (m) got[+m[1]] = LABELS.indexOf(m[2].toUpperCase());
+    }
+    const out = [];
+    for (let k = 1; k <= n; k++) {
+      if (got[k] === undefined) return null;
+      out.push(got[k]);
+    }
+    return out;
+  }
+
+  return { split, assign, labelPrompt, parseLabels, WINDOW, CONTEXT };
 })();

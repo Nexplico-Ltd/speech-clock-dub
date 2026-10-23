@@ -18,6 +18,7 @@
     cues: [], // { start, end, text } in video seconds
     ja: [], // translated text per cue (kept even after audio is freed)
     jaP: [], // in-flight/finished translation promises per cue
+    spkP: [], // in-flight/finished speaker-labelling promises per window (speakerVoices 'llm')
     items: [], // { buffer, dur } | { failed: true, dur: 0 } per cue
     lang: 'English',
     idx: 0, // cue currently being scheduled
@@ -206,8 +207,37 @@
     return p;
   }
 
+  // speakerVoices 'llm': labels one window of cues. A window waits for the one before it when that has
+  // started, because it shows those labels as context; after a seek it starts without context instead of
+  // labelling everything in between. A failed window keeps the voice of the cue before it.
+  function labelWindow(w) {
+    if (state.spkP[w]) return state.spkP[w];
+    state.spkP[w] = (async () => {
+      const before = state.spkP[w - 1];
+      await before;
+      const from = w * YTD_SPK.WINDOW;
+      const cues = state.cues.slice(from, from + YTD_SPK.WINDOW);
+      const shown = before ? state.cues.slice(Math.max(0, from - YTD_SPK.CONTEXT), from) : [];
+      const context = shown.map((c) => ({ text: c.text, voice: c.voice }));
+      const prompt = YTD_SPK.labelPrompt(cues.map((c) => c.text), context);
+      let voices = null;
+      try {
+        voices = YTD_SPK.parseLabels(await retry(() => sendBg({ type: 'label', prompt })), cues.length);
+      } catch (err) {
+        console.warn('[ytd] speaker labelling failed:', err);
+      }
+      let last = before ? state.cues[from - 1].voice : 0;
+      cues.forEach((c, k) => {
+        c.voice = voices ? voices[k] : last;
+        last = c.voice;
+      });
+    })();
+    return state.spkP[w];
+  }
+
   async function produceItem(i) {
     try {
+      if (S.speakerVoices === 'llm') await labelWindow(Math.floor(i / YTD_SPK.WINDOW));
       const text = await translateCue(i);
       const b64 = await retry(() => sendBg({ type: 'synthesize', text, alt: state.cues[i].voice === 1 }));
       const buffer = await state.ctx.decodeAudioData(b64ToArrayBuffer(b64));
@@ -507,6 +537,7 @@
     state.cues = cues;
     state.ja = [];
     state.jaP = [];
+    state.spkP = [];
     state.items = [];
     state.failStreak = 0;
     state.userPaused = false;

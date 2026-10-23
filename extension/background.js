@@ -38,6 +38,11 @@ async function punctuate({ text, sourceLang }) {
   return chat(s, prompt, { temperature: 0, maxTokens: 1024 });
 }
 
+// Labels who speaks each line of a dialogue (see extension/speakers.js); `prompt` is built by the caller.
+async function labelSpeakers({ prompt }) {
+  return chat(await getSettings(), prompt, { temperature: 0, maxTokens: 600 });
+}
+
 // One chat completion against the OpenAI-compatible endpoint; returns the reply text.
 async function chat(s, prompt, { temperature, maxTokens }) {
   let extra = {};
@@ -133,9 +138,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       ? translate(msg)
       : msg.type === 'punctuate'
         ? punctuate(msg)
-        : msg.type === 'synthesize'
-          ? synthesize(msg)
-          : null;
+        : msg.type === 'label'
+          ? labelSpeakers(msg)
+          : msg.type === 'synthesize'
+            ? synthesize(msg)
+            : null;
   if (!job) return false;
   job.then(
     (result) => sendResponse({ ok: true, result }),

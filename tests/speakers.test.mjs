@@ -37,3 +37,25 @@ test('assign alternates the voice at each turn, starting with voice 0', () => {
   const cues = [{ turn: true }, {}, { turn: true }, {}, { turn: true }];
   assert.deepEqual(plain(SPK.assign(cues)).map((c) => c.voice), [0, 0, 1, 1, 0]);
 });
+
+test('labelPrompt numbers the lines and shows the labelled context', () => {
+  const p = SPK.labelPrompt(['How did you start?', 'I built circuits.'], [{ text: 'Welcome.', voice: 0 }, { text: 'Thanks.', voice: 1 }]);
+  assert.match(p, /\[H\] Welcome\.\n\[G\] Thanks\./);
+  assert.match(p, /1\. How did you start\?\n2\. I built circuits\./);
+  assert.match(p, /exactly 2 lines/);
+  assert.match(SPK.labelPrompt(['Hi.'], []), /start of the conversation/);
+});
+
+test('labelPrompt clips very long lines', () => {
+  assert.ok(SPK.labelPrompt(['x'.repeat(1000)], []).length < 1500);
+});
+
+test('parseLabels maps H to voice 0 and G to voice 1, tolerating list styles', () => {
+  assert.deepEqual(plain(SPK.parseLabels('1: H\n2: G\n3. g\n4) H', 4)), [0, 1, 1, 0]);
+  assert.deepEqual(plain(SPK.parseLabels('```\n1: G\n2: H\n```', 2)), [1, 0]);
+});
+
+test('parseLabels returns null when a line is missing or the reply is unusable', () => {
+  assert.equal(SPK.parseLabels('1: H\n3: G', 3), null);
+  assert.equal(SPK.parseLabels('I cannot tell.', 2), null);
+});

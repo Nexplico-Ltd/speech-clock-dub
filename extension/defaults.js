@@ -34,7 +34,7 @@ const YTD_DEFAULTS = {
   voiceGender: 'female', // 'female' | 'male'
   // 'alternate': for dialogue captions that mark a change of speaker ('- ' or '>>'), the voices alternate
   // between voiceGender and the opposite gender. Needs captions with markers (not auto-generated ones).
-  speakerVoices: 'off', // 'off' | 'alternate'
+  speakerVoices: 'off', // 'off' | 'alternate' (captions with "- " / ">>" markers) | 'llm' (experimental: the LLM labels who speaks)
   subtitles: 'off', // on-screen subtitles: 'off' | 'translated' | 'both' (translation + original)
   subtitleMaxLines: 2, // longer text is shown in pages of this many lines; 0 = no limit
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language.
