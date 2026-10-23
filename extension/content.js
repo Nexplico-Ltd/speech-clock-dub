@@ -77,7 +77,7 @@
       const timer = setTimeout(() => {
         window.removeEventListener('message', onMsg);
         reject(new Error('Timed out waiting for captions'));
-      }, 10000);
+      }, 25000); // page-hook may wait up to 10 s for the player's own caption request
       function onMsg(e) {
         if (e.source !== window || e.data?.type !== 'ytd:captions' || e.data.reqId !== reqId) return;
         clearTimeout(timer);
