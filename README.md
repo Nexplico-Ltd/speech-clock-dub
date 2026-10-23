@@ -151,7 +151,8 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 
 ## License
 
-Apache License 2.0, see [LICENSE](LICENSE). This applies to the code in this repository only. The
+Copyright 2026 Nexplico-Ltd. Licensed under the Apache License 2.0, see [LICENSE](LICENSE) and
+[NOTICE](NOTICE). This applies to the code in this repository only. The
 services and models it talks to have their own terms: VOICEVOX and each of its voice characters,
 Microsoft's online speech service behind edge-tts, and the LLM you run (e.g. Gemma). Check them
 before publishing dubbed videos.
