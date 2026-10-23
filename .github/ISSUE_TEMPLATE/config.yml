@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the README first
+    url: https://github.com/Nexplico-Ltd/speech-clock-dub#readme
+    about: Setup, settings and known limitations (for example YouTube returning empty captions) are documented there.
+  - name: Contributing guide
+    url: https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/CONTRIBUTING.md
+    about: How to set up a development environment and send a pull request.

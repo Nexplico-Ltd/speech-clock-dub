@@ -164,6 +164,8 @@ npm test                                                  # extension tests, Nod
 GitHub Actions (`.github/workflows/ci.yml`) runs a syntax check of every extension script plus both
 test suites on each push to `main` and on every pull request.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute and report issues.
+
 ## Known limitations / TODO
 
 - Auto-generated (ASR) captions have no punctuation. With `asrPunctuation` set to `on` (the default) the LLM first restores punctuation in overlapping windows of words, so cues end at sentence boundaries. This takes about 1.2 s per minute of video (measured with a local 12B model on a 16 GB GPU); the video is paused and a progress count is shown meanwhile. The result is saved per video when the captions come from YouTube, so later starts do not wait. On a 43-minute lecture 74% of the cues ended at a sentence end (without this step 70% were cut mid-sentence by the length limit). Windows where the model changes the words (3 of 52 in that test) fall back to cutting by length. Set `asrPunctuation` to `off` to skip the step. Manual captions still work best.
