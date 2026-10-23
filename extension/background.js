@@ -19,6 +19,13 @@ async function translate({ text, prev, sourceLang }) {
     `for a voice-over. Keep technical terms accurate. Output ONLY the Japanese translation of the ` +
     `last line, with no notes, quotes or romaji.\n\n${context}Translate this line:\n${text}`;
 
+  let extra = {};
+  try {
+    extra = JSON.parse(s.llmExtraBody || '{}');
+  } catch {
+    throw new Error('llmExtraBody is not valid JSON');
+  }
+
   const res = await fetch(`${s.llmBaseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -29,8 +36,11 @@ async function translate({ text, prev, sourceLang }) {
       model: s.llmModel,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
+      max_tokens: 512, // guard against runaway output
       stream: false,
+      ...extra,
     }),
+    signal: AbortSignal.timeout(s.llmTimeoutSec * 1000),
   });
   if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${await res.text()}`);
   const json = await res.json();

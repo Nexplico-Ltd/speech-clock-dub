@@ -2,9 +2,13 @@
 // the content script and the options page. Stored overrides live in chrome.storage.sync.
 const YTD_DEFAULTS = {
   // OpenAI-compatible chat completions endpoint (e.g. the Unsloth service).
-  llmBaseUrl: 'http://localhost:8000/v1',
-  llmModel: 'gemma-3-12b-it',
+  llmBaseUrl: 'http://127.0.0.1:8888/v1',
+  llmModel: 'unsloth/gemma-4-12B-it-qat-GGUF',
   llmApiKey: '',
+  // JSON merged into every chat completion request. The default turns thinking off: with
+  // thinking on, Gemma 4 can spend minutes on a single subtitle line and return no content.
+  llmExtraBody: '{"chat_template_kwargs":{"enable_thinking":false}}',
+  llmTimeoutSec: 60,
 
   // VOICEVOX engine.
   voicevoxUrl: 'http://localhost:50021',
