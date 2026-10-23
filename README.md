@@ -104,11 +104,20 @@ Set `targetLang` in the options page:
 edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.
 
+## On-screen subtitles
+
+The **Sub** button in the player cycles `off` -> `translated` -> `both` (translation plus the original
+line). The choice is saved in the `subtitles` setting (default `off`). The text of the cue being
+spoken is shown near the bottom of the player and hidden between cues, while paused-by-the-user it
+stays visible. The font scales with the player width, so it also works in fullscreen. It sits above
+YouTube's own caption line, so it does not overlap if YouTube captions are switched on.
+
 ## Install (development)
 
 1. Open `chrome://extensions`, enable Developer mode, click "Load unpacked", select `extension/`.
 2. Open the extension's options page and adjust the settings.
-3. Open a YouTube video that has captions and click **Dub (xx)** at the top left of the player.
+3. Open a YouTube video that has captions and click **Dub (xx)** at the top left of the player
+   (**Sub** toggles the on-screen translation).
    Reload the YouTube tab after every extension reload.
 
 ## Files

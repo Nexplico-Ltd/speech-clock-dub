@@ -32,6 +32,7 @@ const YTD_LANGS = {
 const YTD_DEFAULTS = {
   targetLang: 'ja', // a key of YTD_LANGS
   voiceGender: 'female', // 'female' | 'male'
+  subtitles: 'off', // on-screen subtitles: 'off' | 'translated' | 'both' (translation + original)
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language.
   ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge'
 

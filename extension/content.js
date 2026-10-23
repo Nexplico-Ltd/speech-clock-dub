@@ -329,6 +329,7 @@
     state.lastT = v.currentTime;
 
     updateStatus();
+    updateSubtitle();
 
     if (state.idx >= state.cues.length) {
       // Last cue spoken: hand the rest of the video back to its original audio and speed.
@@ -490,11 +491,13 @@
     state.ctx.close().catch(() => {});
     setButton(false);
     setStatus('');
+    updateSubtitle();
   }
 
   // ---------- HUD ----------
 
-  let hud, btn, statusEl;
+  const SUB_MODES = ['off', 'translated', 'both'];
+  let hud, btn, statusEl, subBtn, subEl;
 
   function ensureHud() {
     if (hud?.isConnected) return;
@@ -533,8 +536,27 @@
       }
     });
 
-    hud.append(btn, loadBtn, fileInput, statusEl);
-    player.append(hud);
+    subBtn = document.createElement('button');
+    subBtn.style.cssText = btn.style.cssText;
+    subBtn.addEventListener('click', () => {
+      S.subtitles = SUB_MODES[(SUB_MODES.indexOf(S.subtitles) + 1) % SUB_MODES.length];
+      try {
+        chrome.storage.sync.set({ subtitles: S.subtitles });
+      } catch {} // orphaned after an extension reload; the toggle still works for this page
+      setButton(state.active);
+      updateSubtitle();
+    });
+
+    // Translated subtitle overlay (pointer-events:none so it never blocks the player).
+    subEl = document.createElement('div');
+    subEl.style.cssText =
+      'position:absolute;left:50%;bottom:12%;transform:translateX(-50%);max-width:80%;z-index:59;' +
+      'pointer-events:none;text-align:center;color:#fff;background:rgba(0,0,0,.65);padding:4px 10px;' +
+      'border-radius:6px;line-height:1.4;white-space:pre-wrap;text-shadow:0 1px 2px #000;';
+    subEl.hidden = true;
+
+    hud.append(btn, loadBtn, fileInput, subBtn, statusEl);
+    player.append(hud, subEl);
     btn.addEventListener('click', async () => {
       if (state.active) return stop();
       try {
@@ -555,6 +577,21 @@
 
   function setButton(on) {
     if (btn) btn.textContent = `Dub (${S.targetLang}): ${on ? 'on' : 'off'}`;
+    if (subBtn) subBtn.textContent = `Sub: ${S.subtitles}`;
+  }
+
+  // Show the translation (and optionally the original) of the cue being spoken.
+  function updateSubtitle() {
+    if (!subEl) return;
+    const text = state.active && state.phase === 'speaking' && S.subtitles !== 'off' ? state.ja[state.idx] : '';
+    const cue = state.cues[state.idx];
+    const shown = !text ? '' : S.subtitles === 'both' && cue ? `${text}\n${cue.text}` : text;
+    if (subEl.textContent !== shown) {
+      subEl.textContent = shown;
+      const w = document.getElementById('movie_player')?.clientWidth ?? 800;
+      subEl.style.fontSize = `${clamp(w * 0.026, 14, 40)}px`;
+    }
+    subEl.hidden = !shown;
   }
 
   function setStatus(text) {
