@@ -116,7 +116,8 @@
       const [a, b] = lines[i].split('-->');
       const start = toMs(a);
       const end = toMs(b.trim().split(/\s+/)[0]);
-      const body = lines.slice(i + 1).join(' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      // Keep line breaks: a line starting with "- " marks a change of speaker.
+      const body = lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '').replace(/[ \t]+/g, ' ').trim();
       if (body) events.push({ tStartMs: start, dDurationMs: end - start, segs: [{ utf8: body }] });
     }
     return events;
@@ -124,7 +125,8 @@
 
   // Merge caption fragments into sentence-sized cues.
   function buildCues(events, kind) {
-    const frags =
+    const dialogue = S.speakerVoices === 'alternate' && kind !== 'asr';
+    let frags =
       kind === 'asr'
         ? YTD_ASR.words(events)
         : events
@@ -132,9 +134,10 @@
             .map((e) => ({
               start: e.tStartMs / 1000,
               end: (e.tStartMs + (e.dDurationMs ?? 0)) / 1000,
-              text: e.segs.map((s) => s.utf8).join('').replace(/\s+/g, ' ').trim(),
-            }))
-            .filter((f) => f.text);
+              text: e.segs.map((s) => s.utf8).join('').trim(),
+            }));
+    frags = dialogue ? YTD_SPK.split(frags) : frags.map((f) => ({ ...f, text: f.text.replace(/\s+/g, ' ') }));
+    frags = frags.filter((f) => f.text);
 
     const cues = [];
     let cur = null;
@@ -143,8 +146,8 @@
       cur = null;
     };
     for (const f of frags) {
-      if (cur && f.start - cur.end > S.maxGapSec) flush();
-      if (!cur) cur = { start: f.start, end: f.end, text: f.text };
+      if (cur && (f.turn || f.start - cur.end > S.maxGapSec)) flush();
+      if (!cur) cur = { start: f.start, end: f.end, text: f.text, turn: f.turn };
       else {
         cur.text += ' ' + f.text;
         cur.end = Math.max(cur.end, f.end);
@@ -152,6 +155,7 @@
       if (/[.!?。！？]["')\]]?$/.test(cur.text) || cur.text.length >= S.maxCueChars) flush();
     }
     flush();
+    if (dialogue) YTD_SPK.assign(cues);
 
     // Cues must not overlap: the scheduler moves strictly forward in video time.
     for (let i = 0; i < cues.length; i++) {
@@ -205,7 +209,7 @@
   async function produceItem(i) {
     try {
       const text = await translateCue(i);
-      const b64 = await retry(() => sendBg({ type: 'synthesize', text }));
+      const b64 = await retry(() => sendBg({ type: 'synthesize', text, alt: state.cues[i].voice === 1 }));
       const buffer = await state.ctx.decodeAudioData(b64ToArrayBuffer(b64));
       state.items[i] = { buffer, dur: buffer.duration };
       state.failStreak = 0;

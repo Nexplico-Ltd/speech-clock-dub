@@ -67,9 +67,9 @@ test('translate reports HTTP errors', async () => {
   assert.match(res.error, /LLM HTTP 401/);
 });
 
-async function synth(settings) {
+async function synth(settings, extra = {}) {
   const bg = loadBackground({ settings, fetchImpl: fakeServers() });
-  const res = await bg.send({ type: 'synthesize', text: 'こんにちは' });
+  const res = await bg.send({ type: 'synthesize', text: 'こんにちは', ...extra });
   return { res, calls: bg.calls };
 }
 
@@ -128,4 +128,14 @@ test('punctuate asks the model to restore punctuation without changing any word'
   assert.match(body.messages[0].content, /Do not add, remove, reorder or change any word/);
   assert.match(body.messages[0].content, /English/);
   assert.ok(body.messages[0].content.endsWith('hello world'));
+});
+
+test('alt asks for the voice of the opposite gender (second speaker of a dialogue)', async () => {
+  assert.match((await synth({}, { alt: true })).calls[0].url, /speaker=11&/);
+  assert.match((await synth({ voiceGender: 'male' }, { alt: true })).calls[0].url, /speaker=2&/);
+  const edge = async (settings, extra) => JSON.parse((await synth({ targetLang: 'en', ...settings }, extra)).calls[0].opts.body).voice;
+  assert.equal(await edge({}, { alt: true }), 'en-US-GuyNeural');
+  assert.equal(await edge({ voiceGender: 'male' }, { alt: true }), 'en-US-AriaNeural');
+  // A fixed edgeVoice is the first speaker's voice; the second still uses the other gender.
+  assert.equal(await edge({ edgeVoice: 'en-GB-SoniaNeural' }, { alt: true }), 'en-US-GuyNeural');
 });

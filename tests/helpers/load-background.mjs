@@ -66,3 +66,10 @@ export function loadSubtitle() {
   vm.runInContext(fs.readFileSync(path.join(EXT, 'subtitle.js'), 'utf8'), context);
   return vm.runInContext('YTD_SUB', context);
 }
+
+/** Evaluates extension/speakers.js and returns its YTD_SPK helpers. */
+export function loadSpeakers() {
+  const context = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.join(EXT, 'speakers.js'), 'utf8'), context);
+  return vm.runInContext('YTD_SPK', context);
+}

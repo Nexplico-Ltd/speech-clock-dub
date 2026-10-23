@@ -27,7 +27,7 @@ test('the page hook runs in the MAIN world and the content script in the isolate
   assert.equal(hook.world, 'MAIN');
   assert.notEqual(content.world, 'MAIN');
   assert.ok(content.js.indexOf('defaults.js') < content.js.indexOf('content.js'), 'defaults.js must load first');
-  for (const helper of ['asr.js', 'subtitle.js']) {
+  for (const helper of ['asr.js', 'speakers.js', 'subtitle.js']) {
     assert.ok(content.js.indexOf(helper) < content.js.indexOf('content.js'), `${helper} must load before content.js`);
   }
 });

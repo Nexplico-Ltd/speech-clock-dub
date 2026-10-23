@@ -76,27 +76,30 @@ function getLang(s) {
   return lang;
 }
 
-async function synthesize({ text }) {
+// `alt` asks for the second voice of a dialogue: the gender opposite to voiceGender.
+async function synthesize({ text, alt }) {
   const s = await getSettings();
   const provider = s.ttsProvider === 'auto' ? (s.targetLang === 'ja' ? 'voicevox' : 'edge') : s.ttsProvider;
-  return provider === 'edge' ? synthesizeEdge(s, text) : synthesizeVoicevox(s, text);
+  return provider === 'edge' ? synthesizeEdge(s, text, alt) : synthesizeVoicevox(s, text, alt);
 }
 
-async function synthesizeEdge(s, text) {
+const genderFor = (s, alt) => ((s.voiceGender === 'male') !== Boolean(alt) ? 'male' : 'female');
+
+async function synthesizeEdge(s, text, alt) {
   const res = await fetch(`${s.edgeUrl.replace(/\/$/, '')}/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice: s.edgeVoice || getLang(s).voices[s.voiceGender], rate: s.edgeRate }),
+    body: JSON.stringify({ text, voice: (!alt && s.edgeVoice) || getLang(s).voices[genderFor(s, alt)], rate: s.edgeRate }),
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) throw new Error(`edge-tts bridge HTTP ${res.status}: ${await res.text()}`);
   return toBase64(await res.arrayBuffer());
 }
 
-async function synthesizeVoicevox(s, text) {
+async function synthesizeVoicevox(s, text, alt) {
   if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
-  const speaker = s.voiceGender === 'male' ? s.speakerMale : s.speakerFemale;
+  const speaker = genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
 
   const q = await fetch(`${base}/audio_query?speaker=${speaker}&text=${encodeURIComponent(text)}`, {
     method: 'POST',

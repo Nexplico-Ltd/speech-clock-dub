@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { loadSpeakers } from './helpers/load-background.mjs';
+
+const SPK = loadSpeakers();
+const plain = (x) => JSON.parse(JSON.stringify(x));
+const frag = (start, end, text) => ({ start, end, text });
+
+test('a leading "- " flags a new turn and is removed', () => {
+  const out = plain(SPK.split([frag(0, 2, '- Hello there'), frag(2, 4, 'and welcome'), frag(4, 6, '- Thanks.')]));
+  assert.deepEqual(
+    out.map((f) => [f.text, f.turn]),
+    [['Hello there', true], ['and welcome', false], ['Thanks.', true]],
+  );
+});
+
+test('">>" markers work at the start of a line and inside one', () => {
+  const out = plain(SPK.split([frag(0, 4, '>> How are you? >> Fine.')]));
+  assert.deepEqual(out.map((f) => [f.text, f.turn]), [['How are you?', true], ['Fine.', true]]);
+});
+
+test('a fragment holding two turns is divided by text length', () => {
+  const out = plain(SPK.split([frag(10, 20, '- Hi!\n- Hello, nice to see you.')]));
+  assert.deepEqual(out.map((f) => f.text), ['Hi!', 'Hello, nice to see you.']);
+  assert.equal(out[0].start, 10);
+  assert.equal(out[1].end, 20);
+  assert.equal(out[0].end, out[1].start);
+  assert.ok(out[0].end - out[0].start < out[1].end - out[1].start, 'the shorter turn gets less time');
+});
+
+test('hyphens inside words and numbers are not markers', () => {
+  const out = plain(SPK.split([frag(0, 2, 'a well-known -5 dB trade-off')]));
+  assert.deepEqual(out.map((f) => f.text), ['a well-known -5 dB trade-off']);
+});
+
+test('assign alternates the voice at each turn, starting with voice 0', () => {
+  const cues = [{ turn: true }, {}, { turn: true }, {}, { turn: true }];
+  assert.deepEqual(plain(SPK.assign(cues)).map((c) => c.voice), [0, 0, 1, 1, 0]);
+});

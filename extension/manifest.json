@@ -15,7 +15,7 @@
     },
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["defaults.js", "asr.js", "subtitle.js", "content.js"],
+      "js": ["defaults.js", "asr.js", "speakers.js", "subtitle.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
