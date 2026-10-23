@@ -52,9 +52,14 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
    reserves nearly all of a 16 GB card (e.g. a very large context window), the first voice may work
    while another one fails with a CUDA out-of-memory error (HTTP 500 on `/synthesis`). Dubbing needs
    only a small LLM context (a few thousand tokens), so lower the context length when loading the
-   model. Alternatively run VOICEVOX on the CPU (about 0.5x real time per sentence; omit `--use_gpu`
-   by overriding the image's command: `... voicevox_engine:nvidia-latest gosu user
-   /opt/voicevox_engine/run --host 0.0.0.0`).
+   model. Measured on a 16 GB RTX 4060 Ti with Gemma 4 12B (Q4): at a 262144-token context
+   llama-server used 14.2 GB (about 0.5 GB free, male voices failed); at 16384 it used 9.5 GB
+   (about 3.9 GB free with VOICEVOX loaded, both voices work) and translation got faster
+   (0.5 s -> 0.3 s per sentence).
+
+   Alternatively run VOICEVOX on the CPU (about 0.5x real time per sentence). Omit `--use_gpu` by
+   overriding the image's command: `... voicevox_engine:nvidia-latest gosu user
+   /opt/voicevox_engine/run --host 0.0.0.0`.
 
 3. **edge-tts bridge** (only for non-Japanese targets, or Japanese if you prefer it over VOICEVOX).
    edge-tts uses Microsoft's online speech service through an unofficial API, so **the translated
