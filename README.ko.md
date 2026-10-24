@@ -64,6 +64,18 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
 LLM, VOICEVOX, edge-tts 브리지는 로컬 네트워크의 GPU 머신처럼 다른 컴퓨터에서 실행할 수 있습니다. 그 컴퓨터에서 서버가 네트워크에서 접근 가능하도록 실행하고 방화벽에서 포트를 허용하세요(LAN 안에서만). VOICEVOX는 `--host 0.0.0.0`, 브리지는 `tools/edge_tts_server.py --host 0.0.0.0`, LLM 서버는 각자의 호스트 옵션을 사용합니다. 그런 다음 옵션 페이지의 `llmBaseUrl`, `voicevoxUrl`, `edgeUrl`에 `http://192.168.1.20:8888/v1` 같은 URL을 입력합니다. 저장을 누르면 Chrome이 호스트마다 한 번, 확장 프로그램이 그곳에 접속해도 되는지 묻습니다(`optional_host_permissions`). 통신은 암호화되지 않은 HTTP이고 브리지와 VOICEVOX에는 인증이 없으므로, 신뢰할 수 있는 네트워크에서만 사용하세요.
 
+### HTTPS
+
+서버 자체는 평문 HTTP만 사용합니다(VOICEVOX에는 TLS 옵션이 없습니다). 확장 프로그램은 `https://` URL을 받아들이므로, 다른 컴퓨터의 서버 앞에 TLS를 종단하는 리버스 프록시를 두고 그 프록시의 URL을 입력하세요(예: `voicevoxUrl` = `https://voicevox.lan:50443`). [Caddy](https://caddyserver.com/)는 자체 로컬 CA로 인증서를 만들어 주므로 `Caddyfile`은 다음만 있으면 됩니다:
+
+```
+voicevox.lan:50443 {
+    reverse_proxy 127.0.0.1:50021
+}
+```
+
+확장 프로그램을 실행하는 컴퓨터의 Chrome이 그 인증서를 신뢰해야 합니다(Caddy라면 루트 인증서를 한 번 설치). 그렇지 않으면 요청이 실패합니다. Tailscale을 쓴다면 `tailscale serve --https=50443 http://127.0.0.1:50021`로 tailnet 이름에 대해 공인 인증서를 받을 수 있어 신뢰 설정이 필요 없습니다. edge-tts 브리지와 LLM 서버에도 같은 방법을 쓸 수 있습니다. 이 프록시 구성은 이 확장 프로그램으로 시험해 보지 않았습니다.
+
 ## 대상 언어
 
 옵션 페이지에서 `targetLang`을 설정합니다:

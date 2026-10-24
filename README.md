@@ -102,6 +102,25 @@ page. When you press Save, Chrome asks once per host whether the extension may r
 (`optional_host_permissions`). The traffic is plain HTTP and the bridge and VOICEVOX have no
 authentication, so use this only on a network you trust.
 
+### HTTPS
+
+The servers themselves speak plain HTTP only (VOICEVOX has no TLS option). The extension accepts
+`https://` URLs, so put a TLS-terminating reverse proxy in front of the server on the other machine
+and enter the proxy's URL, for example `voicevoxUrl` = `https://voicevox.lan:50443`. With
+[Caddy](https://caddyserver.com/), which creates a certificate from its own local CA, a `Caddyfile` is enough:
+
+```
+voicevox.lan:50443 {
+    reverse_proxy 127.0.0.1:50021
+}
+```
+
+Chrome on the machine running the extension must trust the certificate (for Caddy, install its root
+certificate once), otherwise requests fail. If you use Tailscale, `tailscale serve --https=50443 http://127.0.0.1:50021`
+gives a publicly trusted certificate for the machine's tailnet name and needs no trust setup. The same
+works for the edge-tts bridge and the LLM server. These proxy setups have not been tested with this
+extension.
+
 ## Target languages
 
 Set `targetLang` in the options page:

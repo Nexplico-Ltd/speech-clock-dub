@@ -64,6 +64,18 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
 LLM、VOICEVOX、edge-tts ブリッジは、ローカルネットワーク上の GPU マシンなど、別のコンピューターで動かせます。そのマシンで、サーバーがネットワークから届くように起動し、ファイアウォールでポートを許可します（LAN の中だけにしてください）。VOICEVOX は `--host 0.0.0.0`、ブリッジは `tools/edge_tts_server.py --host 0.0.0.0`、LLM サーバーはそれぞれのホスト指定オプションを使います。そのうえで、オプションページの `llmBaseUrl`、`voicevoxUrl`、`edgeUrl` に `http://192.168.1.20:8888/v1` のような URL を入力します。保存を押すと、Chrome がホストごとに一度だけ、拡張機能がそこへ接続してよいかを尋ねます（`optional_host_permissions`）。通信は平文の HTTP で、ブリッジと VOICEVOX には認証がないため、信頼できるネットワークでだけ使ってください。
 
+### HTTPS
+
+サーバー自体は平文の HTTP しか話しません（VOICEVOX には TLS のオプションがありません）。拡張機能は `https://` の URL を受け付けるので、別のマシンのサーバーの前に TLS を終端するリバースプロキシを置き、そのプロキシの URL を入力します（例: `voicevoxUrl` = `https://voicevox.lan:50443`）。[Caddy](https://caddyserver.com/) なら、自前のローカル CA で証明書を作ってくれるので、`Caddyfile` はこれだけで済みます:
+
+```
+voicevox.lan:50443 {
+    reverse_proxy 127.0.0.1:50021
+}
+```
+
+拡張機能を動かす側の Chrome が、その証明書を信頼している必要があります（Caddy の場合は、ルート証明書を一度インストールします）。信頼されていないと、リクエストは失敗します。Tailscale を使っているなら、`tailscale serve --https=50443 http://127.0.0.1:50021` で、tailnet 上のマシン名に対して正規に信頼される証明書が使え、信頼の設定は不要です。edge-tts ブリッジや LLM サーバーでも同じ方法が使えます。これらのプロキシ構成は、この拡張機能では試していません。
+
 ## ターゲット言語
 
 オプションページで `targetLang` を設定します:

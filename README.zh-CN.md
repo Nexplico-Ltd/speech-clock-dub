@@ -64,6 +64,18 @@ YouTube 字幕 -> 句子级 cue -> LLM 翻译 -> TTS (VOICEVOX / edge-tts) -> We
 
 LLM、VOICEVOX 和 edge-tts 桥接程序可以运行在另一台电脑上，例如局域网中的 GPU 主机。请在那台机器上让服务器监听网络，并在防火墙开放端口（仅限你的局域网）：VOICEVOX 使用 `--host 0.0.0.0`，桥接程序使用 `tools/edge_tts_server.py --host 0.0.0.0`，LLM 服务器则使用它自己的主机选项。然后在选项页面的 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl` 填入如 `http://192.168.1.20:8888/v1` 的地址。点击保存时，Chrome 会针对每个主机询问一次，是否允许扩展程序连接（`optional_host_permissions`）。通信是明文 HTTP，桥接程序和 VOICEVOX 也没有认证机制，请只在你信任的网络中使用。
 
+### HTTPS
+
+服务器本身只使用明文 HTTP（VOICEVOX 没有 TLS 选项）。扩展程序接受 `https://` 地址，所以请在另一台机器的服务器前面放一个负责终结 TLS 的反向代理，并填入代理的地址（例如 `voicevoxUrl` = `https://voicevox.lan:50443`）。[Caddy](https://caddyserver.com/) 会用自己的本地 CA 生成证书，`Caddyfile` 只需要这样：
+
+```
+voicevox.lan:50443 {
+    reverse_proxy 127.0.0.1:50021
+}
+```
+
+运行扩展程序那台电脑上的 Chrome 必须信任该证书（使用 Caddy 时，安装一次它的根证书），否则请求会失败。如果你使用 Tailscale，`tailscale serve --https=50443 http://127.0.0.1:50021` 会为机器在 tailnet 中的名称提供公开受信任的证书，不需要设置信任。edge-tts 桥接程序和 LLM 服务器也可以用同样的方法。这些代理配置尚未在本扩展程序上测试过。
+
 ## 目标语言
 
 在选项页面设置 `targetLang`：
