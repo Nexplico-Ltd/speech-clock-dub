@@ -55,7 +55,7 @@ The defaults are the cheapest options: `gemini-3.1-flash-lite` for the translati
 
 **Both services are paid (each has a free quota; check Google's pricing), and the subtitle text and its
 translation are sent to Google.** The keys are stored in `chrome.storage.sync` like all settings, so
-restrict each key to its own API in the Google Cloud console. If a key is missing, the status line shows
+restrict the Text-to-Speech key to that API in the Google Cloud console (and restrict the Gemini key too if Google offers that for it). If a key is missing, the status line shows
 an error that names it. This default setup has not been run end to end by the maintainers yet; the local
 setup below is the one that has been used the most.
 
@@ -116,9 +116,9 @@ otherwise), `voicevox` or `edge`.
 ## Profiles
 
 The options page has a **Profile** box for switching between whole configurations, for example the hosted
-setup on a laptop and the local servers at home. It comes with two built-in profiles (`Hosted (Gemini +
-Google TTS)` and `Local (Unsloth + VOICEVOX / edge-tts)`). **Load** fills the form from the selected profile and
-**Save** applies it. **Save as profile** stores the current form under a name you type, **Delete**
+setup on a laptop and the local servers at home. It comes with built-in profiles (listed below). **Load** fills the form from the selected profile and
+**Save** applies it. A profile sets every setting except the API keys: settings it does not list go back to
+their defaults, so Load, then re-check your language and voice before Save. **Save as profile** stores the current form under a name you type, **Delete**
 removes a profile of your own, and **Export file** / **Import file** move a profile to another browser as a
 JSON file. The API keys are not part of any profile: they are shared by all profiles and are never
 exported or imported. Profiles are stored in `chrome.storage.sync`, one item per profile.

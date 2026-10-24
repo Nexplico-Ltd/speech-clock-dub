@@ -36,7 +36,7 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
 預設值是最便宜的選擇：翻譯用 `gemini-3.1-flash-lite`，語音用 WaveNet 聲音（撰寫時 Google 將 WaveNet 與 Standard 列為相同價格，是 Neural2 的四分之一，且每月有免費額度）。價格會變動，請查看 Google 的價格頁面。音質更好的 Neural2 和 Chirp 3 HD 聲音可用 `googleVoice` 指定。
 
-**這兩項服務都要付費（有免費額度，費用請以 Google 的說明為準），字幕文字及其翻譯會傳送給 Google。** 金鑰和其他設定一樣存放在 `chrome.storage.sync`，請在 Google Cloud 主控台把每把金鑰限制為只能用於對應的 API。缺少金鑰時，狀態列會顯示指出該金鑰名稱的錯誤。維護者尚未把這個預設設定從頭到尾實際跑過一次；使用最多的是下面的本機設定。
+**這兩項服務都要付費（有免費額度，費用請以 Google 的說明為準），字幕文字及其翻譯會傳送給 Google。** 金鑰和其他設定一樣存放在 `chrome.storage.sync`，請在 Google Cloud 主控台把 Text-to-Speech 金鑰限制為只能用於該 API（若 Google 支援，Gemini 金鑰也請同樣限制）。缺少金鑰時，狀態列會顯示指出該金鑰名稱的錯誤。維護者尚未把這個預設設定從頭到尾實際跑過一次；使用最多的是下面的本機設定。
 
 `host_permissions` 中只有 `localhost` / `127.0.0.1`、`texttospeech.googleapis.com` 和 `generativelanguage.googleapis.com`。其他主機上的伺服器會在執行時請求權限（見下一節）。
 
@@ -75,7 +75,7 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
 ## 設定檔
 
-選項頁面的 **Profile** 欄可以切換整組設定，例如在筆電上用雲端託管設定、在家裡用本機伺服器。內建兩個設定檔（`Hosted (Gemini + Google TTS)` 和 `Local (Unsloth + VOICEVOX / edge-tts)`）。**Load** 會把所選設定檔載入表單，**Save** 才會套用。**Save as profile** 會以你輸入的名稱儲存目前的表單，**Delete** 會刪除你自己建立的設定檔，**Export file** / **Import file** 可以用 JSON 檔把設定檔搬到另一個瀏覽器。API 金鑰不屬於任何設定檔：所有設定檔共用，也不會被匯出或匯入。設定檔存放在 `chrome.storage.sync`，每個設定檔一個項目。
+選項頁面的 **Profile** 欄可以切換整組設定，例如在筆電上用雲端託管設定、在家裡用本機伺服器。內建了一些設定檔（見下表）。**Load** 會把所選設定檔載入表單，**Save** 才會套用。設定檔會決定 API 金鑰以外的所有設定：沒有列出的設定會回到預設值，所以 Load 之後請先確認語言和聲音再 Save。**Save as profile** 會以你輸入的名稱儲存目前的表單，**Delete** 會刪除你自己建立的設定檔，**Export file** / **Import file** 可以用 JSON 檔把設定檔搬到另一個瀏覽器。API 金鑰不屬於任何設定檔：所有設定檔共用，也不會被匯出或匯入。設定檔存放在 `chrome.storage.sync`，每個設定檔一個項目。
 
 內建設定檔：
 

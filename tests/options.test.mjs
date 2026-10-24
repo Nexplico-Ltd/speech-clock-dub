@@ -144,10 +144,44 @@ test('import fills the form, ignores keys, unknown settings and wrong types, and
   assert.equal(o.inputs.googleApiKey.value, 'gk');
   assert.equal(o.name.value, 'Shared');
   assert.match(o.msg.textContent, /3 ignored/);
+  assert.doesNotMatch(o.msg.textContent, /Check the server URLs/);
   assert.deepEqual(o.store, { googleApiKey: 'gk' }, 'import alone saves nothing');
 
   await o.importFile('{not json');
   assert.match(o.msg.textContent, /not valid JSON/);
   await o.importFile(JSON.stringify({ settings: {} }));
   assert.match(o.msg.textContent, /not a Speech Clock Dub settings file/);
+});
+
+test('import rejects invalid choices and numbers, ignores __proto__, and warns when a server URL moves', async () => {
+  const o = await openOptions({ llmApiKey: 'secret' });
+  o.inputs.llmBaseUrl.value = 'https://generativelanguage.googleapis.com/v1beta/openai';
+  await o.importFile(
+    '{"app":"speech-clock-dub","settings":{"__proto__":{"x":1},"ttsProvider":"bogus","targetLang":"xx","maxRate":null,"minRate":1e999,"llmTimeoutSec":30,"llmBaseUrl":"https://evil.example/v1"}}',
+  );
+  assert.equal(o.inputs.ttsProvider.value, 'google', 'an unknown dropdown value is ignored');
+  assert.equal(o.inputs.targetLang.value, 'ja');
+  assert.equal(o.inputs.llmTimeoutSec.value, 30);
+  assert.match(o.msg.textContent, /Imported 2 settings \(5 ignored\)/);
+  assert.match(o.msg.textContent, /llmBaseUrl = https:\/\/evil\.example\/v1/, 'the moved URL is shown');
+  assert.equal(o.inputs.llmApiKey.value, 'secret', 'the key stays in the form, so the warning matters');
+  assert.equal(({}).x, undefined, 'Object.prototype is untouched');
+});
+
+test('Save refuses an empty or non-numeric number field', async () => {
+  const o = await openOptions();
+  o.inputs.maxRate.value = '';
+  await o.handlers.save();
+  assert.match(o.msg.textContent, /maxRate must be a number/);
+  assert.deepEqual(plain(o.store), {});
+  o.inputs.maxRate.value = 'abc';
+  await o.handlers.save();
+  assert.deepEqual(plain(o.store), {});
+});
+
+test('inherited names such as constructor are not built-in profiles', async () => {
+  const o = await openOptions();
+  o.name.value = 'constructor';
+  await o.handlers.saveAs();
+  assert.deepEqual(Object.keys(o.store), ['profile:constructor']);
 });

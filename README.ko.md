@@ -36,7 +36,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
 기본값은 가장 저렴한 선택입니다. 번역은 `gemini-3.1-flash-lite`, 음성은 WaveNet 음성을 사용합니다(작성 시점에 Google은 WaveNet을 Standard와 같은 가격, Neural2의 4분의 1로 안내하며 매월 무료 할당량이 있습니다). 가격은 바뀔 수 있으니 Google의 요금 페이지를 확인하세요. 음질이 더 좋은 Neural2와 Chirp 3 HD 음성은 `googleVoice`로 지정할 수 있습니다.
 
-**두 서비스 모두 유료이며(무료 할당량이 있으니 요금은 Google 안내를 확인하세요), 자막 텍스트와 그 번역이 Google로 전송됩니다.** 키는 다른 설정처럼 `chrome.storage.sync`에 저장되므로 Google Cloud 콘솔에서 각 키를 해당 API로만 제한하세요. 키가 없으면 상태 줄에 그 키 이름이 나오는 오류가 표시됩니다. 이 기본 구성은 아직 관리자가 처음부터 끝까지 실행해 보지 않았습니다. 가장 많이 사용된 것은 아래의 로컬 구성입니다.
+**두 서비스 모두 유료이며(무료 할당량이 있으니 요금은 Google 안내를 확인하세요), 자막 텍스트와 그 번역이 Google로 전송됩니다.** 키는 다른 설정처럼 `chrome.storage.sync`에 저장되므로 Google Cloud 콘솔에서 Text-to-Speech 키를 해당 API로만 제한하세요(Google이 제한을 지원한다면 Gemini 키도 마찬가지로 제한하세요). 키가 없으면 상태 줄에 그 키 이름이 나오는 오류가 표시됩니다. 이 기본 구성은 아직 관리자가 처음부터 끝까지 실행해 보지 않았습니다. 가장 많이 사용된 것은 아래의 로컬 구성입니다.
 
 `host_permissions`에는 `localhost` / `127.0.0.1`, `texttospeech.googleapis.com`, `generativelanguage.googleapis.com`만 들어 있습니다. 다른 호스트의 서버는 실행 중에 허용합니다(아래 절 참조).
 
@@ -75,7 +75,7 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
 ## 프로필
 
-옵션 페이지의 **Profile** 칸에서 설정 전체를 전환할 수 있습니다. 예를 들어 노트북에서는 호스팅 구성, 집에서는 로컬 서버를 쓰는 식입니다. 처음부터 두 개의 프로필(`Hosted (Gemini + Google TTS)`와 `Local (Unsloth + VOICEVOX / edge-tts)`)이 들어 있습니다. **Load**는 선택한 프로필을 양식에 불러오고, **Save**로 적용합니다. **Save as profile**은 입력한 이름으로 현재 양식을 저장하고, **Delete**는 직접 만든 프로필을 삭제합니다. **Export file** / **Import file**로 프로필을 JSON 파일로 다른 브라우저에 옮길 수 있습니다. API 키는 프로필에 포함되지 않습니다. 모든 프로필이 공유하며, 내보내기와 가져오기에도 포함되지 않습니다. 프로필은 `chrome.storage.sync`에 프로필 하나당 항목 하나로 저장됩니다.
+옵션 페이지의 **Profile** 칸에서 설정 전체를 전환할 수 있습니다. 예를 들어 노트북에서는 호스팅 구성, 집에서는 로컬 서버를 쓰는 식입니다. 기본 제공 프로필이 처음부터 들어 있습니다(아래 목록). **Load**는 선택한 프로필을 양식에 불러오고, **Save**로 적용합니다. 프로필은 API 키를 제외한 모든 설정을 정합니다. 나열되지 않은 설정은 기본값으로 돌아가므로, Load한 뒤 언어와 음성을 확인하고 Save하세요. **Save as profile**은 입력한 이름으로 현재 양식을 저장하고, **Delete**는 직접 만든 프로필을 삭제합니다. **Export file** / **Import file**로 프로필을 JSON 파일로 다른 브라우저에 옮길 수 있습니다. API 키는 프로필에 포함되지 않습니다. 모든 프로필이 공유하며, 내보내기와 가져오기에도 포함되지 않습니다. 프로필은 `chrome.storage.sync`에 프로필 하나당 항목 하나로 저장됩니다.
 
 기본 제공 프로필:
 

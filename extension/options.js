@@ -28,7 +28,7 @@ function readForm() {
   const values = {};
   for (const [key, def] of Object.entries(YTD_DEFAULTS)) {
     const raw = form.elements[key].value;
-    values[key] = typeof def === 'number' ? Number(raw) : raw;
+    values[key] = typeof def === 'number' ? (String(raw).trim() === '' ? NaN : Number(raw)) : raw;
   }
   return values;
 }
@@ -52,7 +52,7 @@ function overridesOf(values, { secrets }) {
 }
 
 function userProfiles(stored) {
-  const profiles = {};
+  const profiles = Object.create(null);
   for (const [key, value] of Object.entries(stored)) {
     if (key.startsWith(PROFILE_PREFIX)) profiles[key.slice(PROFILE_PREFIX.length)] = value;
   }
@@ -101,6 +101,11 @@ document.getElementById('save').addEventListener('click', async () => {
   // Only values that differ from the defaults are stored, so a later change of a default reaches everyone
   // who never changed that setting; a setting set back to its default is removed from storage.
   const values = readForm();
+  const badNumber = Object.keys(YTD_DEFAULTS).find((key) => typeof YTD_DEFAULTS[key] === 'number' && !Number.isFinite(values[key]));
+  if (badNumber) {
+    msg.textContent = `Cannot save: ${badNumber} must be a number`;
+    return;
+  }
   const out = overridesOf(values, { secrets: true });
   const reset = Object.keys(YTD_DEFAULTS).filter((key) => !(key in out));
   // Servers on other machines (e.g. an LLM and TTS box on the LAN) need a host permission, which Chrome
@@ -127,15 +132,21 @@ document.getElementById('save').addEventListener('click', async () => {
 
 document.getElementById('load').addEventListener('click', async () => {
   const name = profileSelect.value;
-  const stored = await chrome.storage.sync.get(null);
-  const overrides = YTD_PRESETS[name] ?? userProfiles(stored)[name];
+  let stored;
+  try {
+    stored = await chrome.storage.sync.get(null);
+  } catch (err) {
+    msg.textContent = `Cannot read profiles: ${err.message}`;
+    return;
+  }
+  const overrides = Object.hasOwn(YTD_PRESETS, name) ? YTD_PRESETS[name] : userProfiles(stored)[name];
   if (!overrides) {
     msg.textContent = 'No profile selected';
     return;
   }
   fillForm(overrides);
   loadedProfile = name;
-  msg.textContent = `Loaded "${name}". Press Save to apply it.`;
+  msg.textContent = `Loaded "${name}": every setting except the API keys now follows the profile (settings it does not list are back to their defaults). Press Save to apply it.`;
 });
 
 document.getElementById('saveAs').addEventListener('click', async () => {
@@ -144,7 +155,7 @@ document.getElementById('saveAs').addEventListener('click', async () => {
     msg.textContent = `Enter a profile name of 1 to ${MAX_NAME} characters`;
     return;
   }
-  if (name in YTD_PRESETS) {
+  if (Object.hasOwn(YTD_PRESETS, name)) {
     msg.textContent = `"${name}" is a built-in profile; choose another name`;
     return;
   }
@@ -161,11 +172,16 @@ document.getElementById('saveAs').addEventListener('click', async () => {
 
 document.getElementById('delete').addEventListener('click', async () => {
   const name = profileSelect.value;
-  if (name in YTD_PRESETS) {
+  if (Object.hasOwn(YTD_PRESETS, name)) {
     msg.textContent = 'Built-in profiles cannot be deleted';
     return;
   }
-  await chrome.storage.sync.remove(PROFILE_PREFIX + name);
+  try {
+    await chrome.storage.sync.remove(PROFILE_PREFIX + name);
+  } catch (err) {
+    msg.textContent = `Cannot delete the profile: ${err.message}`;
+    return;
+  }
   if (loadedProfile === name) loadedProfile = '';
   await listProfiles();
   msg.textContent = `Deleted profile "${name}"`;
@@ -202,15 +218,26 @@ importFile.addEventListener('change', async () => {
     msg.textContent = 'Import failed: this is not a Speech Clock Dub settings file';
     return;
   }
-  // Unknown keys, API keys and values of the wrong type are ignored.
+  // Unknown keys, API keys and invalid values (wrong type, not one of the dropdown choices, not a finite
+  // number) are ignored.
   const kept = {};
   let ignored = 0;
   for (const [key, value] of Object.entries(data.settings)) {
-    if (key in YTD_DEFAULTS && !isSecret(key) && typeof value === typeof YTD_DEFAULTS[key]) kept[key] = value;
+    const valid =
+      Object.hasOwn(YTD_DEFAULTS, key) &&
+      !isSecret(key) &&
+      typeof value === typeof YTD_DEFAULTS[key] &&
+      (typeof value !== 'number' || Number.isFinite(value)) &&
+      (!CHOICES[key] || CHOICES[key].includes(value));
+    if (valid) Object.defineProperty(kept, key, { value, enumerable: true });
     else ignored++;
   }
+  // The shared API keys stay in the form, so a file must not move a server URL unnoticed.
+  const current = readForm();
+  const moved = ['llmBaseUrl', 'voicevoxUrl', 'edgeUrl'].filter((key) => key in kept && kept[key] !== current[key]);
   fillForm(kept);
   if (typeof data.name === 'string') nameInput.value = data.name.slice(0, MAX_NAME);
   loadedProfile = '';
-  msg.textContent = `Imported ${Object.keys(kept).length} settings${ignored ? ` (${ignored} ignored)` : ''}. Press Save to apply them, or "Save as profile" to keep them.`;
+  const warning = moved.length ? ` Check the server URLs before saving, your API keys are sent to them: ${moved.map((key) => `${key} = ${kept[key]}`).join(', ')}.` : '';
+  msg.textContent = `Imported ${Object.keys(kept).length} settings${ignored ? ` (${ignored} ignored)` : ''}. Press Save to apply them, or "Save as profile" to keep them.${warning}`;
 });
