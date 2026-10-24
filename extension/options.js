@@ -15,7 +15,14 @@ const CHOICES = {
 // Secrets are masked at all times, so the key is never visible on screen after saving.
 const SECRET_KEY = /ApiKey/i;
 
-chrome.storage.sync.get(null).then((stored) => {
+const msg = document.getElementById('msg');
+
+// If storage is unavailable (for example an add-on without a fixed id in Firefox), still show the form
+// with the defaults and say why, instead of leaving the page blank.
+chrome.storage.sync.get(null).catch((err) => {
+  msg.textContent = `Cannot read saved settings: ${err.message}`;
+  return {};
+}).then((stored) => {
   const values = { ...YTD_DEFAULTS, ...stored };
   for (const [key, def] of Object.entries(YTD_DEFAULTS)) {
     const label = document.createElement('label');
@@ -45,7 +52,6 @@ document.getElementById('save').addEventListener('click', async () => {
   }
   // Servers on other machines (e.g. an LLM and TTS box on the LAN) need a host permission, which Chrome
   // only grants after a click, so ask first.
-  const msg = document.getElementById('msg');
   const origins = ytdRemoteOrigins(out);
   let note = '';
   if (origins.length) {
@@ -56,6 +62,11 @@ document.getElementById('save').addEventListener('click', async () => {
       note = `cannot request access to ${origins.join(', ')} (${e.message})`;
     }
   }
-  await chrome.storage.sync.set(out);
+  try {
+    await chrome.storage.sync.set(out);
+  } catch (err) {
+    msg.textContent = `Cannot save: ${err.message}`;
+    return;
+  }
   msg.textContent = note ? `Saved, but ${note}` : 'Saved';
 });

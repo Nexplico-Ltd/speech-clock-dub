@@ -8,7 +8,7 @@
 
 YouTube dubbing for lectures where the video follows the voice.
 
-A Chrome (MV3) extension that dubs YouTube lecture videos into Japanese, English, Traditional
+A Chrome and Firefox (MV3) extension that dubs YouTube lecture videos into Japanese, English, Traditional
 Chinese, Simplified Chinese or Korean. It is designed for videos that are essentially slideshows:
 instead of squeezing the translated speech to fit the picture, **the picture follows the speech**.
 
@@ -172,6 +172,12 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 3. Open a YouTube video that has captions and click **Dub (xx)** at the top left of the player
    (**Sub** toggles the on-screen translation).
    Reload the YouTube tab after every extension reload.
+
+**Firefox (128 or newer):** open `about:debugging#/runtime/this-firefox`, click "Load Temporary
+Add-on..." and select `extension/manifest.json`. Temporary add-ons are removed when Firefox quits.
+The same files run on both browsers: Chrome uses `background.service_worker`, Firefox uses
+`background.scripts`. Firefox asks for the host permissions at install time; they can be revoked in
+`about:addons` > the extension > Permissions. The options page is under `about:addons` > Preferences.
 
 ## Example lectures
 

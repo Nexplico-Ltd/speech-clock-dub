@@ -8,7 +8,7 @@
 
 讓畫面跟著語音走的 YouTube 講課影片配音工具。
 
-這是一個 Chrome（MV3）擴充功能，可把 YouTube 講課影片配音成日文、英文、繁體中文、簡體中文或韓文。它是為以投影片為主的影片設計的：不是把翻譯後的語音硬壓進畫面的節奏，而是 **讓畫面跟著語音走**。
+這是一個 Chrome / Firefox（MV3）擴充功能，可把 YouTube 講課影片配音成日文、英文、繁體中文、簡體中文或韓文。它是為以投影片為主的影片設計的：不是把翻譯後的語音硬壓進畫面的節奏，而是 **讓畫面跟著語音走**。
 
 ## 運作方式
 
@@ -113,9 +113,11 @@ voicevox.lan:50443 {
 
 ## 安裝（開發用）
 
-1. 開啟 `chrome://extensions`，啟用「開發人員模式」，按下「載入未封裝項目」，選擇 `extension/`。
+1. Chrome：開啟 `chrome://extensions`，啟用「開發人員模式」，按下「載入未封裝項目」，選擇 `extension/`。
 2. 開啟擴充功能的選項頁面並調整設定。
 3. 開啟一支有字幕的 YouTube 影片，按下播放器左上角的 **Dub (xx)**（**Sub** 用來切換畫面上的翻譯字幕）。每次重新載入擴充功能之後，也要重新整理 YouTube 分頁。
+
+**Firefox（128 以上）：** 開啟 `about:debugging#/runtime/this-firefox`，按「載入暫時性附加元件...」並選擇 `extension/manifest.json`。暫時性附加元件會在 Firefox 結束時移除。兩個瀏覽器使用同一份檔案（Chrome 使用 `background.service_worker`，Firefox 使用 `background.scripts`）。主機權限會在安裝時詢問，可在 `about:addons` 的擴充功能「權限」中撤銷。選項頁面在 `about:addons` 的「偏好設定」。
 
 ## 範例講課影片
 

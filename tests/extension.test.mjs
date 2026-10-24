@@ -82,3 +82,11 @@ test('remote server origins are collected without ports, skipping local and inva
 test('only the server hosts the options page can ask for are optional host permissions', () => {
   assert.deepEqual(manifest.optional_host_permissions, ['http://*/*', 'https://*/*']);
 });
+
+test('the same manifest runs in Firefox: event-page scripts load defaults.js first and a gecko id is set', () => {
+  assert.equal(manifest.background.service_worker, 'background.js');
+  assert.deepEqual(manifest.background.scripts, ['defaults.js', 'background.js']);
+  const gecko = manifest.browser_specific_settings.gecko;
+  assert.match(gecko.id, /^[\w.-]+@[\w.-]+$/);
+  assert.ok(parseInt(gecko.strict_min_version, 10) >= 128, 'world: MAIN content scripts need Firefox 128');
+});

@@ -1,6 +1,8 @@
-// Service worker: bridges the content script to the local LLM and TTS servers.
+// Background script: bridges the content script to the local LLM and TTS servers.
 // Content scripts cannot call these directly because of the page's CORS/CSP rules.
-importScripts('defaults.js');
+// Chrome runs this as a service worker and loads defaults.js here; Firefox runs it as an event
+// page and loads defaults.js through the manifest's "scripts" list (importScripts does not exist).
+if (typeof importScripts === 'function') importScripts('defaults.js');
 
 async function getSettings() {
   return { ...YTD_DEFAULTS, ...(await chrome.storage.sync.get(null)) };
