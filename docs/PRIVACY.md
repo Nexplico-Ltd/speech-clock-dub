@@ -37,7 +37,8 @@ configure on the options page:
 The extension's host permissions cover `localhost`, `127.0.0.1` and `texttospeech.googleapis.com`. Out of
 the box nothing is sent to the last one: it is used only if you set `ttsProvider` to `google`. If you enter
 the address of a server on another machine (for example on your local network), Chrome asks you to allow
-the extension to reach that one host (optional host permission); you can revoke it at any time. What those servers do with the text is governed by whoever runs them:
+the extension to reach that one host (optional host permission); you can revoke it at any time (this also applies to a hosted LLM service). What those servers do with the
+text is governed by whoever runs them:
 
 - If you point the LLM base URL at a hosted service, the caption text and your API key are sent to that
   service and are subject to its privacy policy.

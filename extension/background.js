@@ -118,7 +118,7 @@ async function synthesizeGoogle(s, text, alt, voice) {
     body: JSON.stringify({
       input: { text },
       voice: { languageCode: g.code, name: voice || (!alt && s.googleVoice) || g.voices[genderFor(s, alt)] },
-      audioConfig: { audioEncoding: 'MP3', speakingRate: s.googleSpeed },
+      audioConfig: { audioEncoding: 'MP3', speakingRate: Math.min(4, Math.max(0.25, Number(s.googleSpeed) || 1)) },
     }),
     signal: AbortSignal.timeout(30000),
   });
@@ -131,9 +131,8 @@ async function synthesizeGoogle(s, text, alt, voice) {
 async function synthesizeVoicevox(s, text, alt, voice) {
   if (s.targetLang !== 'ja') throw new Error('VOICEVOX only speaks Japanese; use ttsProvider "edge", "google" or "auto"');
   const base = s.voicevoxUrl.replace(/\/$/, '');
-  const speaker = voice !== '' && Number.isFinite(Number(voice))
-    ? Number(voice)
-    : genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
+  if (voice !== '' && !Number.isFinite(Number(voice))) throw new Error(`VOICEVOX voice must be a style id (a number), got "${voice}"`);
+  const speaker = voice !== '' ? Number(voice) : genderFor(s, alt) === 'male' ? s.speakerMale : s.speakerFemale;
 
   const q = await fetch(`${base}/audio_query?speaker=${speaker}&text=${encodeURIComponent(text)}`, {
     method: 'POST',

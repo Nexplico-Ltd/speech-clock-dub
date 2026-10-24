@@ -47,10 +47,15 @@ document.getElementById('save').addEventListener('click', async () => {
   // only grants after a click, so ask first.
   const msg = document.getElementById('msg');
   const origins = ytdRemoteOrigins(out);
-  let denied = false;
-  if (origins.length && !(await chrome.permissions.contains({ origins }))) {
-    denied = !(await chrome.permissions.request({ origins }));
+  let note = '';
+  if (origins.length) {
+    // request() first: it resolves true at once for hosts already granted, and keeps the click's user gesture.
+    try {
+      if (!(await chrome.permissions.request({ origins }))) note = `access to ${origins.join(', ')} was not granted`;
+    } catch (e) {
+      note = `cannot request access to ${origins.join(', ')} (${e.message})`;
+    }
   }
   await chrome.storage.sync.set(out);
-  msg.textContent = denied ? `Saved, but access to ${origins.join(', ')} was not granted` : 'Saved';
+  msg.textContent = note ? `Saved, but ${note}` : 'Saved';
 });

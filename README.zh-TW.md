@@ -91,7 +91,7 @@ LLM、VOICEVOX 與 edge-tts 橋接程式可以跑在另一台電腦上，例如�
 
 `speakerVoices`（預設 `off`）適用於訪談、Podcast 之類的對話。許多手動字幕會在換人說話時，在行首加上 `- ` 或 `>>`。設為 `alternate` 後，這些標記會從文字中移除，並在每次換人時切換聲音：第一位說話者使用 `voiceGender` 的聲音，另一位使用相反性別的聲音。標記中沒有姓名，所以只適用於兩個人；自動產生的字幕通常也沒有這些標記。
 
-`voice1Provider` / `voice1Voice` 與 `voice2Provider` / `voice2Voice` 可分別指定第一位與第二位說話者的提供者與聲音。它們只對對話有意義（`speakerVoices` 為 `alternate` 或 `llm`），可以混用不同提供者，或使用兩個相同性別的聲音，例如第一位用 VOICEVOX 樣式 `8`，第二位用 Google 的 `ja-JP-Neural2-B`。聲音依提供者而定，可以是 VOICEVOX 樣式 ID、edge-tts 聲音名稱或 Google 聲音名稱。留空則維持原本行為（使用 `ttsProvider`，第二位說話者的性別與 `voiceGender` 相反）。
+`voice1Provider` / `voice1Voice` 與 `voice2Provider` / `voice2Voice` 可分別指定第一位與第二位說話者的提供者與聲音。`voice1*` 適用於所有字幕句（單人影片的聲音也由它決定），`voice2*` 只用於對話（`speakerVoices` 為 `alternate` 或 `llm`）中的第二位說話者。兩者搭配可以混用不同提供者，或使用兩個相同性別的聲音，例如第一位用 VOICEVOX 樣式 `8`，第二位用 Google 的 `ja-JP-Neural2-B`。聲音依提供者而定，可以是 VOICEVOX 樣式 ID、edge-tts 聲音名稱或 Google 聲音名稱。留空則維持原本行為（使用 `ttsProvider`，第二位說話者的性別與 `voiceGender` 相反）。
 
 對於沒有標記的字幕，另有實驗性的 `llm` 模式：翻譯所用的 LLM 每 15 個 cue 只根據文字，判斷哪些行屬於主持人（`voiceGender` 的聲音）、哪些屬於來賓（相反性別的聲音）。提示詞以訪談為前提，每 15 個 cue 約多一次請求，自動產生的字幕也能使用。在移除標記的 Lex Fridman #494 字幕上做的離線測試（Gemma 4 12B，3 段各 300 句）中，它找出了 70–80% 的換人處，精確率相近；漏掉換人時，聲音角色可能會對調一陣子，請求失敗則沿用前一個聲音。如果前 30 個 cue 幾乎都被判定為同一位說話者（例如講課），就視為獨白，只使用一個聲音。請把它當作粗略的輔助，而不是可靠的說話者辨識。
 

@@ -74,6 +74,8 @@ test('remote server origins are collected without ports, skipping local and inva
     origins({ llmBaseUrl: 'http://192.168.1.20:8888/v1', voicevoxUrl: 'http://192.168.1.20:50021', edgeUrl: 'https://tts.lan:5050' }),
     ['http://192.168.1.20/*', 'https://tts.lan/*'],
   );
+  // IPv6 literals are not valid match patterns; https://localhost is not covered by the manifest.
+  assert.deepEqual(origins({ llmBaseUrl: 'http://[::1]:5050', voicevoxUrl: 'https://localhost:1', edgeUrl: '' }), ['https://localhost/*']);
   assert.deepEqual(origins({ llmBaseUrl: 'not a url', voicevoxUrl: 'ftp://x', edgeUrl: '' }), []);
 });
 

@@ -49,8 +49,8 @@ const YTD_DEFAULTS = {
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language. 'google' = Google Cloud
   // Text-to-Speech (a paid online service: the translated text is sent to Google).
   ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge' | 'google'
-  // Per-speaker overrides for dialogues (speakerVoices 'alternate' or 'llm'): slot 1 is the first speaker,
-  // slot 2 the second. An empty provider uses ttsProvider; an empty voice uses the defaults below
+  // Per-speaker overrides: slot 1 is the first speaker (and every cue of a single-speaker video), slot 2 the
+  // second speaker of a dialogue (speakerVoices 'alternate' or 'llm'). An empty provider uses ttsProvider; an empty voice uses the defaults below
   // (slot 2 gets the gender opposite to voiceGender). A voice is a VOICEVOX style id, an edge-tts voice
   // name or a Google voice name, matching the provider. Mixing providers is allowed, e.g. two female
   // voices, one from VOICEVOX and one from Google.
@@ -122,7 +122,10 @@ function ytdRemoteOrigins(settings) {
     } catch {
       continue;
     }
-    if (!/^https?:$/.test(url.protocol) || ['localhost', '127.0.0.1'].includes(url.hostname)) continue;
+    if (!/^https?:$/.test(url.protocol)) continue;
+    // The manifest covers plain-http localhost only; IPv6 literals are not valid match patterns.
+    if (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)) continue;
+    if (url.hostname.startsWith('[')) continue;
     origins.add(`${url.protocol}//${url.hostname}/*`);
   }
   return [...origins];

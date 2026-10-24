@@ -136,6 +136,8 @@ test('speaker slots can use different providers and voices, even with the same g
   const plain = await synth({ targetLang: 'en' }, { alt: true });
   assert.equal(JSON.parse(plain.calls[0].opts.body).voice, 'en-US-GuyNeural');
   assert.match((await synth({ voice1Provider: 'nope' })).res.error, /Unknown TTS provider/);
+  assert.match((await synth({ voice1Provider: 'voicevox', voice1Voice: 'ja-JP-KeitaNeural' })).res.error, /style id/);
+  assert.equal(JSON.parse((await synth({ ttsProvider: 'google', googleApiKey: 'k', googleSpeed: 99 })).calls[0].opts.body).audioConfig.speakingRate, 4, 'googleSpeed is clamped');
 });
 
 test('unknown message types are not handled, so Chrome does not wait for a reply', () => {
