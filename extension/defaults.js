@@ -7,7 +7,7 @@ const YTD_LANGS = {
     name: 'Japanese',
     style: 'natural spoken Japanese (polite desu/masu style)',
     voices: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
-    google: { code: 'ja-JP', voices: { female: 'ja-JP-Neural2-B', male: 'ja-JP-Neural2-C' } },
+    google: { code: 'ja-JP', voices: { female: 'ja-JP-Wavenet-B', male: 'ja-JP-Wavenet-C' } },
     // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
     extraRule:
       '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
@@ -16,7 +16,7 @@ const YTD_LANGS = {
     name: 'English',
     style: 'natural spoken English',
     voices: { female: 'en-US-AriaNeural', male: 'en-US-GuyNeural' },
-    google: { code: 'en-US', voices: { female: 'en-US-Neural2-F', male: 'en-US-Neural2-D' } },
+    google: { code: 'en-US', voices: { female: 'en-US-Wavenet-F', male: 'en-US-Wavenet-D' } },
   },
   'zh-TW': {
     name: 'Traditional Chinese',
@@ -34,7 +34,7 @@ const YTD_LANGS = {
     name: 'Korean',
     style: 'natural spoken Korean (polite haeyo/hapnida style)',
     voices: { female: 'ko-KR-SunHiNeural', male: 'ko-KR-InJoonNeural' },
-    google: { code: 'ko-KR', voices: { female: 'ko-KR-Neural2-A', male: 'ko-KR-Neural2-C' } },
+    google: { code: 'ko-KR', voices: { female: 'ko-KR-Wavenet-A', male: 'ko-KR-Wavenet-C' } },
   },
 };
 
@@ -47,8 +47,9 @@ const YTD_DEFAULTS = {
   subtitles: 'off', // on-screen subtitles: 'off' | 'translated' | 'both' (translation + original)
   subtitleMaxLines: 2, // longer text is shown in pages of this many lines; 0 = no limit
   // 'auto' = VOICEVOX for Japanese, edge-tts for every other language. 'google' = Google Cloud
-  // Text-to-Speech (a paid online service: the translated text is sent to Google).
-  ttsProvider: 'auto', // 'auto' | 'voicevox' | 'edge' | 'google'
+  // Text-to-Speech. The default is Google Cloud TTS, a paid online service: the translated text is sent to
+  // Google. 'auto' (VOICEVOX for Japanese, edge-tts otherwise) is the local setup described in the README.
+  ttsProvider: 'google', // 'auto' | 'voicevox' | 'edge' | 'google'
   // Per-speaker overrides: slot 1 is the first speaker (and every cue of a single-speaker video), slot 2 the
   // second speaker of a dialogue (speakerVoices 'alternate' or 'llm'). An empty provider uses ttsProvider; an empty voice uses the defaults below
   // (slot 2 gets the gender opposite to voiceGender). A voice is a VOICEVOX style id, an edge-tts voice
@@ -59,13 +60,16 @@ const YTD_DEFAULTS = {
   voice2Provider: '',
   voice2Voice: '',
 
-  // OpenAI-compatible chat completions endpoint (e.g. the Unsloth service).
-  llmBaseUrl: 'http://127.0.0.1:8888/v1',
-  llmModel: 'unsloth/gemma-4-12B-it-qat-GGUF',
+  // OpenAI-compatible chat completions endpoint. The default is Google's Gemini API, which needs llmApiKey
+  // (the subtitle text is sent to Google). For a local server such as Unsloth use
+  // 'http://127.0.0.1:8888/v1' and a model name it serves.
+  llmBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+  llmModel: 'gemini-3.1-flash-lite',
   llmApiKey: '',
-  // JSON merged into every chat completion request. The default turns thinking off: with
-  // thinking on, Gemma 4 can spend minutes on a single subtitle line and return no content.
-  llmExtraBody: '{"chat_template_kwargs":{"enable_thinking":false}}',
+  // JSON merged into every chat completion request. Hosted APIs may reject unknown fields, so the default
+  // is empty. A local Gemma 4 needs '{"chat_template_kwargs":{"enable_thinking":false}}': with thinking
+  // on it can spend minutes on a single subtitle line and return no content.
+  llmExtraBody: '{}',
   llmTimeoutSec: 60,
 
   // VOICEVOX engine.
@@ -111,8 +115,33 @@ const YTD_DEFAULTS = {
   gapRate: 2, // rate used while crossing long silent gaps between cues
 };
 
+// Built-in settings profiles of the options page: only the values that differ from YTD_DEFAULTS.
+// API keys are never part of a profile. User profiles are stored as "profile:<name>" in chrome.storage.sync.
+const YTD_PRESETS = {
+  'Hosted (Gemini + Google TTS)': {},
+  'Local (Unsloth + VOICEVOX / edge-tts)': {
+    llmBaseUrl: 'http://127.0.0.1:8888/v1',
+    llmModel: 'unsloth/gemma-4-12B-it-qat-GGUF',
+    llmExtraBody: '{"chat_template_kwargs":{"enable_thinking":false}}',
+    ttsProvider: 'auto',
+  },
+  // Free voice: the edge-tts bridge (tools/edge_tts_server.py) instead of the paid Google TTS.
+  'Gemini + edge-tts (free voice)': { ttsProvider: 'edge' },
+  // Translation stays on your machine; only the translated text goes to Google TTS.
+  'Local LLM + Google TTS': {
+    llmBaseUrl: 'http://127.0.0.1:8888/v1',
+    llmModel: 'unsloth/gemma-4-12B-it-qat-GGUF',
+    llmExtraBody: '{"chat_template_kwargs":{"enable_thinking":false}}',
+  },
+  // Interviews and podcasts: the voice alternates at every change of speaker (hosted services).
+  'Interview / podcast (two voices)': { speakerVoices: 'alternate' },
+};
+
 // Host permission patterns (port-less, as Chrome requires) for the configured servers that are not on this
 // machine and are not already covered by the manifest. The options page asks for them at run time.
+// Hosts that manifest.json already grants over https (kept in sync by a test).
+const YTD_MANIFEST_HOSTS = ['texttospeech.googleapis.com', 'generativelanguage.googleapis.com'];
+
 function ytdRemoteOrigins(settings) {
   const origins = new Set();
   for (const key of ['llmBaseUrl', 'voicevoxUrl', 'edgeUrl']) {
@@ -126,6 +155,7 @@ function ytdRemoteOrigins(settings) {
     // The manifest covers plain-http localhost only; IPv6 literals are not valid match patterns.
     if (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)) continue;
     if (url.hostname.startsWith('[')) continue;
+    if (url.protocol === 'https:' && YTD_MANIFEST_HOSTS.includes(url.hostname)) continue;
     origins.add(`${url.protocol}//${url.hostname}/*`);
   }
   return [...origins];

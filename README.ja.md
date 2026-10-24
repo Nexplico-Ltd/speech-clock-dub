@@ -25,9 +25,26 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 - 先読みのプロデューサーループが、再生に先行して cue を翻訳・音声合成します。翻訳は順番に実行し（各翻訳は直前までの訳を文脈として受け取ります）、音声合成は最大 `concurrency` 件の cue を並列に実行します。クラウド TTS は 1 リクエストに数秒かかるため、これが効きます。cue の境界で、準備済みの音声が `lowWaterSec` 秒分を下回っていたら映像を一時停止し、`highWaterSec` 秒分が溜まってから再開します（ヒステリシス）。映像が従属側なので、バッファが尽きても同期はずれず、映像が止まるだけです。文の途中で再生が中断されることはありません。
 - ユーザーが一時停止・再生すると音声も一時停止・再開します。ユーザーがシークすると、cue の位置を再同期します。広告は検出され（`.ad-showing`）、その間スケジューラは停止します。
 
-## 必要なもの
+## セットアップ
 
-1. **OpenAI 互換の LLM エンドポイント**（例: Unsloth サービス）で、Gemma 12B クラスのモデルを動かします。オプションページで `llmBaseUrl`（`/v1` で終わる URL）と `llmModel` を設定してください。拡張機能は `POST {llmBaseUrl}/chat/completions` を呼び出します。
+### クイックスタート（既定）: ホスト型サービス
+
+既定の設定は Google のホスト型サービス 2 つを使うので、**ローカルサーバーは不要**です。Google Cloud / AI Studio のアカウントと API キーが 2 つ必要です（両方の API を有効にした同じキーでも構いません）。
+
+1. 翻訳用の **Gemini API キー**。[Google AI Studio](https://aistudio.google.com/apikey) で作成し、オプションページの `llmApiKey` に貼り付けます。既定値（`llmBaseUrl` = `https://generativelanguage.googleapis.com/v1beta/openai`、`llmModel` = `gemini-3.1-flash-lite`）は Gemini の OpenAI 互換エンドポイントを使います。ほかのホスト型 OpenAI 互換サービス（OpenAI、Groq、OpenRouter など）も、`llmBaseUrl`・`llmModel`・`llmApiKey` を設定すれば使えます。そのホストへのアクセスは、Save を押すと Chrome が一度だけ確認します。
+2. 音声用の **Google Cloud Text-to-Speech キー**。Google Cloud のプロジェクトで Cloud Text-to-Speech API を有効にして API キーを作り、`googleApiKey` に貼り付けます。`ttsProvider` は最初から `google` です。
+
+既定値は最も安い選択肢です。翻訳は `gemini-3.1-flash-lite`、音声は WaveNet の声を使います（執筆時点で、Google は WaveNet を Standard と同じ価格、Neural2 の 4 分の 1 としており、毎月の無料枠もあります）。価格は変わるので、Google の料金ページで確認してください。音質のよい Neural2 や Chirp 3 HD の声は、`googleVoice` で指定できます。
+
+**どちらのサービスも有料で（無料枠はありますが、料金は Google の案内で確認してください）、字幕のテキストとその翻訳は Google に送信されます。** キーはほかの設定と同様に `chrome.storage.sync` に保存されるので、Google Cloud コンソールでそれぞれの API だけに制限してください。キーが未設定のときは、ステータス行にそのキー名を示すエラーが出ます。この既定の構成は、メンテナーがまだ最初から最後まで動かしていません。最もよく使われてきたのは、下のローカル構成です。
+
+`host_permissions` に入っているのは `localhost` / `127.0.0.1`、`texttospeech.googleapis.com`、`generativelanguage.googleapis.com` だけです。別のホストのサーバーは、実行時に許可します（下の節を参照）。
+
+### 上級者向け: ローカルサーバー（任意）
+
+無料でプライベートに吹き替えるには、自分でサーバーを動かして設定をそちらに向けます。LLM には `llmBaseUrl`・`llmModel`・`llmExtraBody` を、TTS には `ttsProvider` を `auto`（日本語は VOICEVOX、それ以外は edge-tts）、`voicevox`、`edge` のいずれかに設定します。
+
+1. **OpenAI 互換の LLM エンドポイント**（例: Unsloth サービス）で、Gemma 12B クラスのモデルを動かします。`llmBaseUrl`（`/v1` で終わる URL。例: `http://127.0.0.1:8888/v1`）と `llmModel` を設定してください。Gemma 4 では `llmExtraBody` も `{"chat_template_kwargs":{"enable_thinking":false}}` にします。そうしないと 1 行に数分かかることがあります。拡張機能は `POST {llmBaseUrl}/chat/completions` を呼び出します。
 2. **VOICEVOX エンジン**（オープンソースで高品質な日本語 TTS）:
 
    ```
@@ -56,9 +73,19 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
    `--port` でポートを変えられます（その場合は `edgeUrl` も更新してください）。1 文あたり 2〜3 秒かかりますが、バッファが溜まれば並列プロデューサーが隠してくれます。ただし、最初の再生開始までは VOICEVOX より時間がかかります。
 
-4. **Google Cloud Text-to-Speech**（任意。VOICEVOX や edge-tts の代わりに使えます）。Google の有料オンラインサービスです（毎月の無料枠がありますが、料金は Google の案内で確認してください）。**翻訳したテキストが Google に送信されます。** Google Cloud のプロジェクトで Cloud Text-to-Speech API を有効にして API キーを作り、オプションページで `ttsProvider` を `google` にして、キーを `googleApiKey` に貼り付けます。ローカルサーバーは不要です。キーは LLM のキーと同様に `chrome.storage.sync` に保存されるので、Google Cloud コンソールで Text-to-Speech API だけに制限してください。
+## プロファイル
 
-`host_permissions` に入っているのは `localhost` / `127.0.0.1` と `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）だけです。別のホストのサーバーは、実行時に許可します（下の節を参照）。
+オプションページの **Profile** 欄で、設定一式を切り替えられます。たとえば、ノート PC ではホスト型、自宅ではローカルサーバー、といった使い分けです。最初から 2 つのプロファイル（`Hosted (Gemini + Google TTS)` と `Local (Unsloth + VOICEVOX / edge-tts)`）が入っています。**Load** で選んだプロファイルをフォームに読み込み、**Save** で適用します。**Save as profile** は、入力した名前で現在のフォームを保存し、**Delete** は自分で作ったプロファイルを削除します。**Export file** / **Import file** で、プロファイルを JSON ファイルとして別のブラウザに移せます。API キーはプロファイルに含まれません。すべてのプロファイルで共通で、書き出しにも読み込みにも含まれません。プロファイルは `chrome.storage.sync` に、1 つにつき 1 項目で保存されます。
+
+組み込みのプロファイル:
+
+| プロファイル | 翻訳 | 音声 |
+| --- | --- | --- |
+| `Hosted (Gemini + Google TTS)` | Gemini（ホスト型） | Google Cloud TTS（既定） |
+| `Local (Unsloth + VOICEVOX / edge-tts)` | ローカルの Unsloth サーバー | 日本語は VOICEVOX、それ以外は edge-tts |
+| `Gemini + edge-tts (free voice)` | Gemini（ホスト型） | edge-tts ブリッジ（Google TTS の料金なし） |
+| `Local LLM + Google TTS` | ローカルの Unsloth サーバー | Google Cloud TTS |
+| `Interview / podcast (two voices)` | Gemini（ホスト型） | Google Cloud TTS。話者が替わるたびに声が切り替わります（`speakerVoices` = `alternate`） |
 
 ## 別のマシンのサーバーを使う
 
@@ -99,7 +126,7 @@ voicevox.lan:50443 {
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` の既定は `auto` で、`ja` は VOICEVOX、それ以外は edge-tts を使います。`google` にすると Google Cloud Text-to-Speech を使います（既定の声: `ja-JP-Neural2-B/C`、`en-US-Neural2-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Neural2-A/C`。`googleVoice` で声を、`googleSpeed` で話速を変えられます）。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
+`ttsProvider` の既定は `google`（Google Cloud Text-to-Speech）です。`auto` は `ja` に VOICEVOX、それ以外に edge-tts を使います。`google` にすると Google Cloud Text-to-Speech を使います（既定の声: `ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`。`googleVoice` で声を、`googleSpeed` で話速を変えられます）。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
 
 `speakerVoices`（既定は `off`）は、インタビューやポッドキャストのような対話向けです。手動字幕の多くは、話者の交代を行頭の `- ` や `>>` で示しています。`alternate` にすると、この印を本文から取り除き、話者が替わるたびに声を切り替えます。最初の話者には `voiceGender` の声、もう一人には反対の性別の声を使います。印には名前がないため、対応できるのは 2 人までです。また、自動生成字幕には通常この印がありません。
 

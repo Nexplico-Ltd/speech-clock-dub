@@ -35,11 +35,43 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
 - User pause/play pauses/resumes the audio too; a user seek re-syncs the cue index.
   Ads are detected (`.ad-showing`) and suspend the scheduler.
 
-## Requirements
+## Setup
+
+### Quick start (default): hosted services
+
+The default settings use two hosted Google services and need **no local server**. You need a Google
+Cloud / AI Studio account and two API keys (they may be the same key if it is enabled for both APIs):
+
+1. **Gemini API key** for the translation. Create it in [Google AI Studio](https://aistudio.google.com/apikey)
+   and paste it into `llmApiKey` in the options page. The defaults (`llmBaseUrl` =
+   `https://generativelanguage.googleapis.com/v1beta/openai`, `llmModel` = `gemini-3.1-flash-lite`) use
+   Gemini's OpenAI-compatible endpoint. Any other hosted OpenAI-compatible service (OpenAI, Groq,
+   OpenRouter, ...) works too: set `llmBaseUrl`, `llmModel` and `llmApiKey`. Chrome asks once for access
+   to that host when you press Save.
+2. **Google Cloud Text-to-Speech key** for the voice. Enable the Cloud Text-to-Speech API in a Google
+   Cloud project, create an API key, and paste it into `googleApiKey`. `ttsProvider` is already `google`.
+
+The defaults are the cheapest options: `gemini-3.1-flash-lite` for the translation and WaveNet voices for the speech (at the time of writing, Google lists WaveNet at the same price as Standard voices, a quarter of the Neural2 price, with a monthly free quota). Prices change, so check Google's pricing pages. The better-sounding Neural2 and Chirp 3 HD voices can be set with `googleVoice`.
+
+**Both services are paid (each has a free quota; check Google's pricing), and the subtitle text and its
+translation are sent to Google.** The keys are stored in `chrome.storage.sync` like all settings, so
+restrict each key to its own API in the Google Cloud console. If a key is missing, the status line shows
+an error that names it. This default setup has not been run end to end by the maintainers yet; the local
+setup below is the one that has been used the most.
+
+Only `localhost` / `127.0.0.1`, `texttospeech.googleapis.com` and `generativelanguage.googleapis.com`
+are in `host_permissions`. Servers on other hosts are allowed at run time, see below.
+
+### Advanced: local servers (optional)
+
+For free, private dubbing run your own servers and point the settings at them: set `llmBaseUrl`,
+`llmModel` and `llmExtraBody` for the LLM, and `ttsProvider` to `auto` (VOICEVOX for Japanese, edge-tts
+otherwise), `voicevox` or `edge`.
 
 1. **An OpenAI-compatible LLM endpoint** (e.g. the Unsloth service) serving a Gemma 12B-class
-   model. Set `llmBaseUrl` (the URL that ends in `/v1`) and `llmModel` in the options page.
-   The extension calls `POST {llmBaseUrl}/chat/completions`.
+   model. Set `llmBaseUrl` (the URL that ends in `/v1`, e.g. `http://127.0.0.1:8888/v1`) and `llmModel`.
+   For Gemma 4 also set `llmExtraBody` to `{"chat_template_kwargs":{"enable_thinking":false}}`, otherwise
+   thinking can take minutes per line. The extension calls `POST {llmBaseUrl}/chat/completions`.
 2. **VOICEVOX engine** (open source, high-quality Japanese TTS):
 
    ```
@@ -81,15 +113,25 @@ YouTube captions -> sentence cues -> LLM translation -> TTS (VOICEVOX / edge-tts
    `--port` changes the port (then update `edgeUrl`). Expect 2-3 s per sentence; the parallel
    producer hides this once the buffer has filled, but the first start takes longer than with VOICEVOX.
 
-4. **Google Cloud Text-to-Speech** (optional, instead of VOICEVOX or edge-tts). This is Google's paid
-   online service (it has a free monthly quota; check Google's pricing). **The translated text is sent
-   to Google.** Enable the Cloud Text-to-Speech API in a Google Cloud project, create an API key, and in
-   the options page set `ttsProvider` to `google` and paste the key into `googleApiKey`. No local
-   server is needed. The key is stored in `chrome.storage.sync` like the LLM key, so restrict it to the
-   Text-to-Speech API in the Google Cloud console.
+## Profiles
 
-Only `localhost` / `127.0.0.1` and `texttospeech.googleapis.com` (Google Cloud Text-to-Speech) are in
-`host_permissions`. Servers on other hosts are allowed at run time, see below.
+The options page has a **Profile** box for switching between whole configurations, for example the hosted
+setup on a laptop and the local servers at home. It comes with two built-in profiles (`Hosted (Gemini +
+Google TTS)` and `Local (Unsloth + VOICEVOX / edge-tts)`). **Load** fills the form from the selected profile and
+**Save** applies it. **Save as profile** stores the current form under a name you type, **Delete**
+removes a profile of your own, and **Export file** / **Import file** move a profile to another browser as a
+JSON file. The API keys are not part of any profile: they are shared by all profiles and are never
+exported or imported. Profiles are stored in `chrome.storage.sync`, one item per profile.
+
+Built-in profiles:
+
+| Profile | Translation | Voice |
+| --- | --- | --- |
+| `Hosted (Gemini + Google TTS)` | Gemini (hosted) | Google Cloud TTS (the default) |
+| `Local (Unsloth + VOICEVOX / edge-tts)` | local Unsloth server | VOICEVOX for Japanese, edge-tts otherwise |
+| `Gemini + edge-tts (free voice)` | Gemini (hosted) | edge-tts bridge (no Google TTS fee) |
+| `Local LLM + Google TTS` | local Unsloth server | Google Cloud TTS |
+| `Interview / podcast (two voices)` | Gemini (hosted) | Google Cloud TTS, voice switches at every change of speaker (`speakerVoices` = `alternate`) |
 
 ## Using servers on another machine
 
@@ -127,7 +169,7 @@ Set `targetLang` in the options page:
 
 | `targetLang` | Language | Default edge-tts voice (female) |
 | --- | --- | --- |
-| `ja` | Japanese | `ja-JP-NanamiNeural` (VOICEVOX is used by default) |
+| `ja` | Japanese | `ja-JP-NanamiNeural` (VOICEVOX is used with `ttsProvider` `auto`) |
 | `en` | English | `en-US-AriaNeural` |
 | `zh-TW` | Traditional Chinese (Taiwan) | `zh-TW-HsiaoChenNeural` |
 | `zh-CN` | Simplified Chinese | `zh-CN-XiaoxiaoNeural` |
@@ -144,9 +186,9 @@ Set `targetLang` in the options page:
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` is `auto` by default: VOICEVOX for `ja`, edge-tts otherwise; `google` forces Google Cloud
-Text-to-Speech (default voices: `ja-JP-Neural2-B/C`, `en-US-Neural2-F/D`, `cmn-TW-Wavenet-A/B`,
-`cmn-CN-Wavenet-A/B`, `ko-KR-Neural2-A/C`; `googleVoice` overrides the voice and `googleSpeed` sets the
+`ttsProvider` is `google` by default (Google Cloud Text-to-Speech); `auto` means VOICEVOX for `ja` and edge-tts otherwise; `google` forces Google Cloud
+Text-to-Speech (default voices: `ja-JP-Wavenet-B/C`, `en-US-Wavenet-F/D`, `cmn-TW-Wavenet-A/B`,
+`cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`; `googleVoice` overrides the voice and `googleSpeed` sets the
 speaking rate). `edgeVoice` overrides the
 edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.

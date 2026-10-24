@@ -25,9 +25,26 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 - 선행 생성(producer) 루프가 재생보다 앞서 cue를 번역하고 음성을 합성합니다. 번역은 순서대로 실행하고(각 번역은 앞선 번역을 문맥으로 받습니다), 음성 합성은 최대 `concurrency`개의 cue를 병렬로 실행합니다. 클라우드 TTS는 요청 하나에 몇 초가 걸리기 때문에 이것이 중요합니다. cue 경계에서 준비된 음성이 `lowWaterSec`초 미만이면 영상을 일시정지하고, `highWaterSec`초 분량이 쌓이면 다시 재생합니다(히스테리시스). 영상이 종속 쪽이므로 버퍼가 바닥나도 동기가 어긋나지 않고 영상만 멈춥니다. 문장 중간에 재생이 끊기지 않습니다.
 - 사용자가 일시정지/재생하면 음성도 함께 멈추거나 이어지며, 사용자가 탐색(seek)하면 cue 위치를 다시 맞춥니다. 광고는 감지되어(`.ad-showing`) 그동안 스케줄러가 멈춥니다.
 
-## 필요한 것
+## 설정
 
-1. **OpenAI 호환 LLM 엔드포인트**(예: Unsloth 서비스)에서 Gemma 12B급 모델을 실행합니다. 옵션 페이지에서 `llmBaseUrl`(`/v1`로 끝나는 URL)과 `llmModel`을 설정하세요. 확장 프로그램은 `POST {llmBaseUrl}/chat/completions`를 호출합니다.
+### 빠른 시작(기본값): 호스팅 서비스
+
+기본 설정은 Google의 호스팅 서비스 두 가지를 사용하므로 **로컬 서버가 필요 없습니다**. Google Cloud / AI Studio 계정과 API 키 두 개가 필요합니다(두 API를 모두 활성화한 같은 키여도 됩니다).
+
+1. 번역용 **Gemini API 키**. [Google AI Studio](https://aistudio.google.com/apikey)에서 만들어 옵션 페이지의 `llmApiKey`에 붙여 넣습니다. 기본값(`llmBaseUrl` = `https://generativelanguage.googleapis.com/v1beta/openai`, `llmModel` = `gemini-3.1-flash-lite`)은 Gemini의 OpenAI 호환 엔드포인트를 사용합니다. 다른 호스팅 OpenAI 호환 서비스(OpenAI, Groq, OpenRouter 등)도 `llmBaseUrl`, `llmModel`, `llmApiKey`를 설정하면 쓸 수 있습니다. 해당 호스트에 대한 접근은 Save를 누를 때 Chrome이 한 번 묻습니다.
+2. 음성용 **Google Cloud Text-to-Speech 키**. Google Cloud 프로젝트에서 Cloud Text-to-Speech API를 활성화하고 API 키를 만들어 `googleApiKey`에 붙여 넣습니다. `ttsProvider`는 처음부터 `google`입니다.
+
+기본값은 가장 저렴한 선택입니다. 번역은 `gemini-3.1-flash-lite`, 음성은 WaveNet 음성을 사용합니다(작성 시점에 Google은 WaveNet을 Standard와 같은 가격, Neural2의 4분의 1로 안내하며 매월 무료 할당량이 있습니다). 가격은 바뀔 수 있으니 Google의 요금 페이지를 확인하세요. 음질이 더 좋은 Neural2와 Chirp 3 HD 음성은 `googleVoice`로 지정할 수 있습니다.
+
+**두 서비스 모두 유료이며(무료 할당량이 있으니 요금은 Google 안내를 확인하세요), 자막 텍스트와 그 번역이 Google로 전송됩니다.** 키는 다른 설정처럼 `chrome.storage.sync`에 저장되므로 Google Cloud 콘솔에서 각 키를 해당 API로만 제한하세요. 키가 없으면 상태 줄에 그 키 이름이 나오는 오류가 표시됩니다. 이 기본 구성은 아직 관리자가 처음부터 끝까지 실행해 보지 않았습니다. 가장 많이 사용된 것은 아래의 로컬 구성입니다.
+
+`host_permissions`에는 `localhost` / `127.0.0.1`, `texttospeech.googleapis.com`, `generativelanguage.googleapis.com`만 들어 있습니다. 다른 호스트의 서버는 실행 중에 허용합니다(아래 절 참조).
+
+### 고급: 로컬 서버(선택)
+
+무료로 비공개 더빙을 하려면 직접 서버를 실행하고 설정을 그쪽으로 향하게 하세요. LLM에는 `llmBaseUrl`, `llmModel`, `llmExtraBody`를, TTS에는 `ttsProvider`를 `auto`(일본어는 VOICEVOX, 그 외는 edge-tts), `voicevox`, `edge` 중 하나로 설정합니다.
+
+1. **OpenAI 호환 LLM 엔드포인트**(예: Unsloth 서비스)에서 Gemma 12B급 모델을 실행합니다. `llmBaseUrl`(`/v1`로 끝나는 URL, 예: `http://127.0.0.1:8888/v1`)과 `llmModel`을 설정하세요. Gemma 4에서는 `llmExtraBody`도 `{"chat_template_kwargs":{"enable_thinking":false}}`로 설정합니다. 그렇지 않으면 한 줄에 몇 분이 걸릴 수 있습니다. 확장 프로그램은 `POST {llmBaseUrl}/chat/completions`를 호출합니다.
 2. **VOICEVOX 엔진**(오픈 소스, 고품질 일본어 TTS):
 
    ```
@@ -56,9 +73,19 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
    `--port`로 포트를 바꿀 수 있습니다(그 경우 `edgeUrl`도 바꾸세요). 문장당 2~3초가 걸리지만, 버퍼가 차고 나면 병렬 producer가 이를 가려 줍니다. 다만 처음 재생을 시작할 때까지는 VOICEVOX보다 오래 걸립니다.
 
-4. **Google Cloud Text-to-Speech**(선택. VOICEVOX나 edge-tts 대신 사용할 수 있습니다). Google의 유료 온라인 서비스입니다(매월 무료 할당량이 있으니 요금은 Google 안내를 확인하세요). **번역된 텍스트가 Google로 전송됩니다.** Google Cloud 프로젝트에서 Cloud Text-to-Speech API를 활성화하고 API 키를 만든 뒤, 옵션 페이지에서 `ttsProvider`를 `google`로 바꾸고 키를 `googleApiKey`에 붙여 넣습니다. 로컬 서버는 필요 없습니다. 키는 LLM 키와 마찬가지로 `chrome.storage.sync`에 저장되므로, Google Cloud 콘솔에서 Text-to-Speech API로만 사용하도록 제한하세요.
+## 프로필
 
-`host_permissions`에는 `localhost` / `127.0.0.1`과 `texttospeech.googleapis.com`(Google Cloud Text-to-Speech)만 들어 있습니다. 다른 호스트의 서버는 실행 중에 허용합니다(아래 절 참고).
+옵션 페이지의 **Profile** 칸에서 설정 전체를 전환할 수 있습니다. 예를 들어 노트북에서는 호스팅 구성, 집에서는 로컬 서버를 쓰는 식입니다. 처음부터 두 개의 프로필(`Hosted (Gemini + Google TTS)`와 `Local (Unsloth + VOICEVOX / edge-tts)`)이 들어 있습니다. **Load**는 선택한 프로필을 양식에 불러오고, **Save**로 적용합니다. **Save as profile**은 입력한 이름으로 현재 양식을 저장하고, **Delete**는 직접 만든 프로필을 삭제합니다. **Export file** / **Import file**로 프로필을 JSON 파일로 다른 브라우저에 옮길 수 있습니다. API 키는 프로필에 포함되지 않습니다. 모든 프로필이 공유하며, 내보내기와 가져오기에도 포함되지 않습니다. 프로필은 `chrome.storage.sync`에 프로필 하나당 항목 하나로 저장됩니다.
+
+기본 제공 프로필:
+
+| 프로필 | 번역 | 음성 |
+| --- | --- | --- |
+| `Hosted (Gemini + Google TTS)` | Gemini(호스팅) | Google Cloud TTS(기본값) |
+| `Local (Unsloth + VOICEVOX / edge-tts)` | 로컬 Unsloth 서버 | 일본어는 VOICEVOX, 그 외는 edge-tts |
+| `Gemini + edge-tts (free voice)` | Gemini(호스팅) | edge-tts 브리지(Google TTS 요금 없음) |
+| `Local LLM + Google TTS` | 로컬 Unsloth 서버 | Google Cloud TTS |
+| `Interview / podcast (two voices)` | Gemini(호스팅) | Google Cloud TTS. 화자가 바뀔 때마다 목소리가 바뀝니다(`speakerVoices` = `alternate`) |
 
 ## 다른 컴퓨터의 서버 사용하기
 
@@ -99,7 +126,7 @@ voicevox.lan:50443 {
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider`의 기본값은 `auto`이며, `ja`는 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `google`로 바꾸면 Google Cloud Text-to-Speech를 사용합니다(기본 음성: `ja-JP-Neural2-B/C`, `en-US-Neural2-F/D`, `cmn-TW-Wavenet-A/B`, `cmn-CN-Wavenet-A/B`, `ko-KR-Neural2-A/C`. `googleVoice`로 음성을, `googleSpeed`로 말하기 속도를 바꿀 수 있습니다). `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
+`ttsProvider`의 기본값은 `google`(Google Cloud Text-to-Speech)입니다. `auto`는 `ja`에 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `google`로 바꾸면 Google Cloud Text-to-Speech를 사용합니다(기본 음성: `ja-JP-Wavenet-B/C`, `en-US-Wavenet-F/D`, `cmn-TW-Wavenet-A/B`, `cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`. `googleVoice`로 음성을, `googleSpeed`로 말하기 속도를 바꿀 수 있습니다). `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
 
 `speakerVoices`(기본값 `off`)는 인터뷰나 팟캐스트 같은 대화용입니다. 수동 자막 중에는 화자가 바뀔 때 줄 맨 앞에 `- ` 또는 `>>`를 붙이는 경우가 많습니다. `alternate`로 설정하면 이 표시를 본문에서 제거하고, 화자가 바뀔 때마다 음성을 바꿉니다. 첫 번째 화자는 `voiceGender`의 음성, 다른 화자는 반대 성별의 음성을 씁니다. 표시에는 이름이 없으므로 화자가 두 명일 때만 동작하며, 자동 생성 자막에는 보통 이 표시가 없습니다.
 

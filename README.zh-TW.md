@@ -25,9 +25,26 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 - 預先生成（producer）迴圈會在播放之前先翻譯並合成 cue。翻譯依序進行（每句都會把前面的譯文當作上下文），語音合成則最多同時處理 `concurrency` 個 cue；對於每次請求要好幾秒的雲端 TTS，這一點很重要。在 cue 的邊界，若已備妥的語音少於 `lowWaterSec` 秒，影片就暫停，直到累積到 `highWaterSec` 秒才繼續（遲滯機制）。因為影片是從屬的一方，緩衝耗盡不會造成不同步，只會讓影片暫停。播放不會在一句話的中途被打斷。
 - 使用者暫停／播放時，語音也會跟著暫停／繼續；使用者拖曳進度（seek）時，會重新對齊 cue 的位置。廣告會被偵測到（`.ad-showing`），期間排程器會暫停。
 
-## 需求
+## 設定
 
-1. **相容 OpenAI 的 LLM 端點**（例如 Unsloth 服務），並執行 Gemma 12B 等級的模型。請在選項頁面設定 `llmBaseUrl`（以 `/v1` 結尾的 URL）和 `llmModel`。擴充功能會呼叫 `POST {llmBaseUrl}/chat/completions`。
+### 快速開始（預設）：雲端託管服務
+
+預設設定使用 Google 的兩項雲端託管服務，**不需要任何本機伺服器**。你需要一個 Google Cloud / AI Studio 帳號和兩把 API 金鑰（若同一把金鑰已啟用兩個 API，也可以共用）。
+
+1. 用於翻譯的 **Gemini API 金鑰**。在 [Google AI Studio](https://aistudio.google.com/apikey) 建立，貼到選項頁面的 `llmApiKey`。預設值（`llmBaseUrl` = `https://generativelanguage.googleapis.com/v1beta/openai`、`llmModel` = `gemini-3.1-flash-lite`）使用 Gemini 相容 OpenAI 的端點。其他雲端託管、相容 OpenAI 的服務（OpenAI、Groq、OpenRouter 等）只要設定 `llmBaseUrl`、`llmModel` 和 `llmApiKey` 也能使用。按下 Save 時，Chrome 會就該主機詢問一次存取權限。
+2. 用於語音的 **Google Cloud Text-to-Speech 金鑰**。在 Google Cloud 專案中啟用 Cloud Text-to-Speech API，建立 API 金鑰並貼到 `googleApiKey`。`ttsProvider` 一開始就是 `google`。
+
+預設值是最便宜的選擇：翻譯用 `gemini-3.1-flash-lite`，語音用 WaveNet 聲音（撰寫時 Google 將 WaveNet 與 Standard 列為相同價格，是 Neural2 的四分之一，且每月有免費額度）。價格會變動，請查看 Google 的價格頁面。音質更好的 Neural2 和 Chirp 3 HD 聲音可用 `googleVoice` 指定。
+
+**這兩項服務都要付費（有免費額度，費用請以 Google 的說明為準），字幕文字及其翻譯會傳送給 Google。** 金鑰和其他設定一樣存放在 `chrome.storage.sync`，請在 Google Cloud 主控台把每把金鑰限制為只能用於對應的 API。缺少金鑰時，狀態列會顯示指出該金鑰名稱的錯誤。維護者尚未把這個預設設定從頭到尾實際跑過一次；使用最多的是下面的本機設定。
+
+`host_permissions` 中只有 `localhost` / `127.0.0.1`、`texttospeech.googleapis.com` 和 `generativelanguage.googleapis.com`。其他主機上的伺服器會在執行時請求權限（見下一節）。
+
+### 進階：本機伺服器（選用）
+
+想要免費且私密的配音，可以自己執行伺服器，並把設定指向它們：LLM 設定 `llmBaseUrl`、`llmModel` 和 `llmExtraBody`；TTS 則把 `ttsProvider` 設為 `auto`（日文用 VOICEVOX，其他語言用 edge-tts）、`voicevox` 或 `edge`。
+
+1. **相容 OpenAI 的 LLM 端點**（例如 Unsloth 服務），執行 Gemma 12B 等級的模型。設定 `llmBaseUrl`（以 `/v1` 結尾的 URL，例如 `http://127.0.0.1:8888/v1`）和 `llmModel`。使用 Gemma 4 時，也要把 `llmExtraBody` 設為 `{"chat_template_kwargs":{"enable_thinking":false}}`，否則每一行可能要花上數分鐘。擴充功能會呼叫 `POST {llmBaseUrl}/chat/completions`。
 2. **VOICEVOX 引擎**（開源、高品質的日文 TTS）：
 
    ```
@@ -56,9 +73,19 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
    `--port` 可變更連接埠（之後請同步更新 `edgeUrl`）。每句約需 2-3 秒；緩衝填滿之後，平行的 producer 會把這段延遲遮掉，但第一次開始播放會比 VOICEVOX 久。
 
-4. **Google Cloud Text-to-Speech**（選用，可取代 VOICEVOX 或 edge-tts）。這是 Google 的付費線上服務（每月有免費額度，費用請查閱 Google 的說明）。**翻譯後的文字會傳送給 Google。** 請在 Google Cloud 專案中啟用 Cloud Text-to-Speech API 並建立 API 金鑰，然後在選項頁面把 `ttsProvider` 設為 `google`，並把金鑰貼到 `googleApiKey`。不需要本機伺服器。金鑰與 LLM 金鑰一樣存放在 `chrome.storage.sync`，請在 Google Cloud 主控台把它限制為只能使用 Text-to-Speech API。
+## 設定檔
 
-`host_permissions` 中只有 `localhost` / `127.0.0.1` 和 `texttospeech.googleapis.com`（Google Cloud Text-to-Speech）。其他主機上的伺服器會在執行時請求許可（見下一節）。
+選項頁面的 **Profile** 欄可以切換整組設定，例如在筆電上用雲端託管設定、在家裡用本機伺服器。內建兩個設定檔（`Hosted (Gemini + Google TTS)` 和 `Local (Unsloth + VOICEVOX / edge-tts)`）。**Load** 會把所選設定檔載入表單，**Save** 才會套用。**Save as profile** 會以你輸入的名稱儲存目前的表單，**Delete** 會刪除你自己建立的設定檔，**Export file** / **Import file** 可以用 JSON 檔把設定檔搬到另一個瀏覽器。API 金鑰不屬於任何設定檔：所有設定檔共用，也不會被匯出或匯入。設定檔存放在 `chrome.storage.sync`，每個設定檔一個項目。
+
+內建設定檔：
+
+| 設定檔 | 翻譯 | 語音 |
+| --- | --- | --- |
+| `Hosted (Gemini + Google TTS)` | Gemini（雲端託管） | Google Cloud TTS（預設） |
+| `Local (Unsloth + VOICEVOX / edge-tts)` | 本機 Unsloth 伺服器 | 日文用 VOICEVOX，其他語言用 edge-tts |
+| `Gemini + edge-tts (free voice)` | Gemini（雲端託管） | edge-tts 橋接器（沒有 Google TTS 費用） |
+| `Local LLM + Google TTS` | 本機 Unsloth 伺服器 | Google Cloud TTS |
+| `Interview / podcast (two voices)` | Gemini（雲端託管） | Google Cloud TTS，每次換講者就切換聲音（`speakerVoices` = `alternate`） |
 
 ## 使用另一台機器上的伺服器
 
@@ -99,7 +126,7 @@ voicevox.lan:50443 {
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
 
-`ttsProvider` 預設為 `auto`：`ja` 使用 VOICEVOX，其他語言使用 edge-tts；設為 `google` 則使用 Google Cloud Text-to-Speech（預設聲音：`ja-JP-Neural2-B/C`、`en-US-Neural2-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Neural2-A/C`；`googleVoice` 可覆寫聲音，`googleSpeed` 可設定語速）。`edgeVoice` 可覆寫 edge-tts 的聲音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可調整語速。若要新增語言，請在 `extension/defaults.js` 的 `YTD_LANGS` 加入一個項目。
+`ttsProvider` 預設為 `google`（Google Cloud Text-to-Speech）；`auto` 表示 `ja` 使用 VOICEVOX，其他語言使用 edge-tts；設為 `google` 則使用 Google Cloud Text-to-Speech（預設聲音：`ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`；`googleVoice` 可覆寫聲音，`googleSpeed` 可設定語速）。`edgeVoice` 可覆寫 edge-tts 的聲音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可調整語速。若要新增語言，請在 `extension/defaults.js` 的 `YTD_LANGS` 加入一個項目。
 
 `speakerVoices`（預設 `off`）適用於訪談、Podcast 之類的對話。許多手動字幕會在換人說話時，在行首加上 `- ` 或 `>>`。設為 `alternate` 後，這些標記會從文字中移除，並在每次換人時切換聲音：第一位說話者使用 `voiceGender` 的聲音，另一位使用相反性別的聲音。標記中沒有姓名，所以只適用於兩個人；自動產生的字幕通常也沒有這些標記。
 

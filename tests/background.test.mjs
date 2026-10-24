@@ -16,14 +16,21 @@ function fakeServers() {
   };
 }
 
+// The local setup of the README (Unsloth + VOICEVOX / edge-tts); the shipped defaults are hosted services.
+const LOCAL = {
+  llmBaseUrl: 'http://127.0.0.1:8888/v1',
+  llmExtraBody: '{"chat_template_kwargs":{"enable_thinking":false}}',
+  ttsProvider: 'auto',
+};
+
 async function translate(settings, extra = {}) {
-  const bg = loadBackground({ settings, fetchImpl: fakeServers() });
+  const bg = loadBackground({ settings: { ...LOCAL, ...settings }, fetchImpl: fakeServers() });
   const res = await bg.send({ type: 'translate', text: 'Welcome back.', prev: [], sourceLang: 'English', ...extra });
   const call = bg.calls.find((c) => c.url.includes('/chat/completions'));
   return { res, call, body: call && JSON.parse(call.opts.body) };
 }
 
-test('translate sends an OpenAI-style request with thinking disabled by default', async () => {
+test('translate sends an OpenAI-style request, with thinking disabled for a local model', async () => {
   const { res, call, body } = await translate({});
   assert.equal(res.ok, true);
   assert.equal(res.result, '訳文');
@@ -32,6 +39,25 @@ test('translate sends an OpenAI-style request with thinking disabled by default'
   assert.equal(body.chat_template_kwargs.enable_thinking, false);
   assert.ok(body.max_tokens > 0);
   assert.ok(call.opts.signal, 'request must have a timeout');
+});
+
+test('the default hosted endpoint is Gemini; it needs a key and sends no local-only fields', async () => {
+  const bg = loadBackground({ settings: {}, fetchImpl: fakeServers() });
+  const none = await bg.send({ type: 'translate', text: 'Hi.', prev: [], sourceLang: 'English' });
+  assert.match(none.error, /llmApiKey is empty/);
+  assert.equal(bg.calls.length, 0, 'nothing is sent without a key');
+  const keyed = loadBackground({ settings: { llmApiKey: 'gk' }, fetchImpl: fakeServers() });
+  const res = await keyed.send({ type: 'translate', text: 'Hi.', prev: [], sourceLang: 'English' });
+  assert.equal(res.ok, true);
+  assert.equal(keyed.calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions');
+  assert.equal(keyed.calls[0].opts.headers.Authorization, 'Bearer gk');
+  assert.equal(JSON.parse(keyed.calls[0].opts.body).chat_template_kwargs, undefined);
+});
+
+test('the default TTS is Google Cloud TTS', async () => {
+  const bg = loadBackground({ settings: { googleApiKey: 'gk' }, fetchImpl: fakeServers() });
+  assert.equal((await bg.send({ type: 'synthesize', text: 'こんにちは' })).ok, true);
+  assert.equal(bg.calls[0].url, 'https://texttospeech.googleapis.com/v1/text:synthesize');
 });
 
 test('translate adds the Authorization header only when an API key is set', async () => {
@@ -62,14 +88,14 @@ test('translate rejects an unknown target language and invalid llmExtraBody', as
 });
 
 test('translate reports HTTP errors', async () => {
-  const bg = loadBackground({ fetchImpl: () => response('nope', { status: 401 }) });
+  const bg = loadBackground({ settings: { llmApiKey: 'bad' }, fetchImpl: () => response('nope', { status: 401 }) });
   const res = await bg.send({ type: 'translate', text: 'x', prev: [], sourceLang: 'English' });
   assert.equal(res.ok, false);
   assert.match(res.error, /LLM HTTP 401/);
 });
 
 async function synth(settings, extra = {}) {
-  const bg = loadBackground({ settings, fetchImpl: fakeServers() });
+  const bg = loadBackground({ settings: { ...LOCAL, ...settings }, fetchImpl: fakeServers() });
   const res = await bg.send({ type: 'synthesize', text: 'こんにちは', ...extra });
   return { res, calls: bg.calls };
 }
@@ -116,11 +142,11 @@ test('google TTS sends the key in a header and picks the voice for language and 
   assert.equal(calls[0].url, 'https://texttospeech.googleapis.com/v1/text:synthesize');
   assert.equal(calls[0].opts.headers['x-goog-api-key'], 'gk');
   const body = JSON.parse(calls[0].opts.body);
-  assert.deepEqual(body.voice, { languageCode: 'ko-KR', name: 'ko-KR-Neural2-C' });
+  assert.deepEqual(body.voice, { languageCode: 'ko-KR', name: 'ko-KR-Wavenet-C' });
   assert.equal(body.audioConfig.speakingRate, 1.3);
   assert.equal(Buffer.from(res.result, 'base64').equals(MP3), true);
   const alt = await synth({ ttsProvider: 'google', targetLang: 'en', googleApiKey: 'gk', googleVoice: 'en-GB-Neural2-A' }, { alt: true });
-  assert.equal(JSON.parse(alt.calls[0].opts.body).voice.name, 'en-US-Neural2-D', 'alt ignores the fixed voice');
+  assert.equal(JSON.parse(alt.calls[0].opts.body).voice.name, 'en-US-Wavenet-D', 'alt ignores the fixed voice');
   assert.match((await synth({ ttsProvider: 'google' })).res.error, /googleApiKey is empty/);
 });
 
@@ -148,6 +174,7 @@ test('unknown message types are not handled, so Chrome does not wait for a reply
 
 test('punctuate asks the model to restore punctuation without changing any word', async () => {
   const bg = loadBackground({
+    settings: { ...LOCAL, llmApiKey: 'k' },
     fetchImpl: () => response({ choices: [{ message: { content: 'Hello, world.' } }] }),
   });
   const res = await bg.send({ type: 'punctuate', text: 'hello world', sourceLang: 'English' });
@@ -172,7 +199,7 @@ test('alt asks for the voice of the opposite gender (second speaker of a dialogu
 });
 
 test('label runs the caller-built prompt deterministically through the chat endpoint', async () => {
-  const bg = loadBackground({ settings: {}, fetchImpl: fakeServers() });
+  const bg = loadBackground({ settings: { ...LOCAL, llmApiKey: 'k' }, fetchImpl: fakeServers() });
   const res = await bg.send({ type: 'label', prompt: '1. Hi.' });
   const body = JSON.parse(bg.calls.find((c) => c.url.includes('/chat/completions')).opts.body);
   assert.equal(res.ok, true);

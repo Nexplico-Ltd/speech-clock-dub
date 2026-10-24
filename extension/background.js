@@ -54,6 +54,11 @@ async function chat(s, prompt, { temperature, maxTokens }) {
     throw new Error('llmExtraBody is not valid JSON');
   }
 
+  // Fail with a clear message instead of an HTTP error when the default hosted endpoint has no key yet.
+  if (!s.llmApiKey && /^https:\/\/generativelanguage\.googleapis\.com\//.test(s.llmBaseUrl)) {
+    throw new Error('llmApiKey is empty: set a Gemini API key in the options page');
+  }
+
   const res = await fetch(`${s.llmBaseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {

@@ -46,11 +46,11 @@ export function loadBackground({ settings = {}, fetchImpl }) {
   return { send, calls, onMessage: (...args) => listener(...args) };
 }
 
-/** Evaluates extension/defaults.js and returns { YTD_DEFAULTS, YTD_LANGS }. */
+/** Evaluates extension/defaults.js and returns { YTD_DEFAULTS, YTD_LANGS, YTD_PRESETS }. */
 export function loadDefaults() {
   const context = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(EXT, 'defaults.js'), 'utf8'), context);
-  return JSON.parse(vm.runInContext('JSON.stringify({ YTD_DEFAULTS, YTD_LANGS })', context));
+  return JSON.parse(vm.runInContext('JSON.stringify({ YTD_DEFAULTS, YTD_LANGS, YTD_PRESETS })', context));
 }
 
 /** Evaluates extension/asr.js and returns its YTD_ASR helpers. */

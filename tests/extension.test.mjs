@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { EXT, loadDefaults } from './helpers/load-background.mjs';
 
 const manifest = JSON.parse(fs.readFileSync(path.join(EXT, 'manifest.json'), 'utf8'));
-const { YTD_DEFAULTS, YTD_LANGS } = loadDefaults();
+const { YTD_DEFAULTS, YTD_LANGS, YTD_PRESETS } = loadDefaults();
 
 test('manifest is MV3 and every referenced file exists', () => {
   assert.equal(manifest.manifest_version, 3);
@@ -18,9 +18,9 @@ test('manifest is MV3 and every referenced file exists', () => {
   for (const f of files) assert.ok(fs.existsSync(path.join(EXT, f)), `missing ${f}`);
 });
 
-test('manifest only grants localhost and the Google Cloud TTS host permissions', () => {
+test('manifest only grants localhost and the Google API host permissions', () => {
   for (const p of manifest.host_permissions) {
-    assert.match(p, /^(http:\/\/(localhost|127\.0\.0\.1)|https:\/\/texttospeech\.googleapis\.com)\//);
+    assert.match(p, /^(http:\/\/(localhost|127\.0\.0\.1)|https:\/\/(texttospeech|generativelanguage)\.googleapis\.com)\//);
   }
 });
 
@@ -58,6 +58,32 @@ test('default settings are consistent', () => {
   assert.doesNotThrow(() => JSON.parse(YTD_DEFAULTS.llmExtraBody), 'llmExtraBody must be valid JSON');
 });
 
+test('the default configuration needs no local server: hosted Gemini and Google TTS', () => {
+  assert.equal(YTD_DEFAULTS.ttsProvider, 'google');
+  const base = new URL(YTD_DEFAULTS.llmBaseUrl);
+  assert.equal(base.protocol, 'https:');
+  assert.ok(manifest.host_permissions.includes(`${base.protocol}//${base.hostname}/*`), 'LLM host needs no permission prompt');
+  assert.deepEqual(JSON.parse(YTD_DEFAULTS.llmExtraBody), {}, 'hosted APIs may reject local-only fields');
+  assert.equal(YTD_DEFAULTS.llmApiKey, '');
+  assert.equal(YTD_DEFAULTS.googleApiKey, '');
+});
+
+test('built-in profiles only set known, non-secret settings of the right type and never use a secret', () => {
+  assert.ok(Object.keys(YTD_PRESETS).length >= 4);
+  for (const [name, preset] of Object.entries(YTD_PRESETS)) {
+    assert.ok(name.length <= 40, `${name}: fits the profile name limit`);
+    for (const [key, value] of Object.entries(preset)) {
+      assert.ok(key in YTD_DEFAULTS, `${name}: unknown setting ${key}`);
+      assert.ok(!/ApiKey/i.test(key), `${name}: ${key} is a secret`);
+      assert.equal(typeof value, typeof YTD_DEFAULTS[key], `${name}: type of ${key}`);
+      assert.notEqual(value, YTD_DEFAULTS[key], `${name}: ${key} equals the default`);
+    }
+    if ('llmExtraBody' in preset) assert.doesNotThrow(() => JSON.parse(preset.llmExtraBody), name);
+    if ('ttsProvider' in preset) assert.ok(['auto', 'voicevox', 'edge', 'google'].includes(preset.ttsProvider), name);
+    if ('speakerVoices' in preset) assert.ok(['off', 'alternate', 'llm'].includes(preset.speakerVoices), name);
+  }
+});
+
 test('the options page offers a dropdown for every enumerated setting', () => {
   const options = fs.readFileSync(path.join(EXT, 'options.js'), 'utf8');
   for (const key of ['targetLang', 'voiceGender', 'ttsProvider', 'subtitles', 'asrPunctuation']) {
@@ -76,6 +102,10 @@ test('remote server origins are collected without ports, skipping local and inva
   );
   // IPv6 literals are not valid match patterns; https://localhost is not covered by the manifest.
   assert.deepEqual(origins({ llmBaseUrl: 'http://[::1]:5050', voicevoxUrl: 'https://localhost:1', edgeUrl: '' }), ['https://localhost/*']);
+  // Hosts the manifest already grants need no request.
+  assert.deepEqual(origins({ llmBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', voicevoxUrl: 'http://localhost:50021', edgeUrl: '' }), []);
+  const manifestHosts = manifest.host_permissions.filter((h) => h.startsWith('https://')).map((h) => new URL(h.replace('*', 'x')).hostname.replace(/^x$/, ''));
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(YTD_MANIFEST_HOSTS)', context)).sort(), manifestHosts.sort());
   assert.deepEqual(origins({ llmBaseUrl: 'not a url', voicevoxUrl: 'ftp://x', edgeUrl: '' }), []);
 });
 
