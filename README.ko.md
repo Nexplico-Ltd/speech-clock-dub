@@ -141,7 +141,7 @@ voicevox.lan:50443 {
 ## 설치(개발용)
 
 1. Chrome: `chrome://extensions`를 열고 개발자 모드를 켠 뒤 "압축해제된 확장 프로그램을 로드합니다"를 눌러 `extension/`을 선택합니다.
-2. 확장 프로그램의 옵션 페이지를 열어 설정을 조정합니다.
+2. 확장 프로그램의 옵션 페이지를 열어 설정을 조정합니다. 자주 쓰는 설정(언어, 목소리 성별, 자막, TTS 제공자, API 키)은 맨 위에 있고, 나머지는 접힌 섹션(목소리 세부 설정, 서버와 모델, 자막과 문장 분할, 버퍼와 영상 속도)에 들어 있습니다. 변경한 값이 있는 섹션은 자동으로 펼쳐집니다.
 3. 자막이 있는 YouTube 영상을 열고 플레이어 왼쪽 위의 **Dub (xx)** 를 누릅니다(**Sub**는 화면 번역 자막을 켜고 끕니다). 확장 프로그램을 다시 로드할 때마다 YouTube 탭도 새로고침하세요.
 
 **Firefox(128 이상):** `about:debugging#/runtime/this-firefox`를 열고 "임시 부가 기능 로드..."로 `extension/manifest.json`을 선택합니다. 임시 부가 기능은 Firefox를 종료하면 제거됩니다. 같은 파일이 두 브라우저에서 동작합니다(Chrome은 `background.service_worker`, Firefox는 `background.scripts`를 사용). 호스트 권한은 설치할 때 확인하며 `about:addons`의 확장 기능 "권한"에서 취소할 수 있습니다. 옵션 페이지는 `about:addons`의 "설정"에서 엽니다.

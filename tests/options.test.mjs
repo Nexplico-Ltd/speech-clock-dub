@@ -18,7 +18,7 @@ async function openOptions(stored = {}) {
   const node = () => ({
     children: {},
     add() {},
-    append(input) { this.children[input.name] = input; },
+    append(child) { if (child.name) this.children[child.name] = child; else Object.assign(this.children, child.children); },
   });
   const button = (id) => ({ addEventListener: (_, fn) => (handlers[id] = fn), click: () => handlers[id]?.() });
   const elements = {
