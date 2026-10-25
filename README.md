@@ -210,7 +210,10 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 ## Install (development)
 
 1. Open `chrome://extensions`, enable Developer mode, click "Load unpacked", select `extension/`.
-2. Open the extension's options page and adjust the settings.
+2. Open the extension's options page and adjust the settings. The everyday ones (language, voice gender,
+   subtitles, TTS provider, API keys) are at the top; the rest is folded into sections (voice details,
+   servers and models, captions and subtitles, buffering and video speed) that open by themselves when
+   they hold a changed value.
 3. Open a YouTube video that has captions and click **Dub (xx)** at the top left of the player
    (**Sub** toggles the on-screen translation).
    Reload the YouTube tab after every extension reload.
