@@ -118,7 +118,7 @@ otherwise), `voicevox` or `edge`.
 The options page has a **Profile** box for switching between whole configurations, for example the hosted
 setup on a laptop and the local servers at home. It comes with built-in profiles (listed below). **Load** fills the form from the selected profile and
 **Save** applies it. A profile sets every setting except the API keys: settings it does not list go back to
-their defaults, so Load, then re-check your language and voice before Save. **Save as profile** stores the current form under a name you type, **Delete**
+their defaults, so Load, then re-check your language and voice before Save. **Save as profile** stores the current form under a name you type (every setting except the API keys, so the profile keeps its meaning if a default changes later), **Delete**
 removes a profile of your own, and **Export file** / **Import file** move a profile to another browser as a
 JSON file. The API keys are not part of any profile: they are shared by all profiles and are never
 exported or imported. Profiles are stored in `chrome.storage.sync`, one item per profile.

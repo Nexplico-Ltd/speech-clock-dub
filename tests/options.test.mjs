@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { Blob } from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -6,6 +7,7 @@ import vm from 'node:vm';
 import { EXT, loadDefaults } from './helpers/load-background.mjs';
 
 // Objects made inside the vm context have another Object prototype, so compare them as plain JSON.
+const { YTD_DEFAULTS } = loadDefaults();
 const plain = (x) => JSON.parse(JSON.stringify(x));
 
 // Runs extension/options.js against a tiny DOM and an in-memory chrome.storage.sync.
@@ -14,10 +16,12 @@ async function openOptions(stored = {}) {
   const inputs = {};
   const handlers = {};
   const permissionRequests = [];
+  const exported = [];
   const form = { elements: inputs, append(label) { Object.assign(inputs, label.children); } };
   const node = () => ({
     children: {},
     add() {},
+    click() {},
     append(child) { if (child.name) this.children[child.name] = child; else Object.assign(this.children, child.children); },
   });
   const button = (id) => ({ addEventListener: (_, fn) => (handlers[id] = fn), click: () => handlers[id]?.() });
@@ -31,6 +35,7 @@ async function openOptions(stored = {}) {
   for (const id of ['save', 'load', 'saveAs', 'delete', 'export', 'import']) elements[id] = button(id);
   const context = vm.createContext({
     URL,
+    Blob: class extends Blob { constructor(parts, opts) { super(parts, opts); exported.push(parts.join('')); } },
     Option: class { constructor(text, value) { this.text = text; this.value = value; } },
     document: { getElementById: (id) => elements[id], createElement: node },
     chrome: {
@@ -50,7 +55,7 @@ async function openOptions(stored = {}) {
     elements.importFile.files = [{ text: async () => text }];
     await handlers.importFile();
   };
-  return { store, inputs, permissionRequests, msg: elements.msg, profile: elements.profile, name: elements.profileName, handlers, importFile };
+  return { store, inputs, permissionRequests, exported, msg: elements.msg, profile: elements.profile, name: elements.profileName, handlers, importFile };
 }
 
 test('saving stores only values that differ from the defaults and drops reset ones', async () => {
@@ -101,7 +106,11 @@ test('a user profile is saved without API keys, listed, loaded and deleted', asy
   o.inputs.edgeRate.value = '+10%';
   o.name.value = '  English fast  ';
   await o.handlers.saveAs();
-  assert.deepEqual(plain(o.store['profile:English fast']), { targetLang: 'en', edgeRate: '+10%' });
+  const saved = plain(o.store['profile:English fast']);
+  assert.equal(saved.targetLang, 'en');
+  assert.equal(saved.edgeRate, '+10%');
+  assert.equal(saved.llmModel, YTD_DEFAULTS.llmModel, 'a profile is a full snapshot, including values equal to the defaults');
+  assert.deepEqual(Object.keys(saved).sort(), Object.keys(YTD_DEFAULTS).filter((k) => !/ApiKey/i.test(k)).sort());
   assert.equal(JSON.stringify(o.store).includes('secret'), true, 'the shared key itself is still stored');
   assert.equal(JSON.stringify(o.store['profile:English fast']).includes('secret'), false);
   assert.deepEqual(o.profile.options.slice(-1), ['English fast']);
@@ -116,6 +125,25 @@ test('a user profile is saved without API keys, listed, loaded and deleted', asy
   await o.handlers.delete();
   assert.equal('profile:English fast' in o.store, false);
   assert.equal(o.profile.options.length, Object.keys(loadDefaults().YTD_PRESETS).length);
+});
+
+test('Export file writes every setting except the API keys, and the file can be imported again', async () => {
+  const o = await openOptions({ llmApiKey: 'secret', googleApiKey: 'gk', targetLang: 'ko' });
+  await o.handlers.export();
+  assert.equal(o.exported.length, 1);
+  const file = JSON.parse(o.exported[0]);
+  assert.equal(file.app, 'speech-clock-dub');
+  assert.equal(file.settings.targetLang, 'ko');
+  assert.equal(file.settings.llmModel, YTD_DEFAULTS.llmModel, 'defaults are written out too');
+  assert.equal(Object.keys(file.settings).length, Object.keys(YTD_DEFAULTS).length - 2, 'all but the two API keys');
+  assert.equal(o.exported[0].includes('secret') || o.exported[0].includes('gk'), false, 'no key in the file');
+
+  const other = await openOptions({ llmApiKey: 'other-key' });
+  await other.importFile(o.exported[0]);
+  assert.equal(other.inputs.targetLang.value, 'ko');
+  assert.equal(other.inputs.llmApiKey.value, 'other-key');
+  assert.match(other.msg.textContent, /Imported \d+ settings\./);
+  assert.doesNotMatch(other.msg.textContent, /ignored/);
 });
 
 test('profile names are validated and built-in profiles are protected', async () => {

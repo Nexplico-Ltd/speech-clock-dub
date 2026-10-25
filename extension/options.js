@@ -63,6 +63,16 @@ function overridesOf(values, { secrets }) {
   return out;
 }
 
+// Every setting except the API keys: what Save as profile and Export file store, so a profile keeps its
+// meaning when a default changes later. (Built-in profiles list only their differences.)
+function snapshotOf(values) {
+  const out = {};
+  for (const key of Object.keys(YTD_DEFAULTS)) {
+    if (!isSecret(key)) out[key] = values[key];
+  }
+  return out;
+}
+
 function userProfiles(stored) {
   const profiles = Object.create(null);
   for (const [key, value] of Object.entries(stored)) {
@@ -186,7 +196,7 @@ document.getElementById('saveAs').addEventListener('click', async () => {
     return;
   }
   try {
-    await chrome.storage.sync.set({ [PROFILE_PREFIX + name]: overridesOf(readForm(), { secrets: false }) });
+    await chrome.storage.sync.set({ [PROFILE_PREFIX + name]: snapshotOf(readForm()) });
   } catch (err) {
     msg.textContent = `Cannot save the profile: ${err.message}`;
     return;
@@ -217,7 +227,7 @@ document.getElementById('export').addEventListener('click', () => {
   const data = {
     app: 'speech-clock-dub',
     name: loadedProfile,
-    settings: overridesOf(readForm(), { secrets: false }),
+    settings: snapshotOf(readForm()),
   };
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
