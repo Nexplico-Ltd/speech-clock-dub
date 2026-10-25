@@ -625,13 +625,26 @@
     if (hud?.isConnected) return;
     const player = document.getElementById('movie_player');
     if (!player) return;
+    // Keep clear of YouTube's own chrome: the title bar (top, fullscreen and embeds) and the control bar
+    // (bottom). The HUD sits below the title bar and fades out together with the controls.
+    if (!document.getElementById('ytd-style')) {
+      const style = document.createElement('style');
+      style.id = 'ytd-style';
+      style.textContent =
+        '#movie_player.ytp-fullscreen .ytd-hud,#movie_player.ytp-embed .ytd-hud{top:64px!important}' +
+        '#movie_player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}' +
+        '.ytd-hud{transition:opacity .25s}';
+      document.head.append(style);
+    }
     hud = document.createElement('div');
+    hud.className = 'ytd-hud';
     hud.style.cssText =
-      'position:absolute;left:12px;top:12px;z-index:60;display:flex;gap:8px;align-items:center;' +
-      'font:12px system-ui,sans-serif;color:#fff;';
+      'position:absolute;left:12px;top:12px;z-index:38;display:flex;gap:8px;align-items:center;' +
+      'font:12px system-ui,sans-serif;color:#fff;pointer-events:none;';
     btn = document.createElement('button');
     btn.style.cssText =
-      'padding:4px 10px;border:0;border-radius:12px;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;';
+      'padding:4px 10px;border:0;border-radius:12px;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;' +
+      'pointer-events:auto;';
     statusEl = document.createElement('span');
     statusEl.style.cssText = 'padding:2px 6px;border-radius:8px;background:rgba(0,0,0,.45);';
     statusEl.hidden = true;
@@ -673,7 +686,7 @@
     // Translated subtitle overlay (pointer-events:none so it never blocks the player).
     subEl = document.createElement('div');
     subEl.style.cssText =
-      'position:absolute;left:50%;bottom:12%;transform:translateX(-50%);z-index:59;' +
+      'position:absolute;left:50%;bottom:max(12%,72px);transform:translateX(-50%);z-index:37;' +
       // An explicit width: with left:50% the available width would be only half of the player.
       'box-sizing:border-box;width:max-content;max-width:80%;' +
       'pointer-events:none;text-align:center;color:#fff;background:rgba(0,0,0,.65);padding:4px 10px;' +
