@@ -1,4 +1,16 @@
 // Generic settings form: one input per key of YTD_DEFAULTS; a few keys get a dropdown.
+// The everyday settings come first; the rest is folded into sections that open by themselves when
+// they hold a changed value. A key missing from GROUPS lands in the last section.
+const COMMON = ['targetLang', 'voiceGender', 'subtitles', 'speakerVoices', 'ttsProvider', 'llmApiKey', 'googleApiKey'];
+const GROUPS = [
+  ['Voice details', ['ttsSpeed', 'googleVoice', 'googleSpeed', 'edgeVoice', 'edgeRate', 'speakerFemale', 'speakerMale',
+    'voice1Provider', 'voice1Voice', 'voice2Provider', 'voice2Voice']],
+  ['Servers and models', ['llmBaseUrl', 'llmModel', 'llmExtraBody', 'llmTimeoutSec', 'voicevoxUrl', 'edgeUrl']],
+  ['Captions and subtitles', ['subtitleMaxLines', 'localCaptionLang', 'asrPunctuation', 'asrWindowWords',
+    'asrStrideWords', 'asrConcurrency', 'contextCues', 'maxGapSec', 'maxCueChars']],
+  ['Buffering and video speed', ['lowWaterSec', 'highWaterSec', 'targetAheadSec', 'concurrency', 'minRate', 'maxRate', 'gapRate']],
+];
+
 const form = document.getElementById('form');
 
 const CHOICES = {
@@ -75,6 +87,7 @@ chrome.storage.sync.get(null).catch((err) => {
   return {};
 }).then(async (stored) => {
   const values = { ...YTD_DEFAULTS, ...stored };
+  const fields = {};
   for (const [key, def] of Object.entries(YTD_DEFAULTS)) {
     const label = document.createElement('label');
     label.textContent = key;
@@ -91,7 +104,20 @@ chrome.storage.sync.get(null).catch((err) => {
     input.name = key;
     input.value = values[key];
     label.append(input);
-    form.append(label);
+    fields[key] = label;
+  }
+  const placed = new Set([...COMMON, ...GROUPS.flatMap(([, keys]) => keys)]);
+  const leftover = Object.keys(YTD_DEFAULTS).filter((key) => !placed.has(key));
+  GROUPS[GROUPS.length - 1][1].push(...leftover);
+  for (const key of COMMON) form.append(fields[key]);
+  for (const [title, keys] of GROUPS) {
+    const section = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = title;
+    section.append(summary);
+    for (const key of keys) section.append(fields[key]);
+    section.open = keys.some((key) => values[key] !== YTD_DEFAULTS[key]);
+    form.append(section);
   }
   loadedProfile = stored.activeProfile || '';
   await listProfiles().catch(() => {});

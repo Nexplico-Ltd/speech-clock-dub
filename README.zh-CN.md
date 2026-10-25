@@ -141,7 +141,7 @@ voicevox.lan:50443 {
 ## 安装（开发用）
 
 1. Chrome：打开 `chrome://extensions`，启用“开发者模式”，点击“加载已解压的扩展程序”，选择 `extension/`。
-2. 打开扩展程序的选项页面并调整设置。
+2. 打开扩展程序的选项页面并调整设置。常用设置（语言、声音性别、字幕、TTS 提供者、API 密钥）在最上方，其余收在折叠区段（声音细节、服务器与模型、字幕与断句、缓冲与视频速度）中。含有已更改值的区段会自动展开。
 3. 打开一个有字幕的 YouTube 视频，点击播放器左上角的 **Dub (xx)**（**Sub** 用来切换屏幕上的翻译字幕）。每次重新加载扩展程序之后，也要刷新 YouTube 标签页。
 
 **Firefox（128 及以上）：** 打开 `about:debugging#/runtime/this-firefox`，点击“临时载入附加组件...”并选择 `extension/manifest.json`。临时附加组件会在 Firefox 退出时移除。两个浏览器使用同一份文件（Chrome 使用 `background.service_worker`，Firefox 使用 `background.scripts`）。主机权限会在安装时询问，可在 `about:addons` 的扩展“权限”中撤销。选项页面在 `about:addons` 的“偏好设置”。
