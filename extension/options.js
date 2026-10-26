@@ -1,7 +1,7 @@
 // Generic settings form: one input per key of YTD_DEFAULTS; a few keys get a dropdown.
 // The everyday settings come first; the rest is folded into sections that open by themselves when
 // they hold a changed value. A key missing from GROUPS lands in the last section.
-const COMMON = ['targetLang', 'voiceGender', 'subtitles', 'speakerVoices', 'ttsProvider', 'llmApiKey', 'googleApiKey'];
+const COMMON = ['targetLang', 'translationLevel', 'voiceGender', 'subtitles', 'speakerVoices', 'ttsProvider', 'llmApiKey', 'googleApiKey'];
 const GROUPS = [
   ['Voice details', ['ttsSpeed', 'googleVoice', 'googleSpeed', 'edgeVoice', 'edgeRate', 'speakerFemale', 'speakerMale',
     'voice1Provider', 'voice1Voice', 'voice2Provider', 'voice2Voice']],
@@ -16,6 +16,7 @@ const form = document.getElementById('form');
 const CHOICES = {
   targetLang: Object.keys(YTD_LANGS),
   voiceGender: ['female', 'male'],
+  translationLevel: ['standard', 'easy', 'advanced'],
   speakerVoices: ['off', 'alternate', 'llm'],
   subtitles: ['off', 'translated', 'both'],
   asrPunctuation: ['on', 'off'],
