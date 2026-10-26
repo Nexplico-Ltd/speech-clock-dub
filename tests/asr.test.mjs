@@ -117,3 +117,22 @@ test('flags survive a round trip through the cache encoding', () => {
   assert.equal(text, '?.ec');
   assert.deepEqual(plain(ASR.decodeFlags(text)), plain(flags));
 });
+
+test('stripSounds removes sound annotations and keeps real text', () => {
+  const s = ASR.stripSounds;
+  assert.equal(s('[Music]'), '');
+  assert.equal(s('[Applause] Thank you all.'), 'Thank you all.');
+  assert.equal(s('(upbeat music)'), '');
+  assert.equal(s('(Laughter) Right, so'), 'Right, so');
+  assert.equal(s('♪ ♪'), '');
+  assert.equal(s('♪ la la ♪'), 'la la');
+  assert.equal(s('Compute (a + b) first (see Figure 2).'), 'Compute (a + b) first (see Figure 2).');
+});
+
+test('words and sentence cues drop annotation-only segments', () => {
+  const events = [
+    { tStartMs: 0, segs: [{ utf8: '[Music]' }] },
+    { tStartMs: 2000, segs: [{ utf8: 'hello' }, { utf8: ' there', tOffsetMs: 300 }] },
+  ];
+  assert.deepEqual(plain(ASR.words(events)).map((w) => w.text), ['hello', 'there']);
+});
