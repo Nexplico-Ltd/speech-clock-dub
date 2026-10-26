@@ -16,11 +16,13 @@ async function translate({ text, prev, sourceLang }) {
       '\n\n'
     : '';
   const lang = getLang(s);
+  const level = (lang.levels || YTD_LEVELS)[s.translationLevel] || '';
   // Single user message: some Gemma chat templates have no system role.
   const prompt =
     `You translate ${sourceLang} lecture subtitles into ${lang.style} for a voice-over.\nRules:\n` +
     `- Be faithful: do not add, omit or reinterpret content. Keep technical terms accurate.\n` +
     `- Translate the meaning, not word by word.${lang.extraRule ? ` In particular, ${lang.extraRule}` : ''}\n` +
+    (level ? `- ${level} Keep the meaning and technical terms unchanged.\n` : '') +
     `Output ONLY the ${lang.name} translation of the last line, with no notes, quotes or romaji.` +
     `\n\n${context}Translate this line:\n${text}`;
 

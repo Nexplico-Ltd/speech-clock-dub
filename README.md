@@ -175,6 +175,8 @@ Set `targetLang` in the options page:
 | `zh-CN` | Simplified Chinese | `zh-CN-XiaoxiaoNeural` |
 | `ko` | Korean | `ko-KR-SunHiNeural` |
 
+`translationLevel` sets how hard the translated wording is: `standard` (default), `easy` (simple words and short sentences for learners; about JLPT N5-N3 for Japanese) or `advanced` (more precise, formal wording; about JLPT N3-N1 for Japanese). The meaning and technical terms are not changed.
+
 `voiceGender` (`female` or `male`) picks the voice:
 
 | `targetLang` | female | male |

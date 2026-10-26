@@ -115,6 +115,8 @@ voicevox.lan:50443 {
 | `zh-CN` | 简体中文 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 韩语 | `ko-KR-SunHiNeural` |
 
+`translationLevel` 决定译文的难度：`standard`（默认）、`easy`（给学习者的简单词汇和短句；日语约 JLPT N5～N3）、`advanced`（更精确、较正式的用语；日语约 JLPT N3～N1）。意思和专业术语不会改变。
+
 `voiceGender`（`female` 或 `male`）用来选择声音：
 
 | `targetLang` | female | male |

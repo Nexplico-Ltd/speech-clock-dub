@@ -9,6 +9,10 @@ const YTD_LANGS = {
     voices: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
     google: { code: 'ja-JP', voices: { female: 'ja-JP-Wavenet-B', male: 'ja-JP-Wavenet-C' } },
     // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
+    levels: {
+      easy: 'Use simple Japanese for learners at about JLPT N5 to N3: common words, short sentences, and plain explanations of difficult words instead of rare kanji compounds.',
+      advanced: 'Use more advanced Japanese at about JLPT N3 to N1: precise vocabulary, kanji compounds and formal written-style expressions where they fit.',
+    },
     extraRule:
       '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
   },
@@ -38,8 +42,17 @@ const YTD_LANGS = {
   },
 };
 
+// Wording of the translationLevel rule for languages without their own `levels` in YTD_LANGS.
+const YTD_LEVELS = {
+  easy: 'Use simple wording for language learners: common words, short sentences, and plain explanations of difficult words.',
+  advanced: 'Use more advanced wording: precise vocabulary and formal written-style expressions where they fit.',
+};
+
 const YTD_DEFAULTS = {
   targetLang: 'ja', // a key of YTD_LANGS
+  // How hard the translated wording is: 'standard' (no extra rule), 'easy' (for learners; JLPT N5-N3 for
+  // Japanese) or 'advanced' (JLPT N3-N1 for Japanese). The meaning is never changed.
+  translationLevel: 'standard', // 'standard' | 'easy' | 'advanced'
   voiceGender: 'female', // 'female' | 'male'
   // 'alternate': for dialogue captions that mark a change of speaker ('- ' or '>>'), the voices alternate
   // between voiceGender and the opposite gender. Needs captions with markers (not auto-generated ones).
