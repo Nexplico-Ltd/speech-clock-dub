@@ -196,6 +196,16 @@ test('import rejects invalid choices and numbers, ignores __proto__, and warns w
   assert.equal(({}).x, undefined, 'Object.prototype is untouched');
 });
 
+test('translationLevel is an everyday dropdown and an invalid imported level is ignored', async () => {
+  const o = await openOptions();
+  assert.equal(o.inputs.translationLevel.value, 'standard');
+  await o.importFile('{"app":"speech-clock-dub","settings":{"translationLevel":"expert"}}');
+  assert.equal(o.inputs.translationLevel.value, 'standard');
+  assert.match(o.msg.textContent, /Imported 0 settings \(1 ignored\)/);
+  await o.importFile('{"app":"speech-clock-dub","settings":{"translationLevel":"easy"}}');
+  assert.equal(o.inputs.translationLevel.value, 'easy');
+});
+
 test('Save refuses an empty or non-numeric number field', async () => {
   const o = await openOptions();
   o.inputs.maxRate.value = '';

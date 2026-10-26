@@ -88,6 +88,18 @@ test('translationLevel adds a level rule, JLPT-based for Japanese', async () => 
   assert.doesNotMatch(en, /JLPT/);
 });
 
+test('translationLevel: standard and unknown values leave the prompt unchanged, advanced works for every language', async () => {
+  const hello = { text: 'Hello there.' };
+  const prompt = async (settings) => (await translate(settings, hello)).body.messages[0].content;
+  for (const targetLang of ['ja', 'en', 'zh-TW', 'zh-CN', 'ko']) {
+    const standard = await prompt({ targetLang });
+    assert.equal(await prompt({ targetLang, translationLevel: 'standard' }), standard, targetLang);
+    assert.equal(await prompt({ targetLang, translationLevel: 'expert' }), standard, `${targetLang}: unknown level`);
+    assert.notEqual(await prompt({ targetLang, translationLevel: 'advanced' }), standard, `${targetLang}: advanced`);
+  }
+  assert.match(await prompt({ targetLang: 'ko', translationLevel: 'advanced' }), /formal written-style/);
+});
+
 test('translate includes previous lines as context', async () => {
   const { body } = await translate({}, { prev: [{ src: 'Hello.', ja: 'こんにちは。' }] });
   assert.match(body.messages[0].content, /Hello\.\n=> こんにちは。/);

@@ -115,7 +115,7 @@ voicevox.lan:50443 {
 | `zh-CN` | 간체 중국어 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 한국어 | `ko-KR-SunHiNeural` |
 
-`translationLevel`은 번역문의 난이도를 정합니다: `standard`(기본값), `easy`(학습자를 위한 쉬운 단어와 짧은 문장. 일본어는 JLPT N5~N3 수준), `advanced`(더 정확하고 격식 있는 표현. 일본어는 JLPT N3~N1 수준). 의미와 전문 용어는 바뀌지 않습니다.
+`translationLevel`은 번역문의 난이도를 정합니다: `standard`(기본값), `easy`(학습자를 위한 쉬운 단어와 짧은 문장. 일본어는 JLPT N5~N3 수준), `advanced`(더 정확하고 격식 있는 표현. 일본어는 JLPT N3~N1 수준). 의미와 전문 용어는 바뀌지 않습니다. 번역 프롬프트에 규칙을 한 줄 추가할 뿐이므로 얼마나 지켜지는지는 모델에 따라 다릅니다.
 
 `voiceGender`(`female` 또는 `male`)로 음성을 고릅니다:
 

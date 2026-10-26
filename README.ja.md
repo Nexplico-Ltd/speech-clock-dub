@@ -115,7 +115,7 @@ voicevox.lan:50443 {
 | `zh-CN` | 簡体字中国語 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 韓国語 | `ko-KR-SunHiNeural` |
 
-`translationLevel` は訳文の難しさを決めます: `standard`（既定）、`easy`（学習者向けのやさしい語と短い文。日本語では JLPT N5〜N3 程度）、`advanced`（より正確でかたい表現。日本語では JLPT N3〜N1 程度）。意味と専門用語は変わりません。
+`translationLevel` は訳文の難しさを決めます: `standard`（既定）、`easy`（学習者向けのやさしい語と短い文。日本語では JLPT N5〜N3 程度）、`advanced`（より正確でかたい表現。日本語では JLPT N3〜N1 程度）。意味と専門用語は変わりません。翻訳プロンプトに規則を1行足すだけなので、どこまで守られるかはモデルしだいです。
 
 `voiceGender`（`female` または `male`）で声を選びます:
 

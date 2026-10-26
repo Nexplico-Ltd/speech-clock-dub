@@ -8,11 +8,11 @@ const YTD_LANGS = {
     style: 'natural spoken Japanese (polite desu/masu style)',
     voices: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
     google: { code: 'ja-JP', voices: { female: 'ja-JP-Wavenet-B', male: 'ja-JP-Wavenet-C' } },
-    // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
     levels: {
       easy: 'Use simple Japanese for learners at about JLPT N5 to N3: common words, short sentences, and plain explanations of difficult words instead of rare kanji compounds.',
       advanced: 'Use more advanced Japanese at about JLPT N3 to N1: precise vocabulary, kanji compounds and formal written-style expressions where they fit.',
     },
+    // Observed mistranslation: "Welcome back" came out as 「お帰りください」 ("please go home").
     extraRule:
       '"Welcome back" is a greeting to returning viewers: say 「引き続き…へようこそ」 or 「おかえりなさい」, never 「お帰りください」.',
   },

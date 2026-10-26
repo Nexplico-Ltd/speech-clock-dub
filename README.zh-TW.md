@@ -115,7 +115,7 @@ voicevox.lan:50443 {
 | `zh-CN` | 簡體中文 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 韓文 | `ko-KR-SunHiNeural` |
 
-`translationLevel` 決定譯文的難度：`standard`（預設）、`easy`（給學習者的簡單詞彙和短句；日文約 JLPT N5～N3）、`advanced`（更精確、較正式的用語；日文約 JLPT N3～N1）。意思和專業術語不會改變。
+`translationLevel` 決定譯文的難度：`standard`（預設）、`easy`（給學習者的簡單詞彙和短句；日文約 JLPT N5～N3）、`advanced`（更精確、較正式的用語；日文約 JLPT N3～N1）。意思和專業術語不會改變。這只是在翻譯提示中加一條規則，遵守的程度取決於模型。
 
 `voiceGender`（`female` 或 `male`）用來選擇聲音：
 
