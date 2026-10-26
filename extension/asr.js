@@ -8,6 +8,16 @@ const YTD_ASR = (() => {
   const MIN_SENTENCE_WORDS = 3;
   const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
+  // Non-speech annotations in captions: "[Music]", "[Applause]", "(upbeat music)", "♪". Dubbing them would
+  // make the voice read "music" aloud. Square brackets are removed whatever they hold; round brackets only
+  // when they name a sound, so "(a + b)" and "(see Figure 2)" stay. Note symbols go, the lyrics next to
+  // them stay.
+  const SOUND_WORDS =
+    'music|applause|laughter|laughs|laughing|cheering|cheers|clapping|singing|noise|silence|sighs|coughs|' +
+    'inaudible|crosstalk|chatter|beeping|bell|sound';
+  const ANNOTATION = new RegExp(`\\[[^\\]]{0,60}\\]|\\([^()]{0,30}\\b(?:${SOUND_WORDS})\\b[^()]{0,30}\\)|[♪♫♬]+`, 'giu');
+  const stripSounds = (text) => text.replace(ANNOTATION, ' ').replace(/\s+/g, ' ').trim();
+
   // YouTube's ASR json3 repeats words across events; flatten to words with absolute start times and
   // keep each word once (start times must strictly increase). A word ends when the next one starts,
   // or 0.8 s after it began.
@@ -17,7 +27,7 @@ const YTD_ASR = (() => {
     for (const e of events) {
       if (!e.segs) continue;
       for (const s of e.segs) {
-        const text = s.utf8.replace(/\s+/g, ' ').trim();
+        const text = stripSounds(s.utf8);
         if (!text) continue;
         const start = (e.tStartMs + (s.tOffsetMs ?? 0)) / 1000;
         if (start <= last) continue;
@@ -142,5 +152,5 @@ const YTD_ASR = (() => {
     return out;
   }
 
-  return { words, windows, trusted, align, encodeFlags, decodeFlags, cues };
+  return { stripSounds, words, windows, trusted, align, encodeFlags, decodeFlags, cues };
 })();

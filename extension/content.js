@@ -137,7 +137,7 @@
             .map((e) => ({
               start: e.tStartMs / 1000,
               end: (e.tStartMs + (e.dDurationMs ?? 0)) / 1000,
-              text: e.segs.map((s) => s.utf8).join('').trim(),
+              text: YTD_ASR.stripSounds(e.segs.map((s) => s.utf8).join('')),
             }));
     frags = dialogue ? YTD_SPK.split(frags) : frags.map((f) => ({ ...f, text: f.text.replace(/\s+/g, ' ') }));
     frags = frags.filter((f) => f.text);
