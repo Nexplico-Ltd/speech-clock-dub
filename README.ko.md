@@ -148,11 +148,12 @@ voicevox.lan:50443 {
 
 ## 예시 강의
 
-이 확장 프로그램은 슬라이드 위주의 강의를 위해 만들었습니다. 사용해 볼 수 있는 재생목록 세 개와 팟캐스트 한 편입니다.
+이 확장 프로그램은 슬라이드 위주의 강의를 위해 만들었습니다. 사용해 볼 수 있는 재생목록 네 개와 팟캐스트 한 편입니다.
 
 - Adi Teman의 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)(Bar-Ilan University 83-313, 영상 66편). 확인한 강의에는 수동 영어 자막이 있어, 가장 잘 지원되는 경우입니다.
 - Tony Chan Carusone 교수의 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)(Microelectronics 채널의 대학원 수준 영상 37편). 이 영상들에는 자동 생성된 영어 자막만 있는데, 이는 테스트가 가장 적은 경로입니다(아래 "알려진 제한 사항 / TODO" 참고).
 - Razavi의 [강의 재생목록](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO). 자막은 아직 확인하지 않았으며, 테스트하지 않았습니다.
+- 또 다른 [강의 재생목록](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3). 자막은 아직 확인하지 않았으며, 테스트하지 않았습니다.
 - Lex Fridman Podcast의 [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)(슬라이드가 없는 2시간 26분 대담, 영어 자막 있음). 길고 음성 위주인 영상에서의 동작을 볼 수 있지만, 위의 강의만큼 테스트하지는 않았습니다.
 
 수동 자막이 있는 영상이 더 잘 동작합니다. 이 영상들은 이 프로젝트의 일부가 아니며 제작자와도 관련이 없습니다. 제작자의 권리를 존중하여, 허락 없이 더빙한 사본을 다시 공개하지 마세요.
