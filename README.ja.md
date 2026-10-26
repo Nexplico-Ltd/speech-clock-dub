@@ -155,7 +155,7 @@ voicevox.lan:50443 {
 - Adi Teman 氏の [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313、66 本）。確認した講義には手動の英語字幕があり、もっとも対応が進んでいるケースです。
 - Tony Chan Carusone 教授の [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics チャンネルの大学院レベルの動画 37 本）。これらの動画には自動生成の英語字幕しかなく、最もテストが少ない経路です（下の「既知の制限 / TODO」を参照）。
 - Razavi 氏の [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO)（講義）。字幕はまだ確認しておらず、未テストです。
-- ETH Zürich の [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（ライブ配信の講義）。字幕はまだ確認しておらず、未テストです。
+- ETH Zürich の Onur Mutlu 教授の [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（ライブ配信の講義）。字幕はまだ確認しておらず、未テストです。
 - Lex Fridman Podcast の [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)（スライドのない 2 時間 26 分の対談、英語字幕あり）。長い音声中心の動画での動作を見られますが、上の講義ほどテストしていません。
 
 手動字幕のある動画のほうが、うまく動きます。これらの動画はこのプロジェクトの一部ではなく、制作者とも無関係です。制作者の権利を尊重し、許可なく吹き替えたコピーを再公開しないでください。
