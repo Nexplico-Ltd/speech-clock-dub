@@ -127,6 +127,7 @@ test('stripSounds removes sound annotations and keeps real text', () => {
   assert.equal(s('♪ ♪'), '');
   assert.equal(s('♪ la la ♪'), 'la la');
   assert.equal(s('Compute (a + b) first (see Figure 2).'), 'Compute (a + b) first (see Figure 2).');
+  assert.equal(s('The thermal noise (white noise) limits it.'), 'The thermal noise (white noise) limits it.', 'technical terms stay');
 });
 
 test('words and sentence cues drop annotation-only segments', () => {
