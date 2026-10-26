@@ -150,10 +150,12 @@ voicevox.lan:50443 {
 
 ## 示例课程视频
 
-这个扩展程序面向以幻灯片为主的讲课视频。以下两个播放列表和一期播客可以拿来试用：
+这个扩展程序面向以幻灯片为主的讲课视频。以下四个播放列表和一期播客可以拿来试用：
 
 - Adi Teman 的 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313，共 66 个视频）。我们检查过的课程都有手动的英文字幕，是支持最完善的情况。
 - Tony Chan Carusone 教授的 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics 频道上 37 个研究生水平的视频）。这些视频只有自动生成的英文字幕，这是测试最少的路径（见下方的“已知限制 / TODO”）。
+- Razavi 的 [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO)（课程）。我们尚未检查其字幕，请视为未经测试。
+- ETH Zürich 的 [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（直播课程）。我们尚未检查其字幕，请视为未经测试。
 - Lex Fridman Podcast 的 [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)（没有幻灯片的 2 小时 26 分钟对谈，有英文字幕）。可以用它看看在较长的纯语音视频上的表现，但测试不如上面的课程充分。
 
 有手动字幕的视频效果更好。这些视频不属于本项目，本项目与其作者也没有关联。请尊重作者的权利，未经许可不要重新发布配音后的副本。
