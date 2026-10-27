@@ -148,6 +148,8 @@ voicevox.lan:50443 {
 
 **Firefox(128 이상):** `about:debugging#/runtime/this-firefox`를 열고 "임시 부가 기능 로드..."로 `extension/manifest.json`을 선택합니다. 임시 부가 기능은 Firefox를 종료하면 제거됩니다. 같은 파일이 두 브라우저에서 동작합니다(Chrome은 `background.service_worker`, Firefox는 `background.scripts`를 사용). 호스트 권한은 설치할 때 확인하며 `about:addons`의 확장 기능 "권한"에서 취소할 수 있습니다. 옵션 페이지는 `about:addons`의 "설정"에서 엽니다.
 
+**Android(Firefox for Android, 실험적):** `m.youtube.com`도 지원하며, HUD 버튼과 옵션 페이지는 터치용 크기입니다. 아직 실제 기기에서는 시험하지 않았습니다. 시험하려면 휴대폰에서 USB 디버깅을 켜고 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`를 실행합니다(id는 `adb devices`로 확인). 휴대폰에 연결한 데스크톱 Firefox의 `about:debugging`에서 불러올 수도 있습니다. Chrome for Android는 확장 프로그램을 지원하지 않습니다. 기본 호스팅 구성(Gemini와 Google TTS)은 API 키만 있으면 휴대폰에서 동작합니다. 로컬 LLM, VOICEVOX, edge-tts 브리지는 같은 네트워크의 컴퓨터에서 실행하고 `llmBaseUrl`, `voicevoxUrl`, `edgeUrl`에 그 LAN 주소를 넣습니다. 브라우저가 백그라운드로 가거나 화면이 잠기면 음성이 멈춥니다. iOS에는 별도의 Safari Web Extension이 필요하며 아직 지원하지 않습니다.
+
 ## 예시 강의
 
 이 확장 프로그램은 슬라이드 위주의 강의를 위해 만들었습니다. 사용해 볼 수 있는 재생목록 네 개와 팟캐스트 한 편입니다.

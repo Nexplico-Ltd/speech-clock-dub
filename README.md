@@ -226,6 +226,15 @@ The same files run on both browsers: Chrome uses `background.service_worker`, Fi
 `background.scripts`. Firefox asks for the host permissions at install time; they can be revoked in
 `about:addons` > the extension > Permissions. The options page is under `about:addons` > Preferences.
 
+**Android (Firefox for Android, experimental):** the extension also matches `m.youtube.com`, and the HUD
+buttons and the options page are touch-sized. It has not been tested on a device yet. To try it, enable USB
+debugging on the phone and run `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`
+(`adb devices` lists the id), or load it from `about:debugging` in a desktop Firefox connected to the phone.
+Chrome for Android does not support extensions. The hosted defaults (Gemini and Google TTS) work on a phone with
+just the API keys; a local LLM, VOICEVOX or the edge-tts bridge must run on a computer on the same network,
+with its LAN address in `llmBaseUrl`, `voicevoxUrl` and `edgeUrl`. Audio stops when the browser goes to the
+background or the screen locks. iOS needs a separate Safari Web Extension and is not supported yet.
+
 ## Example lectures
 
 The extension is meant for slide-based lectures. Four playlists and one podcast episode you can try it on:
