@@ -73,6 +73,8 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
    `--port` 可變更連接埠（之後請同步更新 `edgeUrl`）。每句約需 2-3 秒；緩衝填滿之後，平行的 producer 會把這段延遲遮掉，但第一次開始播放會比 VOICEVOX 久。
 
+   如果合成以 `403 Invalid response status` 失敗，代表 Microsoft 的服務已變更，而你的 edge-tts 已過時：請執行 `.venv/bin/pip install -U edge-tts` 並重新啟動橋接程式。
+
 ## 設定檔
 
 選項頁面的 **Profile** 欄可以切換整組設定，例如在筆電上用雲端託管設定、在家裡用本機伺服器。內建了一些設定檔（見下表）。**Load** 會把所選設定檔載入表單，**Save** 才會套用。設定檔會決定 API 金鑰以外的所有設定：沒有列出的設定會回到預設值，所以 Load 之後請先確認語言和聲音再 Save。**Save as profile** 會以你輸入的名稱儲存目前的表單（會儲存 API 金鑰以外的所有設定，所以之後預設值改變時，設定檔的意義也不會變），**Delete** 會刪除你自己建立的設定檔，**Export file** / **Import file** 可以用 JSON 檔把設定檔搬到另一個瀏覽器。API 金鑰不屬於任何設定檔：所有設定檔共用，也不會被匯出或匯入。設定檔存放在 `chrome.storage.sync`，每個設定檔一個項目。

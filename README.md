@@ -113,6 +113,9 @@ otherwise), `voicevox` or `edge`.
    `--port` changes the port (then update `edgeUrl`). Expect 2-3 s per sentence; the parallel
    producer hides this once the buffer has filled, but the first start takes longer than with VOICEVOX.
 
+   If synthesis fails with `403 Invalid response status`, Microsoft has changed its service and your
+   edge-tts is out of date: run `.venv/bin/pip install -U edge-tts` and restart the bridge.
+
 ## Profiles
 
 The options page has a **Profile** box for switching between whole configurations, for example the hosted
