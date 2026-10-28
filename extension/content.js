@@ -300,7 +300,7 @@
 
   // ---------- playback scheduler ----------
 
-  const adShowing = () => !!document.querySelector('#movie_player.ad-showing');
+  const adShowing = () => !!document.querySelector('.html5-video-player.ad-showing');
 
   function hold() {
     const v = state.video;
@@ -621,9 +621,12 @@
   const SUB_MODES = ['off', 'translated', 'both'];
   let hud, btn, statusEl, subBtn, subEl, subJa, subSrc, subMeasure;
 
+  // The desktop and mobile watch pages both use YouTube's html5 player; #movie_player is its usual id.
+  const findPlayer = () => document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
+
   function ensureHud() {
     if (hud?.isConnected) return;
-    const player = document.getElementById('movie_player');
+    const player = findPlayer();
     if (!player) return;
     // Keep clear of YouTube's own chrome: the title bar (top, fullscreen and embeds) and the control bar
     // (bottom). The HUD sits below the title bar and fades out together with the controls.
@@ -631,9 +634,11 @@
       const style = document.createElement('style');
       style.id = 'ytd-style';
       style.textContent =
-        '#movie_player.ytp-fullscreen .ytd-hud,#movie_player.ytp-embed .ytd-hud{top:64px!important}' +
-        '#movie_player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}' +
-        '.ytd-hud{transition:opacity .25s}';
+        '.html5-video-player.ytp-fullscreen .ytd-hud,.html5-video-player.ytp-embed .ytd-hud{top:64px!important}' +
+        '.html5-video-player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}' +
+        '.ytd-hud{transition:opacity .25s}' +
+        // Touch screens: larger tap targets for the HUD buttons.
+        '@media (pointer:coarse){.ytd-hud button{font-size:15px!important;padding:8px 14px!important;min-height:36px}}';
       document.head.append(style);
     }
     hud = document.createElement('div');
@@ -750,7 +755,7 @@
       return;
     }
 
-    const width = document.getElementById('movie_player')?.clientWidth ?? 800;
+    const width = findPlayer()?.clientWidth ?? 800;
     const both = S.subtitles === 'both' && !!cue;
     const key = `${state.idx}|${both}|${S.subtitleMaxLines}|${width}`;
     if (state.subKey !== key) {
@@ -800,8 +805,19 @@
 
   setInterval(ensureHud, 1000);
   // Leaving the watch page (SPA navigation) invalidates the cues.
-  document.addEventListener('yt-navigate-start', () => {
+  const leaveVideo = () => {
     state.local = null;
     if (state.active) stop();
-  });
+  };
+  document.addEventListener('yt-navigate-start', leaveVideo);
+  document.addEventListener('state-navigatestart', leaveVideo); // m.youtube.com
+  // Fallback for pages that fire neither event: the video id in the address changed.
+  let watchedId = new URLSearchParams(location.search).get('v');
+  setInterval(() => {
+    const id = new URLSearchParams(location.search).get('v');
+    if (id !== watchedId) {
+      watchedId = id;
+      if (state.active) leaveVideo();
+    }
+  }, 1000);
 })();

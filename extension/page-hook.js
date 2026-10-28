@@ -48,7 +48,7 @@
     const key = `${videoId}|${track.languageCode}`;
     // The player may have loaded this track already (e.g. captions were switched on).
     if (captured.has(key)) return captured.get(key);
-    const player = document.getElementById('movie_player');
+    const player = document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
     const ccBtn = document.querySelector('.ytp-subtitles-button');
     const wasOn = ccBtn?.getAttribute('aria-pressed') === 'true';
     const request = () => {
@@ -74,7 +74,7 @@
     const { reqId, lang } = e.data;
     const reply = (payload) => window.postMessage({ type: 'ytd:captions', reqId, ...payload }, '*');
     try {
-      const player = document.getElementById('movie_player');
+      const player = document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
       const resp = player?.getPlayerResponse?.() ?? window.ytInitialPlayerResponse;
       const tracks = resp?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
       if (!tracks.length) throw new Error('This video has no caption tracks');
