@@ -95,6 +95,25 @@ test('one- and two-word sentences are merged into the next one', () => {
   assert.deepEqual(plain(ASR.cues(words, flags, opts)).map((c) => c.text), ['okay so now we start', 'the proof here']);
 });
 
+test('conjunctions at the tail of a cue move to the head of the next one', () => {
+  const words = mk(['we', 'apply', 'the', 'bias', 'and', 'so', 'the', 'current', 'flows']);
+  const flags = noFlags(9);
+  flags[5] = { end: false, clause: true };
+  assert.deepEqual(plain(ASR.cues(words, flags, { ...opts, maxCueChars: 20 })).map((c) => c.text), [
+    'we apply the bias',
+    'and so the current flows',
+  ]);
+});
+
+test('a conjunction before a long pause or a sentence end stays where it is', () => {
+  const gap = [...mk(['x', 'y', 'and']), { start: 20, end: 20.3, text: 'z' }];
+  assert.deepEqual(plain(ASR.cues(gap, noFlags(4), opts)).map((c) => c.text), ['x y and', 'z']);
+  const words = mk(['it', 'is', 'so', 'now', 'we', 'go']);
+  const flags = noFlags(6);
+  flags[2] = { end: true, clause: false };
+  assert.deepEqual(plain(ASR.cues(words, flags, opts)).map((c) => c.text), ['it is so', 'now we go']);
+});
+
 test('where punctuation is known the length limit is relaxed', () => {
   const words = mk(['aaaa', 'bbbb', 'cccc', 'dddd', 'eeee', 'ffff', 'gggg', 'hhhh']); // 40 chars
   const known = new Array(8).fill({ end: false, clause: false });

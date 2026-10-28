@@ -6,6 +6,11 @@
 // windows, check the model's answer against the original words, and cut cues at sentence ends.
 const YTD_ASR = (() => {
   const MIN_SENTENCE_WORDS = 3;
+  // Words that start a clause. When a cue is cut right after one ("... and" | "we then ..."), it is
+  // moved to the head of the next cue, where the speech and the translation read naturally.
+  const LEADING_WORDS = new Set(
+    'and but or so because which then while although though if when whereas since where'.split(' '),
+  );
   const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
   // Non-speech annotations in captions: "[Music]", "[Applause]", "(upbeat music)", "♪". Dubbing them would
@@ -126,13 +131,13 @@ const YTD_ASR = (() => {
   // case only the gap and length rules apply. A cue that gets too long without a sentence end is cut
   // at its last clause boundary or pause, if that leaves a reasonable part, else where it is.
   function cues(allWords, flags, { maxGapSec, maxCueChars }) {
-    const out = [];
+    const parts = []; // { words, last: index in allWords of the cue's final word }
     const cur = [];
     let soft = 0; // words of `cur` up to the last clause boundary or pause
     const flush = (n = cur.length) => {
       if (!n) return;
       const part = cur.splice(0, n);
-      out.push({ start: part[0].start, end: part.at(-1).end, text: part.map((w) => w.text).join(' ') });
+      parts.push({ words: part, last: allWords.indexOf(part.at(-1)) });
       soft = 0;
     };
     const charsOf = (n) => cur.slice(0, n).reduce((sum, w) => sum + w.text.length + 1, 0);
@@ -149,7 +154,28 @@ const YTD_ASR = (() => {
       if (charsOf(cur.length) >= limit) flush(soft > 0 && charsOf(soft) >= limit * 0.4 ? soft : cur.length);
     });
     flush();
-    return out;
+    return moveLeadingWords(parts, flags, maxGapSec).map(({ words: part }) => ({
+      start: part[0].start,
+      end: part.at(-1).end,
+      text: part.map((w) => w.text).join(' '),
+    }));
+  }
+
+  // Hands conjunctions stranded at the tail of a cue over to the head of the next one. Cues cut by
+  // the length or gap rules often end on "and" / "but" / "because"; the clause they introduce is in
+  // the next cue. Real sentence ends and cuts at a long pause are left alone, and a cue keeps at
+  // least two words.
+  function moveLeadingWords(parts, flags, maxGapSec) {
+    for (let i = 0; i < parts.length - 1; i++) {
+      const [a, b] = [parts[i], parts[i + 1]];
+      if (flags[a.last]?.end || b.words[0].start - a.words.at(-1).end > maxGapSec) continue;
+      let n = 0;
+      while (a.words.length - n > 2 && LEADING_WORDS.has(norm(a.words.at(-1 - n).text))) n++;
+      if (!n) continue;
+      b.words.unshift(...a.words.splice(-n));
+      a.last -= n;
+    }
+    return parts;
   }
 
   return { stripSounds, words, windows, trusted, align, encodeFlags, decodeFlags, cues };
