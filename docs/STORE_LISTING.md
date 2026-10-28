@@ -21,15 +21,15 @@ Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesize
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
 
-IMPORTANT: this is a tool for people who can run local servers. It does not include a translation or
-speech service. Before it does anything you need:
+IMPORTANT: it does not include a translation or speech service. Before it does anything you need:
 
-- an OpenAI-compatible LLM endpoint (for example the Unsloth service, or any compatible local server)
-  for translation;
-- VOICEVOX (free, runs locally) for Japanese speech, and/or the small edge-tts bridge from the project
-  repository for other languages.
+- by default, your own API keys for Google's Gemini API (translation) and Google Cloud Text-to-Speech
+  (voice). Both are paid services with a free quota;
+- or, instead, servers that you run: an OpenAI-compatible LLM endpoint (for example the Unsloth service)
+  for translation, and VOICEVOX (free, runs locally) for Japanese speech and/or the small edge-tts bridge
+  from the project repository for other languages.
 
-Setup instructions: https://github.com/Nexplico-Ltd/speech-clock-dub#requirements
+Setup instructions: https://github.com/Nexplico-Ltd/speech-clock-dub#setup
 
 Features
 
@@ -38,14 +38,15 @@ Features
 - Optional on-screen translated subtitles.
 - Optional alternating voices for dialogue, from caption speaker markers or labelled by the LLM
   (experimental).
-- Optional Google Cloud Text-to-Speech as a voice provider (the user's own API key).
-- Everything runs against servers you choose. Out of the box the extension talks only to localhost.
+- Google Cloud Text-to-Speech as the default voice provider (your own API key), or VOICEVOX / edge-tts.
+- Everything runs against the services you choose. Out of the box the extension talks only to Google's
+  Gemini and Cloud Text-to-Speech APIs, with your own keys; localhost servers are an alternative.
 
 Privacy
 
-The extension has no server and no analytics. Caption text goes only to the servers you configure. The
-optional edge-tts bridge and the optional Google provider send translated text to Microsoft's and
-Google's speech services, which is stated in the setup instructions. Full policy:
+The extension has no server and no analytics. The captions of the video you dub, and their translation,
+go only to the services you configure: by default Google (Gemini and Cloud Text-to-Speech) with your own
+API keys. The optional edge-tts bridge sends translated text to Microsoft's speech service. Full policy:
 https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 Open source (Apache-2.0): https://github.com/Nexplico-Ltd/speech-clock-dub
@@ -56,20 +57,21 @@ voices you use.
 ## Single purpose
 
 Dub the YouTube video the user is watching into another language, using the user's own translation and
-speech servers, and keep the video in step with the generated speech.
+speech services, and keep the video in step with the generated speech.
 
 ## Permission justifications
 
-- **`storage`**: saves the user's settings (server addresses, languages, voices) and a small per-video
-  cache of punctuation flags.
+- **`storage`**: saves the user's settings (service addresses, languages, voices, API keys) and a small
+  per-video cache of punctuation flags.
 - **Host permission `http://localhost/*` and `http://127.0.0.1/*`**: the extension's background service
   worker calls the user's local LLM, VOICEVOX and edge-tts bridge servers.
-- **Host permission `https://texttospeech.googleapis.com/*`**: used only when the user selects the Google
-  provider and enters their own API key; the service worker sends the translated text to Google Cloud
-  Text-to-Speech. Nothing is sent there by default.
+- **Host permissions `https://generativelanguage.googleapis.com/*` and `https://texttospeech.googleapis.com/*`**:
+  the default translation (Gemini) and voice (Google Cloud Text-to-Speech) services. The service worker
+  sends the caption text and the translated text there, with the user's own API keys. Nothing is sent
+  until the user enters a key and starts a dub.
 - **Optional host permissions `http://*/*` and `https://*/*`**: not granted at install. When the user types
-  the address of their own LLM / VOICEVOX / edge-tts server on another machine (for example a GPU box on
-  the local network) and presses Save, the options page asks Chrome for access to that single host, so
+  the address of another service (a hosted OpenAI-compatible LLM, or their own LLM / VOICEVOX / edge-tts
+  server on another machine, for example a GPU box on the local network) and presses Save, the options page asks Chrome for access to that single host, so
   the user can approve or deny it. No other hosts are requested.
 - **Content script on `https://www.youtube.com/*`**: reads the caption track of the video being dubbed,
   controls the video's playback rate and pause state, and draws the Dub / Sub buttons and subtitles on
@@ -78,21 +80,24 @@ speech servers, and keep the video in step with the generated speech.
 
 ## Data usage disclosures (privacy practices tab)
 
-- Collects: website content (video captions) and, if the user enters one, an authentication
-  credential (LLM API key). Both stay on the user's device or go only to the servers the user configures.
+- Collects: website content (video captions) and, if the user enters them, authentication credentials
+  (LLM and Google API keys). Both stay on the user's device or go only to the services the user configures
+  (by default Google's Gemini and Cloud Text-to-Speech).
 - Not sold, not used for anything unrelated to the single purpose, not used for creditworthiness or
   lending.
 - Privacy policy URL: https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 ## Notes for reviewers
 
-The extension needs local servers, so it will not do anything on a clean machine. To verify it:
+The extension needs a translation service and a speech service, so it will not do anything on a clean
+profile. To verify it:
 
 1. Install the extension and open its options page.
-2. Run an OpenAI-compatible chat server (for example llama.cpp's `llama-server`, or the Unsloth service
-   the project was developed with) and set `llmBaseUrl` (ending in `/v1`) and `llmModel`.
-3. Run VOICEVOX: `docker run --rm -p 50021:50021 voicevox/voicevox_engine:cpu-latest`.
-4. Open a video with captions, for example https://www.youtube.com/watch?v=vif8NQcjVf0, and click
+2. Paste test API keys into `llmApiKey` (Gemini) and `googleApiKey` (Google Cloud Text-to-Speech).
+   TODO: create keys restricted to those two APIs with a low quota, and revoke them after the review.
+   (Alternatively run an OpenAI-compatible chat server and VOICEVOX locally, set `llmBaseUrl`, `llmModel`
+   and `ttsProvider`, as described in the README.)
+3. Open a video with captions, for example https://www.youtube.com/watch?v=vif8NQcjVf0, and click
    **Dub (ja)** at the top left of the player.
 
 A screen recording of this flow (video only, no sound) is linked in the "Additional instructions"
