@@ -637,8 +637,14 @@
         '.html5-video-player.ytp-fullscreen .ytd-hud,.html5-video-player.ytp-embed .ytd-hud{top:64px!important}' +
         '.html5-video-player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}' +
         '.ytd-hud{transition:opacity .25s}' +
-        // Touch screens: larger tap targets for the HUD buttons.
-        '@media (pointer:coarse){.ytd-hud button{font-size:15px!important;padding:8px 14px!important;min-height:36px}}';
+        // Touch screens: larger tap targets, and the HUD stays visible and above the player's tap overlay
+        // (there is no hover to bring auto-hidden controls back).
+        '@media (pointer:coarse){.ytd-hud button{font-size:15px!important;padding:8px 14px!important;min-height:36px}' +
+        '.html5-video-player.ytp-autohide .ytd-hud{opacity:1!important}' +
+        '.ytd-hud{z-index:2147483647!important}' +
+        // Hidden after a few idle seconds (see below); a hidden HUD must not eat the tap that wakes it.
+        '.ytd-hud.ytd-idle,.html5-video-player.ytp-autohide .ytd-hud.ytd-idle{opacity:0!important}' +
+        '.ytd-hud.ytd-idle button{pointer-events:none!important}}';
       document.head.append(style);
     }
     hud = document.createElement('div');
@@ -709,7 +715,21 @@
       'line-height:1.4;white-space:pre-wrap;padding:0;';
 
     hud.append(btn, loadBtn, fileInput, subBtn, statusEl);
-    player.append(hud, subEl, subMeasure);
+    // The mobile player handles touches itself (toggling its controls, swallowing the click), so keep
+    // touches on the HUD from reaching it.
+    for (const type of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'mousedown', 'mouseup']) {
+      hud.addEventListener(type, (e) => e.stopPropagation());
+    }
+    player.append(subEl, subMeasure);
+    // m.youtube.com draws its touch controls in a sibling of the player, on top of everything inside it, so
+    // the HUD has to live next to them to receive taps.
+    const touchHost = location.hostname === 'm.youtube.com' ? player.closest('.player-container') : null;
+    if (touchHost) {
+      hud.style.top = '64px';
+      touchHost.append(hud);
+    } else {
+      player.append(hud);
+    }
     btn.addEventListener('click', async () => {
       if (state.active) return stop();
       if (state.starting) {
@@ -804,6 +824,26 @@
   chrome.storage.onChanged.addListener(refreshSettings);
 
   setInterval(ensureHud, 1000);
+
+  // Touch screens are small, so the HUD fades out after a few idle seconds and returns on any touch.
+  if (matchMedia('(pointer:coarse)').matches) {
+    const HUD_IDLE_MS = 4000;
+    let idleTimer;
+    const wake = () => {
+      hud?.classList.remove('ytd-idle');
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => hud?.classList.add('ytd-idle'), HUD_IDLE_MS);
+    };
+    // Capture phase, so the player cannot swallow the touch first.
+    for (const type of ['touchstart', 'pointerdown']) window.addEventListener(type, wake, { capture: true, passive: true });
+    setInterval(() => {
+      // A freshly created HUD (new page, fullscreen) starts visible and gets its own countdown.
+      if (hud && !hud.dataset.ytdSeen) {
+        hud.dataset.ytdSeen = '1';
+        wake();
+      }
+    }, 500);
+  }
   // Leaving the watch page (SPA navigation) invalidates the cues.
   const leaveVideo = () => {
     state.local = null;

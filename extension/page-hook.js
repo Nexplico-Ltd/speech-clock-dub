@@ -51,6 +51,9 @@
     const player = document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
     const ccBtn = document.querySelector('.ytp-subtitles-button');
     const wasOn = ccBtn?.getAttribute('aria-pressed') === 'true';
+    // m.youtube.com only loads the captions module once the video has started (-1 unstarted, 5 cued).
+    const startedHere = [-1, 5].includes(player?.getPlayerState?.());
+    if (startedHere) player.playVideo?.();
     const request = () => {
       player?.loadModule?.('captions');
       player?.setOption?.('captions', 'track', { languageCode: track.languageCode });
@@ -64,6 +67,7 @@
         request();
       }
     }
+    if (startedHere) player.pauseVideo?.();
     // Leave the player's caption state as we found it.
     if (!wasOn && ccBtn?.getAttribute('aria-pressed') === 'true') ccBtn.click();
     return captured.get(key) ?? '';
@@ -86,7 +90,8 @@
         tracks.find((t) => t.kind !== 'asr') ??
         tracks[0];
 
-      const url = new URL(track.baseUrl);
+      // m.youtube.com gives a relative path here.
+      const url = new URL(track.baseUrl, location.href);
       url.searchParams.set('fmt', 'json3');
       const res = await fetch(url);
       let text = res.ok ? await res.text() : '';

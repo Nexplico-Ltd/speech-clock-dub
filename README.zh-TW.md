@@ -150,7 +150,7 @@ voicevox.lan:50443 {
 
 **Firefox（128 以上）：** 開啟 `about:debugging#/runtime/this-firefox`，按「載入暫時性附加元件...」並選擇 `extension/manifest.json`。暫時性附加元件會在 Firefox 結束時移除。兩個瀏覽器使用同一份檔案（Chrome 使用 `background.service_worker`，Firefox 使用 `background.scripts`）。主機權限會在安裝時詢問，可在 `about:addons` 的擴充功能「權限」中撤銷。選項頁面在 `about:addons` 的「偏好設定」。 已在 Linux 上的 Firefox 測試通過。
 
-**Android（Firefox for Android，實驗性）：** 也支援 `m.youtube.com`，HUD 按鈕和選項頁面已調整為適合觸控的大小。尚未在實機上測試。要試用，請在手機上開啟 USB 偵錯，執行 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`（id 可用 `adb devices` 查看），或從連接手機的桌面版 Firefox 的 `about:debugging` 載入。Chrome for Android 不支援擴充功能。預設的雲端組合（Gemini 與 Google TTS）只要有 API 金鑰就能在手機上運作；本機的 LLM、VOICEVOX 或 edge-tts 橋接必須在同一網路的電腦上執行，並把它的區域網路位址填入 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl`。瀏覽器進入背景或螢幕鎖定時，聲音會停止。iOS 需要另外的 Safari Web Extension，目前尚未支援。
+**Android（Firefox for Android，實驗性）：** 也支援 `m.youtube.com`，HUD 按鈕和選項頁面已調整為適合觸控的大小。已在實機（Firefox for Android）上用預設的雲端組合測試通過。要試用，請在手機上開啟 USB 偵錯，執行 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`（id 可用 `adb devices` 查看），或從連接手機的桌面版 Firefox 的 `about:debugging` 載入。Chrome for Android 不支援擴充功能。預設的雲端組合（Gemini 與 Google TTS）只要有 API 金鑰就能在手機上運作；本機的 LLM、VOICEVOX 或 edge-tts 橋接必須在同一網路的電腦上執行，並把它的區域網路位址填入 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl`。瀏覽器進入背景或螢幕鎖定時，聲音會停止。iOS 需要另外的 Safari Web Extension，目前尚未支援。
 
 ## 範例講課影片
 

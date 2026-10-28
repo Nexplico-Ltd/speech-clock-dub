@@ -231,7 +231,7 @@ The same files run on both browsers: Chrome uses `background.service_worker`, Fi
 running on Linux.
 
 **Android (Firefox for Android, experimental):** the extension also matches `m.youtube.com`, and the HUD
-buttons and the options page are touch-sized. It has not been tested on a device yet. To try it, enable USB
+buttons and the options page are touch-sized. It has been tested on a real phone (Firefox for Android) with the hosted defaults. To try it, enable USB
 debugging on the phone and run `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`
 (`adb devices` lists the id), or load it from `about:debugging` in a desktop Firefox connected to the phone.
 Chrome for Android does not support extensions. The hosted defaults (Gemini and Google TTS) work on a phone with
