@@ -227,7 +227,8 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
 Add-on..." and select `extension/manifest.json`. Temporary add-ons are removed when Firefox quits.
 The same files run on both browsers: Chrome uses `background.service_worker`, Firefox uses
 `background.scripts`. Firefox asks for the host permissions at install time; they can be revoked in
-`about:addons` > the extension > Permissions. The options page is under `about:addons` > Preferences.
+`about:addons` > the extension > Permissions. The options page is under `about:addons` > Preferences. Tested on Firefox
+running on Linux.
 
 **Android (Firefox for Android, experimental):** the extension also matches `m.youtube.com`, and the HUD
 buttons and the options page are touch-sized. It has not been tested on a device yet. To try it, enable USB
