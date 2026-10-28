@@ -1,16 +1,20 @@
 # Privacy policy
 
-Speech Clock Dub is a browser extension that dubs YouTube videos using servers that you run
-yourself. It has no server of its own, no account system, no analytics and no advertising.
+Speech Clock Dub is a browser extension that dubs YouTube videos using translation and speech services
+that you choose. It has no server of its own, no account system, no analytics and no advertising.
 
-_Last updated: 2026-10-23_
+_Last updated: 2026-10-28_
 
 ## Summary
 
-- The extension does not send any data to the developers or to any third party operated by the developers.
-- It sends video captions only to the servers whose addresses you configure in its settings. By default
-  these are on your own computer (`localhost` / `127.0.0.1`).
-- It does not read anything on youtube.com other than the caption data of the video you chose to dub.
+- The developers do not receive any data from the extension, and nothing is sent to any server operated
+  by the developers.
+- The extension sends the captions of the video you dub only to the services whose addresses you
+  configure on its options page. With the default settings these are Google's Gemini API (translation)
+  and Google Cloud Text-to-Speech (voice), which need your own API keys. You can instead point it at
+  servers on your own computer or network.
+- It does not read anything on youtube.com other than the caption data and the playback state of the
+  video you chose to dub.
 
 ## What the extension reads
 
@@ -24,47 +28,48 @@ It does not read your browsing history, your YouTube account, other tabs, cookie
 
 ## Where the data goes
 
-The caption text (and, for translation, nearby captions as context) is sent over HTTP to the servers you
-configure on the options page:
+The caption text (and, for translation, nearby captions as context) and the translated text are sent over
+HTTP(S) to the services you configure on the options page:
 
 | Setting | Purpose | Default |
 | --- | --- | --- |
-| LLM base URL | Translation, caption punctuation and speaker labelling | `http://127.0.0.1:8888/v1` |
-| VOICEVOX URL | Japanese speech synthesis | `http://localhost:50021` |
-| edge-tts bridge URL | Speech synthesis for other languages | `http://127.0.0.1:5050` |
-| Google Cloud Text-to-Speech (only if `ttsProvider` is `google`) | Speech synthesis | `https://texttospeech.googleapis.com` |
+| LLM base URL | Translation, caption punctuation and speaker labelling | `https://generativelanguage.googleapis.com/v1beta/openai` (Google Gemini) |
+| TTS provider | Speech synthesis | Google Cloud Text-to-Speech (`https://texttospeech.googleapis.com`) |
+| VOICEVOX URL | Japanese speech synthesis (only if selected) | `http://localhost:50021` |
+| edge-tts bridge URL | Speech synthesis for other languages (only if selected) | `http://127.0.0.1:5050` |
 
-The extension's host permissions cover `localhost`, `127.0.0.1` and `texttospeech.googleapis.com`. Out of
-the box nothing is sent to the last one: it is used only if you set `ttsProvider` to `google`. If you enter
-the address of a server on another machine (for example on your local network), Chrome asks you to allow
-the extension to reach that one host (optional host permission); you can revoke it at any time (this also applies to a hosted LLM service). What those servers do with the
-text is governed by whoever runs them:
+The extension's host permissions cover `localhost`, `127.0.0.1`, `generativelanguage.googleapis.com` and
+`texttospeech.googleapis.com`. If you enter the address of any other server (for example a hosted LLM
+service, or a machine on your local network), the browser asks you to allow the extension to reach that one
+host (an optional host permission); you can revoke it at any time. What those services do with the text is
+governed by whoever runs them:
 
-- If you point the LLM base URL at a hosted service, the caption text and your API key are sent to that
-  service and are subject to its privacy policy.
-- The optional edge-tts bridge in this repository (`tools/edge_tts_server.py`) forwards the translated text
-  to Microsoft's online speech service to synthesize audio. That text is subject to Microsoft's terms.
-- If you choose the Google provider, the translated text and your Google API key are sent directly from
-  the extension to Google Cloud Text-to-Speech and are subject to Google's terms and privacy policy.
-- VOICEVOX runs locally and does not send text anywhere on its own.
+- If you use the default Gemini endpoint, the caption text and your Gemini API key are sent to Google and
+  are subject to Google's terms and privacy policy. The same applies to any other hosted LLM service you
+  configure.
+- If you use the Google provider, the translated text and your Google API key are sent directly from the
+  extension to Google Cloud Text-to-Speech and are subject to Google's terms and privacy policy.
+- The optional edge-tts bridge in this repository (`tools/edge_tts_server.py`) forwards the translated
+  text to Microsoft's online speech service to synthesize audio. That text is subject to Microsoft's terms.
+- VOICEVOX and a local LLM server run on your own machine and do not send text anywhere on their own.
 
 ## What the extension stores
 
-- **Settings**, including the LLM and Google API keys if you enter them, are stored with `chrome.storage.sync`. If Chrome
-  Sync is enabled for your Google account, Chrome syncs them across your signed-in browsers. The API key
-  is stored unencrypted by the extension; use a key with limited scope, or leave the field empty for
-  local servers that do not need one.
-- **Per-video punctuation flags** for auto-generated captions are cached in `chrome.storage.local` so that
-  the same video is not processed twice. They contain no caption text.
+- **Settings**, including the LLM and Google API keys if you enter them, are stored with
+  `storage.sync`. If browser sync is enabled for your account, the browser may sync them across your
+  signed-in devices. The API keys are stored unencrypted by the extension; use keys with limited scope, or
+  leave the field empty for local servers that do not need one.
+- **Per-video punctuation flags** for auto-generated captions are cached in `storage.local` so that the
+  same video is not processed twice. They contain no caption text.
 
 Nothing else is stored. Translated text and synthesized audio are kept in memory only while the video is
 dubbed.
 
 ## Your choices
 
-You can clear everything at any time by removing the extension, or by clearing its storage from
-`chrome://extensions`. To keep all data on your computer, use only local servers, do not run the
-edge-tts bridge and do not select the Google provider.
+You can clear everything at any time by removing the extension. To keep all data on your own machines, use
+only a local LLM server and VOICEVOX. Do not use the default Google services or the edge-tts bridge, which
+contacts Microsoft.
 
 ## Changes and contact
 
