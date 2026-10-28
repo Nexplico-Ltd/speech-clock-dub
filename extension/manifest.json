@@ -17,13 +17,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
       "js": ["page-hook.js"],
       "world": "MAIN",
       "run_at": "document_start"
     },
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
       "js": ["defaults.js", "asr.js", "speakers.js", "subtitle.js", "content.js"],
       "run_at": "document_idle"
     }

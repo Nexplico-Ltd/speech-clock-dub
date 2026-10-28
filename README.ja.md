@@ -148,6 +148,8 @@ voicevox.lan:50443 {
 
 **Firefox（128 以降）:** `about:debugging#/runtime/this-firefox` を開き、「一時的なアドオンを読み込む...」から `extension/manifest.json` を選びます。一時的なアドオンは Firefox を終了すると削除されます。同じファイルが両方のブラウザーで動きます（Chrome は `background.service_worker`、Firefox は `background.scripts` を使います）。ホスト権限はインストール時に確認され、`about:addons` の拡張機能の「権限」で取り消せます。オプションページは `about:addons` の「設定」から開きます。
 
+**Android（Firefox for Android、実験的）:** `m.youtube.com` にも対応し、HUD のボタンとオプションページはタッチ向けの大きさです。実機ではまだ試していません。試すには、スマホで USB デバッグを有効にして `npx web-ext run --source-dir extension --target firefox-android --android-device <id>` を実行します（id は `adb devices` で分かります）。スマホにつないだデスクトップ版 Firefox の `about:debugging` から読み込むこともできます。Chrome for Android は拡張機能に対応していません。既定のホスト型（Gemini と Google TTS）は API キーだけでスマホ上で動きます。ローカルの LLM、VOICEVOX、edge-tts ブリッジは同じネットワーク上の PC で動かし、`llmBaseUrl`、`voicevoxUrl`、`edgeUrl` にその LAN アドレスを入れます。ブラウザーがバックグラウンドに回るか画面がロックされると音声は止まります。iOS には別に Safari Web Extension が必要で、まだ対応していません。
+
 ## 試せる講義の例
 
 この拡張機能は、スライド中心の講義向けです。試せる再生リストを 4 つと、ポッドキャストを 1 本挙げます。

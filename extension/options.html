@@ -2,9 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Speech Clock Dub - Settings</title>
     <style>
-      body { font: 14px system-ui, sans-serif; max-width: 520px; margin: 24px auto; }
+      body { font: 14px system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 12px; }
+      @media (max-width: 480px) { label { grid-template-columns: 1fr; gap: 2px; } input, select, button { font-size: 16px; } }
       label { display: grid; grid-template-columns: 160px 1fr; gap: 8px; margin: 6px 0; align-items: center; }
       details { border-top: 1px solid #8884; margin-top: 12px; padding-top: 6px; }
       summary { cursor: pointer; font-weight: 600; }
