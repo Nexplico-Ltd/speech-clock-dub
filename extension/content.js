@@ -625,9 +625,14 @@
   const findPlayer = () => document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
 
   function ensureHud() {
-    if (hud?.isConnected) return;
+    // The HUD and the subtitle overlay can live in different containers (see below), so either can be
+    // orphaned when YouTube replaces the player on navigation.
+    if (hud?.isConnected && subEl?.isConnected) return;
     const player = findPlayer();
     if (!player) return;
+    hud?.remove();
+    subEl?.remove();
+    subMeasure?.remove();
     // Keep clear of YouTube's own chrome: the title bar (top, fullscreen and embeds) and the control bar
     // (bottom). The HUD sits below the title bar and fades out together with the controls.
     if (!document.getElementById('ytd-style')) {
