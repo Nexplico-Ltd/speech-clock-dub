@@ -13,7 +13,7 @@ const YTD_ASR = (() => {
   // when they name a sound, so "(a + b)" and "(see Figure 2)" stay. Note symbols go, the lyrics next to
   // them stay.
   const SOUND_WORDS =
-    'music|applause|laughter|laughs|laughing|cheering|cheers|clapping|singing|noise|silence|sighs|coughs|' +
+    'music|applause|laughter|laughs|laughing|cheering|cheers|clapping|singing|silence|sighs|coughs|' +
     'inaudible|crosstalk|chatter|beeping|bell|sound';
   const ANNOTATION = new RegExp(`\\[[^\\]]{0,60}\\]|\\([^()]{0,30}\\b(?:${SOUND_WORDS})\\b[^()]{0,30}\\)|[♪♫♬]+`, 'giu');
   const stripSounds = (text) => text.replace(ANNOTATION, ' ').replace(/\s+/g, ' ').trim();

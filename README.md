@@ -113,6 +113,9 @@ otherwise), `voicevox` or `edge`.
    `--port` changes the port (then update `edgeUrl`). Expect 2-3 s per sentence; the parallel
    producer hides this once the buffer has filled, but the first start takes longer than with VOICEVOX.
 
+   If synthesis fails with `403 Invalid response status`, Microsoft has changed its service and your
+   edge-tts is out of date: run `.venv/bin/pip install -U edge-tts` and restart the bridge.
+
 ## Profiles
 
 The options page has a **Profile** box for switching between whole configurations, for example the hosted
@@ -242,7 +245,7 @@ The extension is meant for slide-based lectures. Four playlists and one podcast 
 - Adi Teman's [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me) (Bar-Ilan University 83-313, 66 videos). The lectures we checked have manual English captions, the best-supported case.
 - Prof. Tony Chan Carusone's [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F) (37 graduate-level videos on the Microelectronics channel). These videos have only auto-generated English captions, which is the least-tested path (see Known limitations below).
 - Razavi's [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO) lectures. We have not checked its captions yet, so treat it as untested.
-- ETH Zürich's [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3) livestreamed lectures. We have not checked its captions yet, so treat it as untested.
+- Prof. Onur Mutlu's (ETH Zürich) [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3) livestreamed lectures. We have not checked its captions yet, so treat it as untested.
 - Lex Fridman Podcast [#494, Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0) (2 h 26 min conversation with no slides, English captions). It shows how the extension behaves on a long, speech-only video, and it has not been tested as thoroughly as the lectures above.
 
 Videos with manual captions work better. The videos are not part of this project, and the project is not affiliated with their authors. Please respect their rights: do not republish dubbed copies without permission.

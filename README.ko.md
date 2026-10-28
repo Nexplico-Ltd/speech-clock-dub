@@ -73,6 +73,8 @@ YouTube 자막 -> 문장 단위 cue -> LLM 번역 -> TTS (VOICEVOX / edge-tts) -
 
    `--port`로 포트를 바꿀 수 있습니다(그 경우 `edgeUrl`도 바꾸세요). 문장당 2~3초가 걸리지만, 버퍼가 차고 나면 병렬 producer가 이를 가려 줍니다. 다만 처음 재생을 시작할 때까지는 VOICEVOX보다 오래 걸립니다.
 
+   합성이 `403 Invalid response status` 로 실패하면 Microsoft 서비스가 바뀌어 edge-tts 가 오래된 것입니다. `.venv/bin/pip install -U edge-tts` 를 실행하고 브리지를 다시 시작하세요.
+
 ## 프로필
 
 옵션 페이지의 **Profile** 칸에서 설정 전체를 전환할 수 있습니다. 예를 들어 노트북에서는 호스팅 구성, 집에서는 로컬 서버를 쓰는 식입니다. 기본 제공 프로필이 처음부터 들어 있습니다(아래 목록). **Load**는 선택한 프로필을 양식에 불러오고, **Save**로 적용합니다. 프로필은 API 키를 제외한 모든 설정을 정합니다. 나열되지 않은 설정은 기본값으로 돌아가므로, Load한 뒤 언어와 음성을 확인하고 Save하세요. **Save as profile**은 입력한 이름으로 현재 양식을 저장하고(API 키를 제외한 모든 설정을 저장하므로 나중에 기본값이 바뀌어도 프로필의 의미는 변하지 않습니다), **Delete**는 직접 만든 프로필을 삭제합니다. **Export file** / **Import file**로 프로필을 JSON 파일로 다른 브라우저에 옮길 수 있습니다. API 키는 프로필에 포함되지 않습니다. 모든 프로필이 공유하며, 내보내기와 가져오기에도 포함되지 않습니다. 프로필은 `chrome.storage.sync`에 프로필 하나당 항목 하나로 저장됩니다.
@@ -157,7 +159,7 @@ voicevox.lan:50443 {
 - Adi Teman의 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)(Bar-Ilan University 83-313, 영상 66편). 확인한 강의에는 수동 영어 자막이 있어, 가장 잘 지원되는 경우입니다.
 - Tony Chan Carusone 교수의 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)(Microelectronics 채널의 대학원 수준 영상 37편). 이 영상들에는 자동 생성된 영어 자막만 있는데, 이는 테스트가 가장 적은 경로입니다(아래 "알려진 제한 사항 / TODO" 참고).
 - Razavi의 [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO)(강의). 자막은 아직 확인하지 않았으며, 테스트하지 않았습니다.
-- ETH Zürich의 [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)(라이브 스트리밍 강의). 자막은 아직 확인하지 않았으며, 테스트하지 않았습니다.
+- ETH Zürich의 Onur Mutlu 교수의 [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)(라이브 스트리밍 강의). 자막은 아직 확인하지 않았으며, 테스트하지 않았습니다.
 - Lex Fridman Podcast의 [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)(슬라이드가 없는 2시간 26분 대담, 영어 자막 있음). 길고 음성 위주인 영상에서의 동작을 볼 수 있지만, 위의 강의만큼 테스트하지는 않았습니다.
 
 수동 자막이 있는 영상이 더 잘 동작합니다. 이 영상들은 이 프로젝트의 일부가 아니며 제작자와도 관련이 없습니다. 제작자의 권리를 존중하여, 허락 없이 더빙한 사본을 다시 공개하지 마세요.

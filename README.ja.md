@@ -73,6 +73,8 @@ YouTube 字幕 -> 文単位の cue -> LLM 翻訳 -> TTS (VOICEVOX / edge-tts) ->
 
    `--port` でポートを変えられます（その場合は `edgeUrl` も更新してください）。1 文あたり 2〜3 秒かかりますが、バッファが溜まれば並列プロデューサーが隠してくれます。ただし、最初の再生開始までは VOICEVOX より時間がかかります。
 
+   合成が `403 Invalid response status` で失敗する場合は、Microsoft 側のサービスが変わって edge-tts が古くなっています。`.venv/bin/pip install -U edge-tts` を実行してブリッジを再起動してください。
+
 ## プロファイル
 
 オプションページの **Profile** 欄で、設定一式を切り替えられます。たとえば、ノート PC ではホスト型、自宅ではローカルサーバー、といった使い分けです。組み込みのプロファイルが最初から入っています（下の一覧）。**Load** で選んだプロファイルをフォームに読み込み、**Save** で適用します。プロファイルは API キー以外のすべての設定を決めます。載っていない設定は既定値に戻るので、Load したあと、言語や声を確認してから Save してください。**Save as profile** は、入力した名前で現在のフォームを保存し（API キー以外のすべての設定を保存するので、あとで既定値が変わってもプロファイルの意味は変わりません）、**Delete** は自分で作ったプロファイルを削除します。**Export file** / **Import file** で、プロファイルを JSON ファイルとして別のブラウザに移せます。API キーはプロファイルに含まれません。すべてのプロファイルで共通で、書き出しにも読み込みにも含まれません。プロファイルは `chrome.storage.sync` に、1 つにつき 1 項目で保存されます。
@@ -157,7 +159,7 @@ voicevox.lan:50443 {
 - Adi Teman 氏の [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313、66 本）。確認した講義には手動の英語字幕があり、もっとも対応が進んでいるケースです。
 - Tony Chan Carusone 教授の [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics チャンネルの大学院レベルの動画 37 本）。これらの動画には自動生成の英語字幕しかなく、最もテストが少ない経路です（下の「既知の制限 / TODO」を参照）。
 - Razavi 氏の [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO)（講義）。字幕はまだ確認しておらず、未テストです。
-- ETH Zürich の [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（ライブ配信の講義）。字幕はまだ確認しておらず、未テストです。
+- ETH Zürich の Onur Mutlu 教授の [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（ライブ配信の講義）。字幕はまだ確認しておらず、未テストです。
 - Lex Fridman Podcast の [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)（スライドのない 2 時間 26 分の対談、英語字幕あり）。長い音声中心の動画での動作を見られますが、上の講義ほどテストしていません。
 
 手動字幕のある動画のほうが、うまく動きます。これらの動画はこのプロジェクトの一部ではなく、制作者とも無関係です。制作者の権利を尊重し、許可なく吹き替えたコピーを再公開しないでください。

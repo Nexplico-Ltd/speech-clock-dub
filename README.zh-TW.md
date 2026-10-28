@@ -73,6 +73,8 @@ YouTube 字幕 -> 句子級 cue -> LLM 翻譯 -> TTS (VOICEVOX / edge-tts) -> We
 
    `--port` 可變更連接埠（之後請同步更新 `edgeUrl`）。每句約需 2-3 秒；緩衝填滿之後，平行的 producer 會把這段延遲遮掉，但第一次開始播放會比 VOICEVOX 久。
 
+   如果合成以 `403 Invalid response status` 失敗，代表 Microsoft 的服務已變更，而你的 edge-tts 已過時：請執行 `.venv/bin/pip install -U edge-tts` 並重新啟動橋接程式。
+
 ## 設定檔
 
 選項頁面的 **Profile** 欄可以切換整組設定，例如在筆電上用雲端託管設定、在家裡用本機伺服器。內建了一些設定檔（見下表）。**Load** 會把所選設定檔載入表單，**Save** 才會套用。設定檔會決定 API 金鑰以外的所有設定：沒有列出的設定會回到預設值，所以 Load 之後請先確認語言和聲音再 Save。**Save as profile** 會以你輸入的名稱儲存目前的表單（會儲存 API 金鑰以外的所有設定，所以之後預設值改變時，設定檔的意義也不會變），**Delete** 會刪除你自己建立的設定檔，**Export file** / **Import file** 可以用 JSON 檔把設定檔搬到另一個瀏覽器。API 金鑰不屬於任何設定檔：所有設定檔共用，也不會被匯出或匯入。設定檔存放在 `chrome.storage.sync`，每個設定檔一個項目。
@@ -157,7 +159,7 @@ voicevox.lan:50443 {
 - Adi Teman 的 [Digital Integrated Circuits (2020-21)](https://www.youtube.com/playlist?list=PLZU5hLL_713yF0Lkwjj9O3ttVIuhPV-me)（Bar-Ilan University 83-313，共 66 支影片）。我們檢查過的課程都有手動的英文字幕，是支援最完整的情況。
 - Tony Chan Carusone 教授的 [CMOS Analog Integrated Circuit Design Fundamentals](https://www.youtube.com/playlist?list=PLUJOuapA83-QlWbnMJvoyQucGaBlpBF0F)（Microelectronics 頻道上 37 支研究所等級的影片）。這些影片只有自動產生的英文字幕，這是測試最少的路徑（請見下方的「已知限制 / TODO」）。
 - Razavi 的 [Beauty of Circuits](https://www.youtube.com/playlist?list=PLvYonHCKSWagKgNwtFKlWmkN7aKeSBPEO)（課程）。我們尚未檢查其字幕，請視為未經測試。
-- ETH Zürich 的 [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（直播課程）。我們尚未檢查其字幕，請視為未經測試。
+- ETH Zürich Onur Mutlu 教授的 [Digital Design and Computer Architecture (Spring 2025)](https://www.youtube.com/playlist?list=PL5Q2soXY2Zi9Eo29LMgKVcaydS7V1zZW3)（直播課程）。我們尚未檢查其字幕，請視為未經測試。
 - Lex Fridman Podcast 的 [#494 Jensen Huang](https://www.youtube.com/watch?v=vif8NQcjVf0)（沒有投影片的 2 小時 26 分鐘對談，有英文字幕）。可以用它看看在較長的純語音影片上的表現，但測試不如上面的課程充分。
 
 有手動字幕的影片效果更好。這些影片不屬於本專案，本專案與其作者也沒有關係。請尊重作者的權利，未經許可不要重新發布配音後的副本。
