@@ -148,7 +148,7 @@ voicevox.lan:50443 {
 2. 확장 프로그램의 옵션 페이지를 열어 설정을 조정합니다. 자주 쓰는 설정(언어, 목소리 성별, 자막, TTS 제공자, API 키)은 맨 위에 있고, 나머지는 접힌 섹션(목소리 세부 설정, 서버와 모델, 자막과 문장 분할, 버퍼와 영상 속도)에 들어 있습니다. 변경한 값이 있는 섹션은 자동으로 펼쳐집니다.
 3. 자막이 있는 YouTube 영상을 열고 플레이어 왼쪽 위의 **Dub (xx)** 를 누릅니다(**Sub**는 화면 번역 자막을 켜고 끕니다). 확장 프로그램을 다시 로드할 때마다 YouTube 탭도 새로고침하세요.
 
-**Firefox(128 이상):** `about:debugging#/runtime/this-firefox`를 열고 "임시 부가 기능 로드..."로 `extension/manifest.json`을 선택합니다. 임시 부가 기능은 Firefox를 종료하면 제거됩니다. 같은 파일이 두 브라우저에서 동작합니다(Chrome은 `background.service_worker`, Firefox는 `background.scripts`를 사용). 호스트 권한은 설치할 때 확인하며 `about:addons`의 확장 기능 "권한"에서 취소할 수 있습니다. 옵션 페이지는 `about:addons`의 "설정"에서 엽니다. Linux의 Firefox에서 동작을 확인했습니다.
+**Firefox(140 이상):** `about:debugging#/runtime/this-firefox`를 열고 "임시 부가 기능 로드..."로 `extension/manifest.json`을 선택합니다. 임시 부가 기능은 Firefox를 종료하면 제거됩니다. 같은 파일이 두 브라우저에서 동작합니다(Chrome은 `background.service_worker`, Firefox는 `background.scripts`를 사용). 호스트 권한은 설치할 때 확인하며 `about:addons`의 확장 기능 "권한"에서 취소할 수 있습니다. 옵션 페이지는 `about:addons`의 "설정"에서 엽니다. Linux의 Firefox에서 동작을 확인했습니다.
 
 **Android(Firefox for Android, 실험적):** `m.youtube.com`도 지원하며, HUD 버튼과 옵션 페이지는 터치용 크기입니다. 실제 기기(Firefox for Android)에서 기본 호스팅 구성으로 동작을 확인했습니다. 시험하려면 휴대폰에서 USB 디버깅을 켜고 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`를 실행합니다(id는 `adb devices`로 확인). 휴대폰에 연결한 데스크톱 Firefox의 `about:debugging`에서 불러올 수도 있습니다. Chrome for Android는 확장 프로그램을 지원하지 않습니다. 기본 호스팅 구성(Gemini와 Google TTS)은 API 키만 있으면 휴대폰에서 동작합니다. 로컬 LLM, VOICEVOX, edge-tts 브리지는 같은 네트워크의 컴퓨터에서 실행하고 `llmBaseUrl`, `voicevoxUrl`, `edgeUrl`에 그 LAN 주소를 넣습니다. 브라우저가 백그라운드로 가거나 화면이 잠기면 음성이 멈춥니다. iOS에는 별도의 Safari Web Extension이 필요하며 아직 지원하지 않습니다.
 

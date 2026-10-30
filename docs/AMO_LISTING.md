@@ -96,7 +96,7 @@ player's caption track list and listens to the player's own caption responses. I
 passes it to the extension's content script with `window.postMessage`.
 
 **Why a Gecko ID and `background.scripts`.** One manifest serves Chrome (`service_worker`) and Firefox
-(`scripts`). The ID is `speech-clock-dub@nexplico-ltd.github.io`; the minimum version is Firefox 128.
+(`scripts`). The ID is `speech-clock-dub@nexplico-ltd.github.io`; the minimum version is Firefox 140 (142 on Android).
 
 **How to test.** The extension needs a translation service and a speech service, so it does nothing on a
 clean profile. Two ways to see it work:

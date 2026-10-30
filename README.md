@@ -223,7 +223,7 @@ YouTube's own caption line, so it does not overlap if YouTube captions are switc
    (**Sub** toggles the on-screen translation).
    Reload the YouTube tab after every extension reload.
 
-**Firefox (128 or newer):** open `about:debugging#/runtime/this-firefox`, click "Load Temporary
+**Firefox (140 or newer):** open `about:debugging#/runtime/this-firefox`, click "Load Temporary
 Add-on..." and select `extension/manifest.json`. Temporary add-ons are removed when Firefox quits.
 The same files run on both browsers: Chrome uses `background.service_worker`, Firefox uses
 `background.scripts`. Firefox asks for the host permissions at install time; they can be revoked in

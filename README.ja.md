@@ -148,7 +148,7 @@ voicevox.lan:50443 {
 2. 拡張機能のオプションページを開き、設定を調整します。よく使う設定（言語、声の性別、字幕、TTS プロバイダー、API キー）は上部にあり、残りは折りたたみセクション（声の詳細、サーバーとモデル、字幕と文の分割、バッファと動画速度）に入っています。変更した値を含むセクションは自動で開きます。
 3. 字幕付きの YouTube 動画を開き、プレイヤー左上の **Dub (xx)** を押します（**Sub** で画面上の翻訳表示を切り替えます）。拡張機能を再読み込みしたら、YouTube のタブも毎回再読み込みしてください。
 
-**Firefox（128 以降）:** `about:debugging#/runtime/this-firefox` を開き、「一時的なアドオンを読み込む...」から `extension/manifest.json` を選びます。一時的なアドオンは Firefox を終了すると削除されます。同じファイルが両方のブラウザーで動きます（Chrome は `background.service_worker`、Firefox は `background.scripts` を使います）。ホスト権限はインストール時に確認され、`about:addons` の拡張機能の「権限」で取り消せます。オプションページは `about:addons` の「設定」から開きます。 Linux 上の Firefox で動作を確認しています。
+**Firefox（140 以降）:** `about:debugging#/runtime/this-firefox` を開き、「一時的なアドオンを読み込む...」から `extension/manifest.json` を選びます。一時的なアドオンは Firefox を終了すると削除されます。同じファイルが両方のブラウザーで動きます（Chrome は `background.service_worker`、Firefox は `background.scripts` を使います）。ホスト権限はインストール時に確認され、`about:addons` の拡張機能の「権限」で取り消せます。オプションページは `about:addons` の「設定」から開きます。 Linux 上の Firefox で動作を確認しています。
 
 **Android（Firefox for Android、実験的）:** `m.youtube.com` にも対応し、HUD のボタンとオプションページはタッチ向けの大きさです。実機（Firefox for Android）で、ホスト型の既定構成を使って動作を確認しています。試すには、スマホで USB デバッグを有効にして `npx web-ext run --source-dir extension --target firefox-android --android-device <id>` を実行します（id は `adb devices` で分かります）。スマホにつないだデスクトップ版 Firefox の `about:debugging` から読み込むこともできます。Chrome for Android は拡張機能に対応していません。既定のホスト型（Gemini と Google TTS）は API キーだけでスマホ上で動きます。ローカルの LLM、VOICEVOX、edge-tts ブリッジは同じネットワーク上の PC で動かし、`llmBaseUrl`、`voicevoxUrl`、`edgeUrl` にその LAN アドレスを入れます。ブラウザーがバックグラウンドに回るか画面がロックされると音声は止まります。iOS には別に Safari Web Extension が必要で、まだ対応していません。
 
