@@ -239,7 +239,7 @@ just the API keys; a local LLM, VOICEVOX or the edge-tts bridge must run on a co
 with its LAN address in `llmBaseUrl`, `voicevoxUrl` and `edgeUrl`. Audio stops when the browser goes to the
 background or the screen locks. iOS needs a separate Safari Web Extension and is not supported yet.
 
-**Udemy (experimental):** the extension also matches `*.udemy.com`. On a lecture page the same **Dub** button appears on the player. Captions are read from the `<video>` element's standard `<track>` elements (WebVTT), so pick a caption language in Udemy's player first if the course offers several; the default track is used. This has not been tested against a real course yet, so if no tracks are found use **Load captions** with an SRT/VTT file. Site-specific code lives in `extension/providers.js`; supporting another site means adding one adapter there and one `matches` pattern in `manifest.json`.
+**Udemy (experimental):** the extension also matches `*.udemy.com`. On a lecture page the same **Dub** button appears on the player. Udemy draws its own captions and adds no `<track>` elements to the video, so the extension asks the same lecture API the player uses (it needs you to be signed in and enrolled in the course) and loads the first caption file the lecture lists (WebVTT). The video's standard `<track>` elements are only a fallback. If the lecture has no captions, use **Load captions** with an SRT/VTT file. Site-specific code lives in `extension/providers.js`; supporting another site means adding one adapter there and one `matches` pattern in `manifest.json`.
 
 ## Example lectures
 

@@ -152,7 +152,7 @@ voicevox.lan:50443 {
 
 **Android(Firefox for Android, 실험적):** `m.youtube.com`도 지원하며, HUD 버튼과 옵션 페이지는 터치용 크기입니다. 실제 기기(Firefox for Android)에서 기본 호스팅 구성으로 동작을 확인했습니다. 시험하려면 휴대폰에서 USB 디버깅을 켜고 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`를 실행합니다(id는 `adb devices`로 확인). 휴대폰에 연결한 데스크톱 Firefox의 `about:debugging`에서 불러올 수도 있습니다. Chrome for Android는 확장 프로그램을 지원하지 않습니다. 기본 호스팅 구성(Gemini와 Google TTS)은 API 키만 있으면 휴대폰에서 동작합니다. 로컬 LLM, VOICEVOX, edge-tts 브리지는 같은 네트워크의 컴퓨터에서 실행하고 `llmBaseUrl`, `voicevoxUrl`, `edgeUrl`에 그 LAN 주소를 넣습니다. 브라우저가 백그라운드로 가거나 화면이 잠기면 음성이 멈춥니다. iOS에는 별도의 Safari Web Extension이 필요하며 아직 지원하지 않습니다.
 
-**Udemy(실험적):** `*.udemy.com`도 지원합니다. 강의 페이지의 플레이어에 같은 **Dub** 버튼이 나타납니다. 자막은 `<video>` 요소의 표준 `<track>`(WebVTT)에서 읽으므로, 강의에 자막 언어가 여러 개라면 먼저 Udemy 플레이어에서 자막 언어를 고르세요(기본 트랙을 사용합니다). 실제 강의에서는 아직 시험하지 않았습니다. 트랙을 찾지 못하면 **Load captions**로 SRT/VTT 파일을 불러오세요. 사이트별 코드는 `extension/providers.js`에 있으며, 다른 사이트를 지원하려면 거기에 어댑터 하나와 `manifest.json`의 `matches` 하나를 추가하면 됩니다.
+**Udemy(실험적):** `*.udemy.com`도 지원합니다. 강의 페이지의 플레이어에 같은 **Dub** 버튼이 나타납니다. Udemy는 자막을 직접 그리고 동영상에 `<track>` 요소를 붙이지 않으므로, 플레이어가 쓰는 것과 같은 강의 API에 요청해(Udemy에 로그인해 있고 해당 강좌에 등록되어 있어야 합니다) 강의에 나열된 첫 번째 자막 파일(WebVTT)을 불러옵니다. 동영상의 표준 `<track>` 요소는 대체 수단으로만 사용합니다. 강의에 자막이 없으면 **Load captions**로 SRT/VTT 파일을 불러오세요. 사이트별 코드는 `extension/providers.js`에 있으며, 다른 사이트를 지원하려면 거기에 어댑터 하나와 `manifest.json`의 `matches` 하나를 추가하면 됩니다.
 
 ## 예시 강의
 

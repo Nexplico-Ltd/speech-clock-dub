@@ -152,7 +152,7 @@ voicevox.lan:50443 {
 
 **Android（Firefox for Android，實驗性）：** 也支援 `m.youtube.com`，HUD 按鈕和選項頁面已調整為適合觸控的大小。已在實機（Firefox for Android）上用預設的雲端組合測試通過。要試用，請在手機上開啟 USB 偵錯，執行 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`（id 可用 `adb devices` 查看），或從連接手機的桌面版 Firefox 的 `about:debugging` 載入。Chrome for Android 不支援擴充功能。預設的雲端組合（Gemini 與 Google TTS）只要有 API 金鑰就能在手機上運作；本機的 LLM、VOICEVOX 或 edge-tts 橋接必須在同一網路的電腦上執行，並把它的區域網路位址填入 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl`。瀏覽器進入背景或螢幕鎖定時，聲音會停止。iOS 需要另外的 Safari Web Extension，目前尚未支援。
 
-**Udemy（實驗性）：** 也支援 `*.udemy.com`。在課程頁面的播放器上會出現同樣的 **Dub** 按鈕。字幕從 `<video>` 元素的標準 `<track>`（WebVTT）讀取，因此課程提供多種字幕語言時，請先在 Udemy 播放器中選擇字幕語言（使用預設軌道）。尚未在真實課程上測試。找不到軌道時，請用 **Load captions** 載入 SRT/VTT 檔案。站點專用的程式碼在 `extension/providers.js` 中；要支援其他站點，只需在那裡加一個適配器，並在 `manifest.json` 中加一個 `matches`。
+**Udemy（實驗性）：** 也支援 `*.udemy.com`。在課程頁面的播放器上會出現同樣的 **Dub** 按鈕。Udemy 自行繪製字幕，不會替影片加上 `<track>` 元素，因此擴充功能會請求播放器所用的同一個課程單元 API（需要已登入 Udemy 並已加入該課程），並載入單元中列出的第一個字幕檔（WebVTT）。影片的標準 `<track>` 元素只作為備用。單元沒有字幕時，請用 **Load captions** 載入 SRT/VTT 檔案。站點專用的程式碼在 `extension/providers.js` 中；要支援其他站點，只需在那裡加一個適配器，並在 `manifest.json` 中加一個 `matches`。
 
 ## 範例講課影片
 
