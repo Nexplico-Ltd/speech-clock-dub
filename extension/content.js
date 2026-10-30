@@ -7,6 +7,7 @@
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  const site = YTD_PROV.pick(location); // per-site adapter, see providers.js
   let S = { ...YTD_DEFAULTS };
 
   const state = {
@@ -83,48 +84,6 @@
   }
 
   // ---------- captions -> cues ----------
-
-  function fetchCaptions() {
-    return new Promise((resolve, reject) => {
-      const reqId = crypto.randomUUID();
-      const timer = setTimeout(() => {
-        window.removeEventListener('message', onMsg);
-        reject(new Error('Timed out waiting for captions'));
-      }, 25000); // page-hook may wait up to 10 s for the player's own caption request
-      function onMsg(e) {
-        if (e.source !== window || e.data?.type !== 'ytd:captions' || e.data.reqId !== reqId) return;
-        clearTimeout(timer);
-        window.removeEventListener('message', onMsg);
-        if (e.data.error) reject(new Error(e.data.error));
-        else resolve(e.data);
-      }
-      window.addEventListener('message', onMsg);
-      window.postMessage({ type: 'ytd:get-captions', reqId }, '*');
-    });
-  }
-
-  // Parse a local SRT / WebVTT / JSON3 caption file into json3-style events.
-  function parseCaptionFile(name, text) {
-    if (/\.json3?$/i.test(name)) return JSON.parse(text).events ?? [];
-    const toMs = (t) => {
-      const p = t.replace(',', '.').split(':').map(parseFloat);
-      while (p.length < 3) p.unshift(0);
-      return Math.round(((p[0] * 60 + p[1]) * 60 + p[2]) * 1000);
-    };
-    const events = [];
-    for (const block of text.replace(/\r/g, '').split(/\n{2,}/)) {
-      const lines = block.split('\n');
-      const i = lines.findIndex((l) => l.includes('-->'));
-      if (i < 0) continue;
-      const [a, b] = lines[i].split('-->');
-      const start = toMs(a);
-      const end = toMs(b.trim().split(/\s+/)[0]);
-      // Keep line breaks: a line starting with "- " marks a change of speaker.
-      const body = lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '').replace(/[ \t]+/g, ' ').trim();
-      if (body) events.push({ tStartMs: start, dDurationMs: end - start, segs: [{ utf8: body }] });
-    }
-    return events;
-  }
 
   // Merge caption fragments into sentence-sized cues.
   function buildCues(events, kind) {
@@ -534,15 +493,14 @@
 
   async function begin() {
     S = { ...YTD_DEFAULTS, ...(await chrome.storage.sync.get(null)) };
-    const v = (state.video =
-      document.querySelector('video.html5-main-video') ?? document.querySelector('video'));
+    const v = (state.video = site.findVideo());
     if (!v) throw new Error('No <video> element found');
 
     setStatus('Loading captions…');
     let cap = state.local;
     if (!cap) {
       try {
-        cap = await fetchCaptions();
+        cap = await site.fetchCaptions();
       } catch (err) {
         throw new Error(`${err.message}. Use "Load captions" to supply an SRT/VTT/JSON3 file.`);
       }
@@ -621,8 +579,7 @@
   const SUB_MODES = ['off', 'translated', 'both'];
   let hud, btn, statusEl, subBtn, subEl, subJa, subSrc, subMeasure;
 
-  // The desktop and mobile watch pages both use YouTube's html5 player; #movie_player is its usual id.
-  const findPlayer = () => document.getElementById('movie_player') ?? document.querySelector('.html5-video-player');
+  const findPlayer = () => site.findPlayer();
 
   function ensureHud() {
     // The HUD and the subtitle overlay can live in different containers (see below), so either can be
@@ -633,14 +590,13 @@
     hud?.remove();
     subEl?.remove();
     subMeasure?.remove();
-    // Keep clear of YouTube's own chrome: the title bar (top, fullscreen and embeds) and the control bar
-    // (bottom). The HUD sits below the title bar and fades out together with the controls.
+    // The HUD and subtitles are positioned against the player.
+    if (getComputedStyle(player).position === 'static') player.style.position = 'relative';
     if (!document.getElementById('ytd-style')) {
       const style = document.createElement('style');
       style.id = 'ytd-style';
       style.textContent =
-        '.html5-video-player.ytp-fullscreen .ytd-hud,.html5-video-player.ytp-embed .ytd-hud{top:64px!important}' +
-        '.html5-video-player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}' +
+        site.css +
         '.ytd-hud{transition:opacity .25s}' +
         // Touch screens: larger tap targets, and the HUD stays visible and above the player's tap overlay
         // (there is no hover to bring auto-hidden controls back).
@@ -678,7 +634,7 @@
       fileInput.value = '';
       if (!f) return;
       try {
-        const events = parseCaptionFile(f.name, await f.text());
+        const events = YTD_PROV.parseCaptionFile(f.name, await f.text());
         if (!events.length) throw new Error('no cues found');
         const asr = /\.json3?$/i.test(f.name) && events.some((e) => e.segs?.some((s) => 'acAsrConf' in s));
         state.local = { local: true, kind: asr ? 'asr' : 'manual', events };
@@ -854,12 +810,11 @@
     state.local = null;
     if (state.active) stop();
   };
-  document.addEventListener('yt-navigate-start', leaveVideo);
-  document.addEventListener('state-navigatestart', leaveVideo); // m.youtube.com
-  // Fallback for pages that fire neither event: the video id in the address changed.
-  let watchedId = new URLSearchParams(location.search).get('v');
+  for (const name of site.navEvents) document.addEventListener(name, leaveVideo);
+  // Fallback for pages that fire no such event: the video key in the address changed.
+  let watchedId = site.videoKey(location);
   setInterval(() => {
-    const id = new URLSearchParams(location.search).get('v');
+    const id = site.videoKey(location);
     if (id !== watchedId) {
       watchedId = id;
       if (state.active) leaveVideo();

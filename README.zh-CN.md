@@ -152,6 +152,8 @@ voicevox.lan:50443 {
 
 **Android（Firefox for Android，实验性）：** 也支持 `m.youtube.com`，HUD 按钮和选项页面已调整为适合触控的大小。已在真机（Firefox for Android）上用默认的云端组合测试通过。要试用，请在手机上开启 USB 调试，运行 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`（id 可用 `adb devices` 查看），或从连接手机的桌面版 Firefox 的 `about:debugging` 载入。Chrome for Android 不支持扩展程序。默认的云端组合（Gemini 与 Google TTS）只要有 API 密钥就能在手机上运行；本地的 LLM、VOICEVOX 或 edge-tts 桥接必须在同一网络的电脑上运行，并把它的局域网地址填入 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl`。浏览器进入后台或屏幕锁定时，声音会停止。iOS 需要另外的 Safari Web Extension，目前尚未支持。
 
+**Udemy（实验性）：** 也支持 `*.udemy.com`。在课程页面的播放器上会出现同样的 **Dub** 按钮。字幕从 `<video>` 元素的标准 `<track>`（WebVTT）读取，因此课程提供多种字幕语言时，请先在 Udemy 播放器中选择字幕语言（使用默认轨道）。尚未在真实课程上测试。找不到轨道时，请用 **Load captions** 载入 SRT/VTT 文件。站点专用的代码在 `extension/providers.js` 中；要支持其他站点，只需在那里加一个适配器，并在 `manifest.json` 中加一个 `matches`。
+
 ## 示例课程视频
 
 这个扩展程序面向以幻灯片为主的讲课视频。以下四个播放列表和一期播客可以拿来试用：
@@ -174,6 +176,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕辅助函数：单词展平、标点窗口、对齐、以句子为单位的 cue |
 | `extension/speakers.js` | 对话辅助函数：按换人标记切分字幕，并交替分配声音 |
 | `extension/subtitle.js` | 字幕分页辅助函数：把较长的文字分成几行一页 |
+| `extension/providers.js` | 站点适配器（YouTube、Udemy）：查找视频与播放器、获取字幕、检测页面切换 |
 | `extension/content.js` | cue 的构建、预生成循环、播放调度器、HUD |
 | `extension/background.js` | Service worker；与 LLM、VOICEVOX、edge-tts 的 HTTP 桥接 |
 | `extension/options.html`, `options.js` | 设置界面 |

@@ -73,3 +73,10 @@ export function loadSpeakers() {
   vm.runInContext(fs.readFileSync(path.join(EXT, 'speakers.js'), 'utf8'), context);
   return vm.runInContext('YTD_SPK', context);
 }
+
+/** Evaluates extension/providers.js and returns its YTD_PROV adapters. */
+export function loadProviders() {
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(fs.readFileSync(path.join(EXT, 'providers.js'), 'utf8'), context);
+  return vm.runInContext('YTD_PROV', context);
+}

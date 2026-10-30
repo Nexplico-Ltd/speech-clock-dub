@@ -152,6 +152,8 @@ voicevox.lan:50443 {
 
 **Android（Firefox for Android，實驗性）：** 也支援 `m.youtube.com`，HUD 按鈕和選項頁面已調整為適合觸控的大小。已在實機（Firefox for Android）上用預設的雲端組合測試通過。要試用，請在手機上開啟 USB 偵錯，執行 `npx web-ext run --source-dir extension --target firefox-android --android-device <id>`（id 可用 `adb devices` 查看），或從連接手機的桌面版 Firefox 的 `about:debugging` 載入。Chrome for Android 不支援擴充功能。預設的雲端組合（Gemini 與 Google TTS）只要有 API 金鑰就能在手機上運作；本機的 LLM、VOICEVOX 或 edge-tts 橋接必須在同一網路的電腦上執行，並把它的區域網路位址填入 `llmBaseUrl`、`voicevoxUrl`、`edgeUrl`。瀏覽器進入背景或螢幕鎖定時，聲音會停止。iOS 需要另外的 Safari Web Extension，目前尚未支援。
 
+**Udemy（實驗性）：** 也支援 `*.udemy.com`。在課程頁面的播放器上會出現同樣的 **Dub** 按鈕。字幕從 `<video>` 元素的標準 `<track>`（WebVTT）讀取，因此課程提供多種字幕語言時，請先在 Udemy 播放器中選擇字幕語言（使用預設軌道）。尚未在真實課程上測試。找不到軌道時，請用 **Load captions** 載入 SRT/VTT 檔案。站點專用的程式碼在 `extension/providers.js` 中；要支援其他站點，只需在那裡加一個適配器，並在 `manifest.json` 中加一個 `matches`。
+
 ## 範例講課影片
 
 這個擴充功能是為以投影片為主的講課影片設計的。以下四個播放清單和一集 Podcast 可以拿來試用：
@@ -174,6 +176,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕輔助函式：單字攤平、標點視窗、對齊、以句子為單位的 cue |
 | `extension/speakers.js` | 對話輔助函式：依換人標記切分字幕，並交替分配聲音 |
 | `extension/subtitle.js` | 字幕分頁輔助函式：把較長的文字分成幾行一頁 |
+| `extension/providers.js` | 站點適配器（YouTube、Udemy）：尋找影片與播放器、取得字幕、偵測頁面切換 |
 | `extension/content.js` | cue 的建立、預先生成迴圈、播放排程器、HUD |
 | `extension/background.js` | Service worker；與 LLM、VOICEVOX、edge-tts 的 HTTP 橋接 |
 | `extension/options.html`, `options.js` | 設定介面 |

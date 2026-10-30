@@ -1,0 +1,144 @@
+// Per-site adapters: how to find the video, where to put the HUD, how to read captions and how to
+// notice that the page moved to another video. content.js only talks to the adapter returned by
+// YTD_PROV.pick(), so supporting a new site means adding one entry here and one `matches` pattern
+// in manifest.json. Loaded before content.js.
+const YTD_PROV = (() => {
+  // ---------- caption files (shared by the "Load captions" button and the <track> adapter) ----------
+
+  // Parse SRT / WebVTT / JSON3 text into json3-style events.
+  function parseCaptionFile(name, text) {
+    if (/\.json3?$/i.test(name)) return JSON.parse(text).events ?? [];
+    const toMs = (t) => {
+      const p = t.trim().replace(',', '.').split(':').map(parseFloat);
+      while (p.length < 3) p.unshift(0);
+      return Math.round(((p[0] * 60 + p[1]) * 60 + p[2]) * 1000);
+    };
+    const events = [];
+    for (const block of text.replace(/\r/g, '').split(/\n{2,}/)) {
+      const lines = block.split('\n');
+      const i = lines.findIndex((l) => l.includes('-->'));
+      if (i < 0) continue;
+      const [a, b] = lines[i].split('-->');
+      const start = toMs(a);
+      const end = toMs(b.trim().split(/\s+/)[0]);
+      // Keep line breaks: a line starting with "- " marks a change of speaker.
+      const body = lines.slice(i + 1).join('\n').replace(/<[^>]+>/g, '').replace(/[ \t]+/g, ' ').trim();
+      if (body) events.push({ tStartMs: start, dDurationMs: end - start, segs: [{ utf8: body }] });
+    }
+    return events;
+  }
+
+  // ---------- YouTube ----------
+
+  const youtube = {
+    id: 'youtube',
+    matches: (loc) => /(^|\.)youtube\.com$/.test(loc.hostname),
+    // The desktop and mobile watch pages both use YouTube's html5 player; #movie_player is its usual id.
+    findVideo: () => document.querySelector('video.html5-main-video') ?? document.querySelector('video'),
+    findPlayer: () => document.getElementById('movie_player') ?? document.querySelector('.html5-video-player'),
+    // Keep clear of YouTube's own chrome: the title bar (top, fullscreen and embeds) and the control bar
+    // (bottom). The HUD sits below the title bar and fades out together with the controls.
+    css:
+      '.html5-video-player.ytp-fullscreen .ytd-hud,.html5-video-player.ytp-embed .ytd-hud{top:64px!important}' +
+      '.html5-video-player.ytp-autohide .ytd-hud{opacity:0;transition:opacity .25s}',
+    videoKey: (loc) => new URLSearchParams(loc.search).get('v'),
+    // Events that mean "the page is leaving this video" (SPA navigation).
+    navEvents: ['yt-navigate-start', 'state-navigatestart'], // the second one is m.youtube.com
+    // The MAIN-world page hook (page-hook.js) reads the caption track; ask it through postMessage.
+    fetchCaptions() {
+      return new Promise((resolve, reject) => {
+        const reqId = crypto.randomUUID();
+        const timer = setTimeout(() => {
+          window.removeEventListener('message', onMsg);
+          reject(new Error('Timed out waiting for captions'));
+        }, 25000); // page-hook may wait up to 10 s for the player's own caption request
+        function onMsg(e) {
+          if (e.source !== window || e.data?.type !== 'ytd:captions' || e.data.reqId !== reqId) return;
+          clearTimeout(timer);
+          window.removeEventListener('message', onMsg);
+          if (e.data.error) reject(new Error(e.data.error));
+          else resolve(e.data);
+        }
+        window.addEventListener('message', onMsg);
+        window.postMessage({ type: 'ytd:get-captions', reqId }, '*');
+      });
+    },
+  };
+
+  // ---------- Udemy (and any site whose player exposes standard <track> elements) ----------
+
+  // Udemy builds its class names with CSS modules (video-player--container--xYz12), so match on the stable part.
+  const UDEMY_PLAYER = '[data-purpose="video-player"],[class*="video-player--container"],[class*="video-viewer--container"]';
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // "en_US" -> "en-US"; anything Intl.DisplayNames would reject becomes 'en'.
+  const langCode = (t) => {
+    const code = (t.srclang || t.language || '').replace('_', '-');
+    return /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(code) ? code : 'en';
+  };
+
+  // Read the caption cues the browser already holds for a <track>. The track has to be in
+  // `hidden` mode (not `disabled`) for the browser to load its cues; `hidden` shows nothing.
+  async function cuesOf(textTrack) {
+    const was = textTrack.mode;
+    if (was === 'disabled') textTrack.mode = 'hidden';
+    try {
+      for (let i = 0; i < 20 && !textTrack.cues?.length; i++) await sleep(250);
+      return [...(textTrack.cues ?? [])].map((c) => ({
+        tStartMs: Math.round(c.startTime * 1000),
+        dDurationMs: Math.round((c.endTime - c.startTime) * 1000),
+        segs: [{ utf8: String(c.text ?? '').replace(/<[^>]+>/g, '') }],
+      }));
+    } finally {
+      textTrack.mode = was;
+    }
+  }
+
+  async function fetchTrackCaptions(video) {
+    const elements = [...video.querySelectorAll('track')].filter((t) => /^(subtitles|captions)$/.test(t.kind || 'subtitles'));
+    const tracks = [...video.textTracks].filter((t) => /^(subtitles|captions)$/.test(t.kind));
+    if (!elements.length && !tracks.length) throw new Error('This video exposes no caption tracks');
+
+    // Prefer the track the player marked as default, then the first one.
+    const el = elements.find((t) => t.default) ?? elements[0];
+    const languageCode = langCode(el ?? tracks[0]);
+    let events = [];
+    if (el?.src) {
+      try {
+        const res = await fetch(el.src, { credentials: 'include' });
+        if (res.ok) events = parseCaptionFile('track.vtt', await res.text());
+      } catch {} // fall through to the cues the browser loaded
+    }
+    if (!events.length) {
+      const tt = (el && tracks.find((t) => t.label === el.label && t.language === el.srclang)) ?? tracks[0];
+      if (tt) events = await cuesOf(tt);
+    }
+    if (!events.length) throw new Error('The caption track is empty');
+    return { languageCode, kind: 'manual', events };
+  }
+
+  const udemy = {
+    id: 'udemy',
+    matches: (loc) => /(^|\.)udemy\.com$/.test(loc.hostname),
+    findVideo: () => document.querySelector('video'),
+    findPlayer() {
+      const v = document.querySelector('video');
+      return v ? (v.closest(UDEMY_PLAYER) ?? v.parentElement) : null;
+    },
+    css: '',
+    // Lectures are /course/<slug>/learn/lecture/<id>: the address changes without a page load.
+    videoKey: (loc) => loc.pathname,
+    navEvents: [],
+    fetchCaptions() {
+      const v = document.querySelector('video');
+      if (!v) return Promise.reject(new Error('No <video> element found'));
+      return fetchTrackCaptions(v);
+    },
+  };
+
+  const providers = [youtube, udemy];
+  const pick = (loc) => providers.find((p) => p.matches(loc)) ?? youtube;
+
+  return { parseCaptionFile, pick, providers };
+})();

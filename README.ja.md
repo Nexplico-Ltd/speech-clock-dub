@@ -152,6 +152,8 @@ voicevox.lan:50443 {
 
 **Android（Firefox for Android、実験的）:** `m.youtube.com` にも対応し、HUD のボタンとオプションページはタッチ向けの大きさです。実機（Firefox for Android）で、ホスト型の既定構成を使って動作を確認しています。試すには、スマホで USB デバッグを有効にして `npx web-ext run --source-dir extension --target firefox-android --android-device <id>` を実行します（id は `adb devices` で分かります）。スマホにつないだデスクトップ版 Firefox の `about:debugging` から読み込むこともできます。Chrome for Android は拡張機能に対応していません。既定のホスト型（Gemini と Google TTS）は API キーだけでスマホ上で動きます。ローカルの LLM、VOICEVOX、edge-tts ブリッジは同じネットワーク上の PC で動かし、`llmBaseUrl`、`voicevoxUrl`、`edgeUrl` にその LAN アドレスを入れます。ブラウザーがバックグラウンドに回るか画面がロックされると音声は止まります。iOS には別に Safari Web Extension が必要で、まだ対応していません。
 
+**Udemy（実験的）:** `*.udemy.com` にも対応します。講義ページのプレーヤーに同じ **Dub** ボタンが出ます。字幕は `<video>` 要素の標準の `<track>`（WebVTT）から読むので、コースに複数の字幕言語がある場合は先に Udemy のプレーヤーで字幕言語を選んでください（既定のトラックを使います）。実際のコースではまだ試していません。トラックが見つからない場合は **Load captions** で SRT/VTT ファイルを読み込んでください。サイト別のコードは `extension/providers.js` にあり、別のサイトに対応するには、そこにアダプターを 1 つ足し、`manifest.json` の `matches` を 1 つ足します。
+
 ## 試せる講義の例
 
 この拡張機能は、スライド中心の講義向けです。試せる再生リストを 4 つと、ポッドキャストを 1 本挙げます。
@@ -174,6 +176,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕のヘルパー。単語の平坦化、句読点の窓、突き合わせ、文単位の cue |
 | `extension/speakers.js` | 対話用ヘルパー。話者交代の印で字幕を区切り、声を交互に割り当てる |
 | `extension/subtitle.js` | 字幕のページ分割ヘルパー。長い文を数行ずつのページに分ける |
+| `extension/providers.js` | サイト別アダプター（YouTube、Udemy）。動画とプレーヤーの検出、字幕の取得、ページ遷移の検知 |
 | `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
 | `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |
 | `extension/options.html`, `options.js` | 設定 UI |
