@@ -8,7 +8,7 @@
 
 YouTube dubbing for lectures where the video follows the voice.
 
-A Chrome and Firefox (MV3) extension that dubs YouTube lecture videos into Japanese, English, Traditional
+A Chrome and Firefox (MV3) extension that dubs YouTube (and, experimentally, Udemy) lecture videos into Japanese, English, Traditional
 Chinese, Simplified Chinese or Korean. It is designed for videos that are essentially slideshows:
 instead of squeezing the translated speech to fit the picture, **the picture follows the speech**.
 
@@ -239,6 +239,8 @@ just the API keys; a local LLM, VOICEVOX or the edge-tts bridge must run on a co
 with its LAN address in `llmBaseUrl`, `voicevoxUrl` and `edgeUrl`. Audio stops when the browser goes to the
 background or the screen locks. iOS needs a separate Safari Web Extension and is not supported yet.
 
+**Udemy (experimental):** the extension also matches `*.udemy.com`. On a lecture page the same **Dub** button appears on the player. Captions are read from the `<video>` element's standard `<track>` elements (WebVTT), so pick a caption language in Udemy's player first if the course offers several; the default track is used. This has not been tested against a real course yet, so if no tracks are found use **Load captions** with an SRT/VTT file. Site-specific code lives in `extension/providers.js`; supporting another site means adding one adapter there and one `matches` pattern in `manifest.json`.
+
 ## Example lectures
 
 The extension is meant for slide-based lectures. Four playlists and one podcast episode you can try it on:
@@ -261,6 +263,7 @@ Videos with manual captions work better. The videos are not part of this project
 | `extension/asr.js` | ASR caption helpers: word flattening, punctuation windows, alignment, sentence-based cues |
 | `extension/speakers.js` | Dialogue helpers: splitting captions at speaker-change markers and alternating voices |
 | `extension/subtitle.js` | Subtitle paging helpers: splitting long text into pages of a few lines |
+| `extension/providers.js` | Per-site adapters (YouTube, Udemy): video and player lookup, caption fetching, navigation detection |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |
