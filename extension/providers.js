@@ -118,6 +118,39 @@ const YTD_PROV = (() => {
     return { languageCode, kind: 'manual', events };
   }
 
+  // Udemy draws its own captions and never adds <track> elements, so ask the same API the player uses:
+  // /course/<slug>/learn/lecture/<id> -> course id -> the lecture's asset.captions[].url (WebVTT).
+  function udemyLectureRef(pathname) {
+    const m = /^\/course\/([^/]+)\/learn\/lecture\/(\d+)/.exec(pathname);
+    return m ? { slug: m[1], lectureId: m[2] } : null;
+  }
+
+  function pickUdemyCaption(captions) {
+    const c = (captions ?? []).find((x) => x?.url);
+    return c ? { url: c.url, languageCode: langCode({ language: c.locale_id }) } : null;
+  }
+
+  async function fetchUdemyCaptions() {
+    const ref = udemyLectureRef(location.pathname);
+    if (!ref) throw new Error('Open a lecture first');
+    const api = async (path) => {
+      const res = await fetch(`/api-2.0/${path}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(`Udemy API returned HTTP ${res.status}`);
+      return res.json();
+    };
+    const course = await api(`courses/${ref.slug}/?fields[course]=id`);
+    const lecture = await api(
+      `users/me/subscribed-courses/${course.id}/lectures/${ref.lectureId}/?fields[lecture]=asset&fields[asset]=captions`,
+    );
+    const cap = pickUdemyCaption(lecture.asset?.captions);
+    if (!cap) throw new Error('Udemy lists no captions for this lecture');
+    const res = await fetch(cap.url);
+    if (!res.ok) throw new Error(`Caption file returned HTTP ${res.status}`);
+    const events = parseCaptionFile('captions.vtt', await res.text());
+    if (!events.length) throw new Error('The caption track is empty');
+    return { languageCode: cap.languageCode, kind: 'manual', events };
+  }
+
   const udemy = {
     id: 'udemy',
     matches: (loc) => /(^|\.)udemy\.com$/.test(loc.hostname),
@@ -130,15 +163,23 @@ const YTD_PROV = (() => {
     // Lectures are /course/<slug>/learn/lecture/<id>: the address changes without a page load.
     videoKey: (loc) => loc.pathname,
     navEvents: [],
-    fetchCaptions() {
+    async fetchCaptions() {
       const v = document.querySelector('video');
-      if (!v) return Promise.reject(new Error('No <video> element found'));
-      return fetchTrackCaptions(v);
+      if (!v) throw new Error('No <video> element found');
+      try {
+        return await fetchUdemyCaptions();
+      } catch (apiErr) {
+        try {
+          return await fetchTrackCaptions(v);
+        } catch {
+          throw apiErr; // the API error is the more useful one
+        }
+      }
     },
   };
 
   const providers = [youtube, udemy];
   const pick = (loc) => providers.find((p) => p.matches(loc)) ?? youtube;
 
-  return { parseCaptionFile, pick, providers };
+  return { parseCaptionFile, pick, providers, udemyLectureRef, pickUdemyCaption };
 })();

@@ -44,3 +44,27 @@ test('every site the manifest matches has an adapter, and providers.js loads bef
     assert.ok(PROV.providers.some((p) => p.matches({ hostname })), `no adapter for ${m}`);
   }
 });
+
+test('a Udemy lecture address yields the course slug and lecture id', () => {
+  assert.deepEqual(plain(PROV.udemyLectureRef('/course/my-course/learn/lecture/21989274')), {
+    slug: 'my-course',
+    lectureId: '21989274',
+  });
+  assert.deepEqual(plain(PROV.udemyLectureRef('/course/my-course/learn/lecture/21989274/')), {
+    slug: 'my-course',
+    lectureId: '21989274',
+  });
+  assert.equal(PROV.udemyLectureRef('/course/my-course/'), null);
+  assert.equal(PROV.udemyLectureRef('/'), null);
+});
+
+test('the Udemy caption list yields one usable track, preferring the first listed', () => {
+  const caps = [
+    { url: '', locale_id: 'ja_JP' }, // no file: skipped
+    { url: 'https://x/en.vtt', locale_id: 'en_US' },
+    { url: 'https://x/fr.vtt', locale_id: 'fr_FR' },
+  ];
+  assert.deepEqual(plain(PROV.pickUdemyCaption(caps)), { url: 'https://x/en.vtt', languageCode: 'en-US' });
+  assert.equal(PROV.pickUdemyCaption([]), null);
+  assert.equal(PROV.pickUdemyCaption(undefined), null);
+});
