@@ -152,7 +152,7 @@ voicevox.lan:50443 {
 
 **Android（Firefox for Android、実験的）:** `m.youtube.com` にも対応し、HUD のボタンとオプションページはタッチ向けの大きさです。実機（Firefox for Android）で、ホスト型の既定構成を使って動作を確認しています。試すには、スマホで USB デバッグを有効にして `npx web-ext run --source-dir extension --target firefox-android --android-device <id>` を実行します（id は `adb devices` で分かります）。スマホにつないだデスクトップ版 Firefox の `about:debugging` から読み込むこともできます。Chrome for Android は拡張機能に対応していません。既定のホスト型（Gemini と Google TTS）は API キーだけでスマホ上で動きます。ローカルの LLM、VOICEVOX、edge-tts ブリッジは同じネットワーク上の PC で動かし、`llmBaseUrl`、`voicevoxUrl`、`edgeUrl` にその LAN アドレスを入れます。ブラウザーがバックグラウンドに回るか画面がロックされると音声は止まります。iOS には別に Safari Web Extension が必要で、まだ対応していません。
 
-**Udemy（実験的）:** `*.udemy.com` にも対応します。講義ページのプレーヤーに同じ **Dub** ボタンが出ます。字幕は `<video>` 要素の標準の `<track>`（WebVTT）から読むので、コースに複数の字幕言語がある場合は先に Udemy のプレーヤーで字幕言語を選んでください（既定のトラックを使います）。実際のコースではまだ試していません。トラックが見つからない場合は **Load captions** で SRT/VTT ファイルを読み込んでください。サイト別のコードは `extension/providers.js` にあり、別のサイトに対応するには、そこにアダプターを 1 つ足し、`manifest.json` の `matches` を 1 つ足します。
+**Udemy（実験的）:** `*.udemy.com` にも対応します。講義ページのプレーヤーに同じ **Dub** ボタンが出ます。Udemy は字幕を独自に描画し、動画に `<track>` 要素を付けないため、プレーヤーが使うのと同じ講義 API に問い合わせ（Udemy にログインし、そのコースを受講している必要があります）、講義に載っている最初の字幕ファイル（WebVTT）を読み込みます。動画の標準の `<track>` 要素はフォールバックとしてだけ使います。講義に字幕がない場合は **Load captions** で SRT/VTT ファイルを読み込んでください。サイト別のコードは `extension/providers.js` にあり、別のサイトに対応するには、そこにアダプターを 1 つ足し、`manifest.json` の `matches` を 1 つ足します。
 
 ## 試せる講義の例
 
