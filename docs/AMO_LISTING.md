@@ -9,15 +9,15 @@ Speech Clock Dub
 
 ## Summary (250 characters at most)
 
-Dubs YouTube lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
+Dubs YouTube and Udemy lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
 
 ## Categories
 
-Language Support, Social & Communication (or Other). Tags: youtube, dubbing, translation, tts, lecture.
+Language Support, Social & Communication (or Other). Tags: youtube, udemy, dubbing, translation, tts, lecture.
 
 ## Description
 
-Speech Clock Dub dubs YouTube videos, mostly slide-based lectures, into Japanese, English, Traditional
+Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy lectures), mostly slide-based lectures, into Japanese, English, Traditional
 Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesized speech is the master
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
@@ -33,6 +33,8 @@ Features
 - Uses the video's own captions (manual or auto-generated) or a caption file you load (SRT, VTT, JSON3).
 - Translates with your LLM and keeps a running buffer of synthesized speech ahead of playback.
 - Optional on-screen translated subtitles, with the original text if you like.
+- Also works on Udemy lectures (experimental): captions come from the lecture's caption file, so you need to
+  be signed in and enrolled in the course.
 - Optional alternating voices for dialogue (experimental).
 - Works on Firefox for Android (m.youtube.com): touch-sized buttons that hide after a few idle seconds.
 
@@ -45,7 +47,7 @@ https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 Open source (Apache-2.0): https://github.com/Nexplico-Ltd/speech-clock-dub
 
-Not affiliated with YouTube or Google. Respect the rights of the video authors and the terms of the
+Not affiliated with YouTube, Udemy or Google. Respect the rights of the video authors and the terms of the
 services you use.
 
 ## Other fields
@@ -77,10 +79,11 @@ collected by the developers.
 - **Optional host permissions `http://*/*`, `https://*/*`**: not granted at install. When the user enters
   the address of another service (a hosted OpenAI-compatible LLM, or a server on the local network) and
   presses Save, the options page asks for access to that single host.
-- **Content scripts on `https://www.youtube.com/*` and `https://m.youtube.com/*`**: one runs in the page
-  context (`world: "MAIN"`) to read the caption tracks from the YouTube player; the other reads the
-  playback state, controls the video's playback rate and pause state, and draws the Dub / Sub buttons and
-  the subtitles on the player.
+- **Content scripts on `https://www.youtube.com/*`, `https://m.youtube.com/*` and `https://*.udemy.com/*`**:
+  one runs in the page context (`world: "MAIN"`, YouTube only) to read the caption tracks from the YouTube
+  player; the other reads the playback state, controls the video's playback rate and pause state, and draws
+  the Dub / Sub buttons and the subtitles on the player. On Udemy it also asks udemy.com's own lecture API
+  (same origin, with the user's existing session) for the caption file of the lecture being dubbed.
 - **Remote code**: none. All code is in the package.
 
 ## Notes to reviewers
