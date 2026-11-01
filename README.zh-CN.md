@@ -156,6 +156,10 @@ voicevox.lan:50443 {
 
 **Vimeo（实验性）：** Vimeo 的所有视频都在 `player.vimeo.com` 框架内播放（vimeo.com 和嵌入它的页面都一样），因此扩展会在该框架内运行，并在播放器上显示同样的 **Dub** 按钮。字幕文件从播放器配置（`/video/<id>/config`）读取，优先使用人工制作的轨道而不是自动生成的轨道，视频的标准 `<track>` 元素作为备用。尚未在真实的 Vimeo 视频上测试。没有字幕的视频需要使用 **Load captions**。限制了可播放域名的嵌入（域名级隐私）可能会拒绝配置请求。
 
+**Coursera（实验性）：** 也支持 `www.coursera.org`。在课程页面的播放器上会出现同样的 **Dub** 按钮。Coursera 的播放器把课程字幕放在标准的 `<track>` 元素中，因此会读取播放器设为默认的轨道（请先在 Coursera 播放器中选择字幕语言）。尚未在真实课程上测试。找不到轨道时，请用 **Load captions** 载入 SRT/VTT 文件。
+
+**edX（实验性）：** 也可在 `courses.edx.org` 和 `learning.edx.org` 的所有框架中运行。新的学习站点把每个视频单元显示在 `courses.edx.org` 的框架中，**Dub** 按钮会出现在其中的播放器上。字幕从视频块的字幕数据（播放器当前显示的语言）读取，视频的 `<track>` 元素作为备用。尚未在真实课程上测试。托管在 YouTube 上的视频由 YouTube 自己的嵌入播放器播放，本扩展不会介入；这种情况请在 YouTube 页面使用，或使用 **Load captions**。其他 Open edX 站点不在支持范围内。
+
 ## 示例课程视频
 
 这个扩展程序面向以幻灯片为主的讲课视频。以下四个播放列表和一期播客可以拿来试用：
@@ -178,7 +182,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕辅助函数：单词展平、标点窗口、对齐、以句子为单位的 cue |
 | `extension/speakers.js` | 对话辅助函数：按换人标记切分字幕，并交替分配声音 |
 | `extension/subtitle.js` | 字幕分页辅助函数：把较长的文字分成几行一页 |
-| `extension/providers.js` | 站点适配器（YouTube、Udemy、Vimeo）：查找视频与播放器、获取字幕、检测页面切换 |
+| `extension/providers.js` | 站点适配器（YouTube、Udemy、Vimeo、Coursera、edX）：查找视频与播放器、获取字幕、检测页面切换 |
 | `extension/content.js` | cue 的构建、预生成循环、播放调度器、HUD |
 | `extension/background.js` | Service worker；与 LLM、VOICEVOX、edge-tts 的 HTTP 桥接 |
 | `extension/options.html`, `options.js` | 设置界面 |

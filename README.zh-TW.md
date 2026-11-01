@@ -156,6 +156,10 @@ voicevox.lan:50443 {
 
 **Vimeo（實驗性）：** Vimeo 的所有影片都在 `player.vimeo.com` 框架內播放（vimeo.com 和嵌入它的頁面都一樣），因此擴充功能會在該框架內執行，並在播放器上顯示同樣的 **Dub** 按鈕。字幕檔從播放器設定（`/video/<id>/config`）讀取，優先使用人工製作的軌道而不是自動產生的軌道，影片的標準 `<track>` 元素作為備用。尚未在真實的 Vimeo 影片上測試。沒有字幕的影片需要使用 **Load captions**。限制了可播放網域的嵌入（網域層級隱私）可能會拒絕設定請求。
 
+**Coursera（實驗性）：** 也支援 `www.coursera.org`。在課程頁面的播放器上會出現同樣的 **Dub** 按鈕。Coursera 的播放器把課程字幕放在標準的 `<track>` 元素中，因此會讀取播放器設為預設的軌道（請先在 Coursera 播放器中選擇字幕語言）。尚未在真實課程上測試。找不到軌道時，請用 **Load captions** 載入 SRT/VTT 檔案。
+
+**edX（實驗性）：** 也可在 `courses.edx.org` 和 `learning.edx.org` 的所有框架中執行。新的學習站點把每個影片單元顯示在 `courses.edx.org` 的框架中，**Dub** 按鈕會出現在其中的播放器上。字幕從影片區塊的字幕資料（播放器目前顯示的語言）讀取，影片的 `<track>` 元素作為備用。尚未在真實課程上測試。託管在 YouTube 上的影片由 YouTube 自己的嵌入播放器播放，本擴充功能不會介入；這種情況請在 YouTube 頁面使用，或使用 **Load captions**。其他 Open edX 站點不在支援範圍內。
+
 ## 範例講課影片
 
 這個擴充功能是為以投影片為主的講課影片設計的。以下四個播放清單和一集 Podcast 可以拿來試用：
@@ -178,7 +182,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕輔助函式：單字攤平、標點視窗、對齊、以句子為單位的 cue |
 | `extension/speakers.js` | 對話輔助函式：依換人標記切分字幕，並交替分配聲音 |
 | `extension/subtitle.js` | 字幕分頁輔助函式：把較長的文字分成幾行一頁 |
-| `extension/providers.js` | 站點適配器（YouTube、Udemy、Vimeo）：尋找影片與播放器、取得字幕、偵測頁面切換 |
+| `extension/providers.js` | 站點適配器（YouTube、Udemy、Vimeo、Coursera、edX）：尋找影片與播放器、取得字幕、偵測頁面切換 |
 | `extension/content.js` | cue 的建立、預先生成迴圈、播放排程器、HUD |
 | `extension/background.js` | Service worker；與 LLM、VOICEVOX、edge-tts 的 HTTP 橋接 |
 | `extension/options.html`, `options.js` | 設定介面 |

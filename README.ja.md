@@ -156,6 +156,10 @@ voicevox.lan:50443 {
 
 **Vimeo（実験的）:** Vimeo はすべての動画を `player.vimeo.com` のフレーム内で再生する（vimeo.com でも埋め込み先でも同じ）ため、拡張機能はそのフレーム内で動き、プレーヤーに同じ **Dub** ボタンを出します。字幕ファイルはプレーヤーの設定（`/video/<id>/config`）から読み、自動生成よりも人が作ったトラックを優先します。動画の標準の `<track>` 要素はフォールバックです。実際の Vimeo 動画ではまだ試していません。字幕のない動画では **Load captions** が必要です。再生できるドメインを制限した埋め込み（ドメインレベルのプライバシー）では、設定の取得が拒否されることがあります。
 
+**Coursera（実験的）:** `www.coursera.org` にも対応します。講義ページのプレーヤーに同じ **Dub** ボタンが出ます。Coursera のプレーヤーは講義の字幕を標準の `<track>` 要素に入れているので、プレーヤーが既定にしているトラックを読み込みます（先に Coursera のプレーヤーで字幕言語を選んでください）。実際のコースではまだ試していません。トラックが見つからない場合は **Load captions** で SRT/VTT ファイルを読み込んでください。
+
+**edX（実験的）:** `courses.edx.org` と `learning.edx.org` でも、すべてのフレームで動きます。新しい学習サイトは動画ユニットを `courses.edx.org` のフレームに表示するため、その中のプレーヤーに **Dub** ボタンが出ます。字幕は動画ブロックのトランスクリプトデータ（プレーヤーが表示している言語のもの）から読み、動画の `<track>` 要素はフォールバックです。実際のコースではまだ試していません。YouTube にホストされた動画は YouTube 自身の埋め込みで再生されるため、この拡張機能は関与しません。その場合は YouTube のページで使うか、**Load captions** を使ってください。他の Open edX サイトは対象外です。
+
 ## 試せる講義の例
 
 この拡張機能は、スライド中心の講義向けです。試せる再生リストを 4 つと、ポッドキャストを 1 本挙げます。
@@ -178,7 +182,7 @@ voicevox.lan:50443 {
 | `extension/asr.js` | ASR 字幕のヘルパー。単語の平坦化、句読点の窓、突き合わせ、文単位の cue |
 | `extension/speakers.js` | 対話用ヘルパー。話者交代の印で字幕を区切り、声を交互に割り当てる |
 | `extension/subtitle.js` | 字幕のページ分割ヘルパー。長い文を数行ずつのページに分ける |
-| `extension/providers.js` | サイト別アダプター（YouTube、Udemy、Vimeo）。動画とプレーヤーの検出、字幕の取得、ページ遷移の検知 |
+| `extension/providers.js` | サイト別アダプター（YouTube、Udemy、Vimeo、Coursera、edX）。動画とプレーヤーの検出、字幕の取得、ページ遷移の検知 |
 | `extension/content.js` | cue の生成、先読みループ、再生スケジューラ、HUD |
 | `extension/background.js` | サービスワーカー。LLM・VOICEVOX・edge-tts との HTTP ブリッジ |
 | `extension/options.html`, `options.js` | 設定 UI |
