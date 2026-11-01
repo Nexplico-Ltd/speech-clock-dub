@@ -11,7 +11,7 @@
 ## Project
 
 Chrome MV3 extension that dubs YouTube (and, experimentally, Udemy, Vimeo, Coursera and edX) lecture videos (mostly static slides) into Japanese, English,
-Traditional/Simplified Chinese or Korean.
+Traditional/Simplified Chinese, Korean, Spanish, Portuguese, Italian, French, German, Dutch or Russian.
 The synthesized speech is the master clock; the video is the slave. The extension adjusts
 `playbackRate` and pauses/resumes the `<video>` element to follow the speech, never the other way around.
 

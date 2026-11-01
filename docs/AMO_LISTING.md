@@ -9,7 +9,7 @@ Speech Clock Dub
 
 ## Summary (250 characters at most)
 
-Dubs YouTube, Udemy and Vimeo lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
+Dubs YouTube, Udemy and Vimeo lectures into 12 languages with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
 
 ## Categories
 
@@ -18,7 +18,7 @@ Language Support, Social & Communication (or Other). Tags: youtube, udemy, vimeo
 ## Description
 
 Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy and Vimeo videos), mostly slide-based lectures, into Japanese, English, Traditional
-Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesized speech is the master
+Chinese, Simplified Chinese, Korean, Spanish, Portuguese, Italian, French, German, Dutch or Russian. Unlike most dubbing tools, the synthesized speech is the master
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
 
