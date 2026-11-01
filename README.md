@@ -8,7 +8,7 @@
 
 YouTube dubbing for lectures where the video follows the voice.
 
-A Chrome and Firefox (MV3) extension that dubs YouTube (and, experimentally, Udemy and Vimeo) lecture videos into Japanese, English, Traditional
+A Chrome and Firefox (MV3) extension that dubs YouTube (and, experimentally, Udemy, Vimeo, Coursera and edX) lecture videos into Japanese, English, Traditional
 Chinese, Simplified Chinese or Korean. It is designed for videos that are essentially slideshows:
 instead of squeezing the translated speech to fit the picture, **the picture follows the speech**.
 
@@ -243,6 +243,10 @@ background or the screen locks. iOS needs a separate Safari Web Extension and is
 
 **Vimeo (experimental):** the extension also runs inside `player.vimeo.com` frames, which is where Vimeo plays every video (on vimeo.com and on pages that embed it), and shows the same **Dub** button on the player. It reads the caption file from the player's config (`/video/<id>/config`), preferring a human-made track over an auto-generated one, and falls back to the video's standard `<track>` elements. This has not been tested against a real Vimeo video yet, and a video with no captions needs **Load captions**. Embeds that restrict where they can be played (domain-level privacy) may refuse the config request.
 
+**Coursera (experimental):** the extension also matches `www.coursera.org`. On a lecture page the same **Dub** button appears on the player. Coursera's player puts the lecture's subtitles in standard `<track>` elements, so the extension reads the one the player marked as default (pick the subtitle language in Coursera's player first). This has not been tested on a real course yet, so if no tracks are found use **Load captions** with an SRT/VTT file.
+
+**edX (experimental):** the extension also runs on `courses.edx.org` and `learning.edx.org`, in all frames: the new learning site shows each video unit in a `courses.edx.org` frame, and the **Dub** button appears on the player inside it. Captions are read from the video block's transcript data (the transcript of the language the player shows), with the video's `<track>` elements as a fallback. This has not been tested on a real course yet. Videos hosted on YouTube are played by YouTube's own embed, which this extension does not touch; use the YouTube page for those or **Load captions**. Other Open edX sites are not matched.
+
 ## Example lectures
 
 The extension is meant for slide-based lectures. Four playlists and one podcast episode you can try it on:
@@ -265,7 +269,7 @@ Videos with manual captions work better. The videos are not part of this project
 | `extension/asr.js` | ASR caption helpers: word flattening, punctuation windows, alignment, sentence-based cues |
 | `extension/speakers.js` | Dialogue helpers: splitting captions at speaker-change markers and alternating voices |
 | `extension/subtitle.js` | Subtitle paging helpers: splitting long text into pages of a few lines |
-| `extension/providers.js` | Per-site adapters (YouTube, Udemy, Vimeo): video and player lookup, caption fetching, navigation detection |
+| `extension/providers.js` | Per-site adapters (YouTube, Udemy, Vimeo, Coursera, edX): video and player lookup, caption fetching, navigation detection |
 | `extension/content.js` | Cue building, production loop, playback scheduler, HUD |
 | `extension/background.js` | Service worker; LLM, VOICEVOX and edge-tts HTTP bridge |
 | `extension/options.html`, `options.js` | Settings UI |

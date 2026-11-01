@@ -106,7 +106,7 @@ const YTD_PROV = (() => {
     let events = [];
     if (el?.src) {
       try {
-        const res = await fetch(el.src, { credentials: 'include' });
+        const res = await fetch(el.src); // cookies go along for same-origin files only
         if (res.ok) events = parseCaptionFile('track.vtt', await res.text());
       } catch {} // fall through to the cues the browser loaded
     }
@@ -117,6 +117,36 @@ const YTD_PROV = (() => {
     if (!events.length) throw new Error('The caption track is empty');
     return { languageCode, kind: 'manual', events };
   }
+
+  // An adapter for a site that plays plain HTML5 <video>: `player` is a selector for the element that should hold
+  // the HUD, `api` (optional) fetches captions from the site's own API; the video's <track> elements are the fallback.
+  const videoSite = ({ id, matches, player, api }) => ({
+    id,
+    matches,
+    findVideo: () => document.querySelector('video'),
+    findPlayer() {
+      const v = document.querySelector('video');
+      return v ? (v.closest(player) ?? v.parentElement) : null;
+    },
+    css: '',
+    // These sites change the address without a page load when the next lecture opens.
+    videoKey: (loc) => loc.pathname,
+    navEvents: [],
+    async fetchCaptions() {
+      const v = document.querySelector('video');
+      if (!v) throw new Error('No <video> element found');
+      if (!api) return fetchTrackCaptions(v);
+      try {
+        return await api();
+      } catch (apiErr) {
+        try {
+          return await fetchTrackCaptions(v);
+        } catch {
+          throw apiErr; // the API error is the more useful one
+        }
+      }
+    },
+  });
 
   // Udemy draws its own captions and never adds <track> elements, so ask the same API the player uses:
   // /course/<slug>/learn/lecture/<id> -> course id -> the lecture's asset.captions[].url (WebVTT).
@@ -151,32 +181,12 @@ const YTD_PROV = (() => {
     return { languageCode: cap.languageCode, kind: 'manual', events };
   }
 
-  const udemy = {
+  const udemy = videoSite({
     id: 'udemy',
     matches: (loc) => /(^|\.)udemy\.com$/.test(loc.hostname),
-    findVideo: () => document.querySelector('video'),
-    findPlayer() {
-      const v = document.querySelector('video');
-      return v ? (v.closest(UDEMY_PLAYER) ?? v.parentElement) : null;
-    },
-    css: '',
-    // Lectures are /course/<slug>/learn/lecture/<id>: the address changes without a page load.
-    videoKey: (loc) => loc.pathname,
-    navEvents: [],
-    async fetchCaptions() {
-      const v = document.querySelector('video');
-      if (!v) throw new Error('No <video> element found');
-      try {
-        return await fetchUdemyCaptions();
-      } catch (apiErr) {
-        try {
-          return await fetchTrackCaptions(v);
-        } catch {
-          throw apiErr; // the API error is the more useful one
-        }
-      }
-    },
-  };
+    player: UDEMY_PLAYER,
+    api: fetchUdemyCaptions,
+  });
 
   // ---------- Vimeo ----------
 
@@ -207,34 +217,80 @@ const YTD_PROV = (() => {
     return { languageCode: langCode({ language: track.lang }), kind: 'manual', events };
   }
 
-  const vimeo = {
+  const vimeo = videoSite({
     id: 'vimeo',
     matches: (loc) => loc.hostname === 'player.vimeo.com',
-    findVideo: () => document.querySelector('video'),
-    findPlayer() {
-      const v = document.querySelector('video');
-      return v ? (v.closest('.vp-video-wrapper,.player,[class*="vp-player"]') ?? v.parentElement) : null;
-    },
-    css: '',
-    videoKey: (loc) => loc.pathname,
-    navEvents: [],
-    async fetchCaptions() {
-      const v = document.querySelector('video');
-      if (!v) throw new Error('No <video> element found');
-      try {
-        return await fetchVimeoCaptions();
-      } catch (apiErr) {
-        try {
-          return await fetchTrackCaptions(v);
-        } catch {
-          throw apiErr; // the config error is the more useful one
-        }
-      }
-    },
-  };
+    player: '.vp-video-wrapper,.player,[class*="vp-player"]',
+    api: fetchVimeoCaptions,
+  });
 
-  const providers = [youtube, udemy, vimeo];
+  // ---------- Coursera ----------
+
+  // Coursera's lecture player (video.js) puts the lecture's subtitles in standard <track> elements
+  // (WebVTT on its CDN), so the shared <track> reader is all it needs. Lectures are
+  // /learn/<course>/lecture/<id>/<title>.
+  const coursera = videoSite({
+    id: 'coursera',
+    matches: (loc) => /(^|\.)coursera\.org$/.test(loc.hostname),
+    player: '.video-js,[class*="VideoPlayer"],[class*="video-player"]',
+  });
+
+  // ---------- edX (Open edX) ----------
+
+  // The new learning.edx.org app shows each video unit in a courses.edx.org/xblock/... frame, so this adapter
+  // runs in that frame. The video block describes its transcripts in the data-metadata attribute of
+  // `.video`: transcriptLanguages ({ code: name }), transcriptLanguage (the one shown) and
+  // transcriptTranslationUrl, whose "__lang__" is replaced by a language code. That URL answers with
+  // { start: [ms], end: [ms], text: [html] }.
+  function edxCaptionSource(meta) {
+    const langs = Object.keys(meta?.transcriptLanguages ?? {});
+    const lang = langs.includes(meta?.transcriptLanguage) ? meta.transcriptLanguage : langs[0];
+    if (!lang || !meta.transcriptTranslationUrl) return null;
+    return { url: meta.transcriptTranslationUrl.replace('__lang__', encodeURIComponent(lang)), languageCode: langCode({ language: lang }) };
+  }
+
+  function edxTranscriptEvents(json) {
+    const { start = [], end = [], text = [] } = json ?? {};
+    return text
+      .map((t, i) => ({
+        tStartMs: start[i],
+        dDurationMs: end[i] - start[i],
+        segs: [{ utf8: String(t ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() }],
+      }))
+      .filter((e) => e.segs[0].utf8 && Number.isFinite(e.tStartMs) && Number.isFinite(e.dDurationMs));
+  }
+
+  async function fetchEdxCaptions() {
+    const el = document.querySelector('.video[data-metadata]');
+    if (!el) throw new Error('This page has no edX video block');
+    const src = edxCaptionSource(JSON.parse(el.dataset.metadata));
+    if (!src) throw new Error('edX lists no transcripts for this video');
+    const res = await fetch(new URL(src.url, location.href));
+    if (!res.ok) throw new Error(`edX transcript returned HTTP ${res.status}`);
+    const events = edxTranscriptEvents(await res.json());
+    if (!events.length) throw new Error('The transcript is empty');
+    return { languageCode: src.languageCode, kind: 'manual', events };
+  }
+
+  const edx = videoSite({
+    id: 'edx',
+    matches: (loc) => /^(courses|learning)\.edx\.org$/.test(loc.hostname),
+    player: '.video-player,.video-wrapper,.video',
+    api: fetchEdxCaptions,
+  });
+
+  const providers = [youtube, udemy, vimeo, coursera, edx];
   const pick = (loc) => providers.find((p) => p.matches(loc)) ?? youtube;
 
-  return { parseCaptionFile, pick, providers, udemyLectureRef, pickUdemyCaption, vimeoVideoId, pickVimeoTrack };
+  return {
+    parseCaptionFile,
+    pick,
+    providers,
+    udemyLectureRef,
+    pickUdemyCaption,
+    vimeoVideoId,
+    pickVimeoTrack,
+    edxCaptionSource,
+    edxTranscriptEvents,
+  };
 })();
