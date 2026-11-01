@@ -98,3 +98,48 @@ test('the Udemy caption list yields one usable track, preferring the first liste
   assert.equal(PROV.pickUdemyCaption([]), null);
   assert.equal(PROV.pickUdemyCaption(undefined), null);
 });
+
+test('Coursera and edX are picked by host name; edX only on its own hosts', () => {
+  assert.equal(PROV.pick({ hostname: 'www.coursera.org' }).id, 'coursera');
+  assert.equal(PROV.pick({ hostname: 'courses.edx.org' }).id, 'edx');
+  assert.equal(PROV.pick({ hostname: 'learning.edx.org' }).id, 'edx');
+  assert.equal(PROV.pick({ hostname: 'www.edx.org' }).id, 'youtube'); // the marketing site is not matched
+  assert.equal(PROV.pick({ hostname: 'notcoursera.org' }).id, 'youtube');
+});
+
+test('the edX video block names the transcript URL for the language shown', () => {
+  const meta = {
+    transcriptLanguages: { en: 'English', 'zh-hans': 'Chinese' },
+    transcriptLanguage: 'zh-hans',
+    transcriptTranslationUrl: '/courses/c/xblock/b/handler/transcript/translation/__lang__',
+  };
+  assert.deepEqual(plain(PROV.edxCaptionSource(meta)), {
+    url: '/courses/c/xblock/b/handler/transcript/translation/zh-hans',
+    languageCode: 'zh-hans',
+  });
+  // An unknown current language falls back to the first listed one; no language list means no source.
+  assert.equal(PROV.edxCaptionSource({ ...meta, transcriptLanguage: 'fr' }).url.endsWith('/en'), true);
+  assert.equal(PROV.edxCaptionSource({ ...meta, transcriptLanguages: {} }), null);
+  assert.equal(PROV.edxCaptionSource({ transcriptLanguages: { en: 'English' } }), null);
+  assert.equal(PROV.edxCaptionSource(undefined), null);
+});
+
+test('an edX transcript becomes json3-style events and skips empty or broken rows', () => {
+  const json = {
+    start: [1000, 4000, 6000, 'x'],
+    end: [3500, 5000, 7000, 8000],
+    text: ['Hello <i>there</i>', '  ', 'Next\n line', 'bad'],
+  };
+  assert.deepEqual(plain(PROV.edxTranscriptEvents(json)), [
+    { tStartMs: 1000, dDurationMs: 2500, segs: [{ utf8: 'Hello there' }] },
+    { tStartMs: 6000, dDurationMs: 1000, segs: [{ utf8: 'Next line' }] },
+  ]);
+  assert.deepEqual(plain(PROV.edxTranscriptEvents(undefined)), []);
+});
+
+test('the edX frames are covered by the manifest in all frames', () => {
+  const entry = manifest.content_scripts.find((cs) => cs.matches.includes('https://courses.edx.org/*'));
+  assert.equal(entry.all_frames, true);
+  assert.ok(entry.matches.includes('https://learning.edx.org/*'));
+  assert.ok(entry.js.includes('content.js'));
+});
