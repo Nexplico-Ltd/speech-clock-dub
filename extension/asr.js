@@ -8,8 +8,32 @@ const YTD_ASR = (() => {
   const MIN_SENTENCE_WORDS = 3;
   // Words that start a clause. When a cue is cut right after one ("... and" | "we then ..."), it is
   // moved to the head of the next cue, where the speech and the translation read naturally.
+  // The words are matched whatever the caption language is, so the list covers the common clause
+  // starters of the main lecture languages. Words that are also frequent endings of a clause in another
+  // language are left out (for example "a" in Spanish or "die" in German).
   const LEADING_WORDS = new Set(
-    'and but or so because which then while although though if when whereas since where'.split(' '),
+    [
+      // English
+      'and but or so because which then while although though if when whereas since where',
+      // Spanish, Portuguese, Italian
+      'y e o u pero mas porque que cuando si aunque mientras pues entonces donde',
+      'mas ou porque quando se embora enquanto então pois onde',
+      'ma perché quando mentre anche quindi dove allora',
+      // French
+      'et ou mais donc car parce que quand lorsque puisque si alors tandis où',
+      // German, Dutch
+      'und aber oder denn weil dass wenn als obwohl während sondern ob damit dann',
+      'en maar of want omdat dat toen terwijl hoewel dus',
+      // Russian
+      'и но а или потому что когда если хотя пока чтобы который',
+      // Korean (captions are space-separated)
+      '그리고 그러나 그런데 하지만 그래서 그러면 그럼 또는 왜냐하면 만약 그렇지만',
+      // Japanese and Chinese (whole caption tokens only)
+      'そして しかし でも だから それで ところが また ですから なぜなら もし',
+      '和 而 而且 但 但是 可是 因为 所以 如果 然后 或者 虽然 因為 如果 然後 或者 雖然 但是 而且',
+    ]
+      .join(' ')
+      .split(' '),
   );
   const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
