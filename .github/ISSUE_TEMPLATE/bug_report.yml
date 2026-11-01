@@ -50,6 +50,13 @@ body:
         - zh-TW (Traditional Chinese)
         - zh-CN (Simplified Chinese)
         - ko (Korean)
+        - es (Spanish)
+        - pt (Portuguese)
+        - it (Italian)
+        - fr (French)
+        - de (German)
+        - nl (Dutch)
+        - ru (Russian)
     validations:
       required: true
   - type: dropdown

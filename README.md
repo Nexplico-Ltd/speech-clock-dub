@@ -9,7 +9,7 @@
 YouTube dubbing for lectures where the video follows the voice.
 
 A Chrome and Firefox (MV3) extension that dubs YouTube (and, experimentally, Udemy, Vimeo, Coursera and edX) lecture videos into Japanese, English, Traditional
-Chinese, Simplified Chinese or Korean. It is designed for videos that are essentially slideshows:
+Chinese, Simplified Chinese, Korean, Spanish, Portuguese, Italian, French, German, Dutch or Russian. It is designed for videos that are essentially slideshows:
 instead of squeezing the translated speech to fit the picture, **the picture follows the speech**.
 
 ## How it works
@@ -177,6 +177,13 @@ Set `targetLang` in the options page:
 | `zh-TW` | Traditional Chinese (Taiwan) | `zh-TW-HsiaoChenNeural` |
 | `zh-CN` | Simplified Chinese | `zh-CN-XiaoxiaoNeural` |
 | `ko` | Korean | `ko-KR-SunHiNeural` |
+| `es` | Spanish | `es-ES-ElviraNeural` |
+| `pt` | Portuguese (Brazil) | `pt-BR-FranciscaNeural` |
+| `it` | Italian | `it-IT-ElsaNeural` |
+| `fr` | French | `fr-FR-DeniseNeural` |
+| `de` | German | `de-DE-KatjaNeural` |
+| `nl` | Dutch | `nl-NL-ColetteNeural` |
+| `ru` | Russian | `ru-RU-SvetlanaNeural` |
 
 `translationLevel` sets how hard the translated wording is: `standard` (default), `easy` (simple words and short sentences for learners; about JLPT N5-N3 for Japanese) or `advanced` (more precise, formal wording; about JLPT N3-N1 for Japanese). The meaning and technical terms are not changed. It only adds one rule to the translation prompt, so how well it is followed depends on the model.
 
@@ -190,10 +197,17 @@ Set `targetLang` in the options page:
 | `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+| `es` | `es-ES-ElviraNeural` | `es-ES-AlvaroNeural` |
+| `pt` | `pt-BR-FranciscaNeural` | `pt-BR-AntonioNeural` |
+| `it` | `it-IT-ElsaNeural` | `it-IT-DiegoNeural` |
+| `fr` | `fr-FR-DeniseNeural` | `fr-FR-HenriNeural` |
+| `de` | `de-DE-KatjaNeural` | `de-DE-ConradNeural` |
+| `nl` | `nl-NL-ColetteNeural` | `nl-NL-MaartenNeural` |
+| `ru` | `ru-RU-SvetlanaNeural` | `ru-RU-DmitryNeural` |
 
 `ttsProvider` is `google` by default (Google Cloud Text-to-Speech); `auto` means VOICEVOX for `ja` and edge-tts otherwise; `google` forces Google Cloud
 Text-to-Speech (default voices: `ja-JP-Wavenet-B/C`, `en-US-Wavenet-F/D`, `cmn-TW-Wavenet-A/B`,
-`cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`; `googleVoice` overrides the voice and `googleSpeed` sets the
+`cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`, `es-ES-Wavenet-C/B`, `pt-BR-Wavenet-A/B`, `it-IT-Wavenet-A/C`, `fr-FR-Wavenet-A/B`, `de-DE-Wavenet-F/B`, `nl-NL-Wavenet-A/B`, `ru-RU-Wavenet-A/B`; `googleVoice` overrides the voice and `googleSpeed` sets the
 speaking rate). `edgeVoice` overrides the
 edge-tts voice (`.venv/bin/edge-tts --list-voices` lists them) and `edgeRate` (e.g. `+10%`) the speed.
 To add a language, add an entry to `YTD_LANGS` in `extension/defaults.js`.

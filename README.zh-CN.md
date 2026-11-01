@@ -8,7 +8,7 @@
 
 让画面跟着语音走的 YouTube 讲课视频配音工具。
 
-这是一个 Chrome / Firefox（MV3）扩展程序，可以把 YouTube 讲课视频配音成日语、英语、繁体中文、简体中文或韩语。它面向以幻灯片为主的视频：不是把翻译后的语音硬压进画面的节奏，而是 **让画面跟着语音走**。
+这是一个 Chrome / Firefox（MV3）扩展程序，可以把 YouTube 讲课视频配音成日语、英语、繁体中文、简体中文、韩语、西班牙语、葡萄牙语、意大利语、法语、德语、荷兰语或俄语。它面向以幻灯片为主的视频：不是把翻译后的语音硬压进画面的节奏，而是 **让画面跟着语音走**。
 
 ## 工作原理
 
@@ -116,6 +116,13 @@ voicevox.lan:50443 {
 | `zh-TW` | 繁体中文（台湾） | `zh-TW-HsiaoChenNeural` |
 | `zh-CN` | 简体中文 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 韩语 | `ko-KR-SunHiNeural` |
+| `es` | 西班牙语 | `es-ES-ElviraNeural` |
+| `pt` | 葡萄牙语（巴西） | `pt-BR-FranciscaNeural` |
+| `it` | 意大利语 | `it-IT-ElsaNeural` |
+| `fr` | 法语 | `fr-FR-DeniseNeural` |
+| `de` | 德语 | `de-DE-KatjaNeural` |
+| `nl` | 荷兰语 | `nl-NL-ColetteNeural` |
+| `ru` | 俄语 | `ru-RU-SvetlanaNeural` |
 
 `translationLevel` 决定译文的难度：`standard`（默认）、`easy`（给学习者的简单词汇和短句；日语约 JLPT N5～N3）、`advanced`（更精确、较正式的用语；日语约 JLPT N3～N1）。意思和专业术语不会改变。这只是在翻译提示中加一条规则，遵守的程度取决于模型。
 
@@ -129,8 +136,15 @@ voicevox.lan:50443 {
 | `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+| `es` | `es-ES-ElviraNeural` | `es-ES-AlvaroNeural` |
+| `pt` | `pt-BR-FranciscaNeural` | `pt-BR-AntonioNeural` |
+| `it` | `it-IT-ElsaNeural` | `it-IT-DiegoNeural` |
+| `fr` | `fr-FR-DeniseNeural` | `fr-FR-HenriNeural` |
+| `de` | `de-DE-KatjaNeural` | `de-DE-ConradNeural` |
+| `nl` | `nl-NL-ColetteNeural` | `nl-NL-MaartenNeural` |
+| `ru` | `ru-RU-SvetlanaNeural` | `ru-RU-DmitryNeural` |
 
-`ttsProvider` 默认为 `google`（Google Cloud Text-to-Speech）；`auto` 表示 `ja` 使用 VOICEVOX，其他语言使用 edge-tts；设为 `google` 则使用 Google Cloud Text-to-Speech（默认声音：`ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`；`googleVoice` 可覆盖声音，`googleSpeed` 可设置语速）。`edgeVoice` 可覆盖 edge-tts 的声音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可调整语速。如需添加语言，请在 `extension/defaults.js` 的 `YTD_LANGS` 中加入一个条目。
+`ttsProvider` 默认为 `google`（Google Cloud Text-to-Speech）；`auto` 表示 `ja` 使用 VOICEVOX，其他语言使用 edge-tts；设为 `google` 则使用 Google Cloud Text-to-Speech（默认声音：`ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`, `es-ES-Wavenet-C/B`, `pt-BR-Wavenet-A/B`, `it-IT-Wavenet-A/C`, `fr-FR-Wavenet-A/B`, `de-DE-Wavenet-F/B`, `nl-NL-Wavenet-A/B`, `ru-RU-Wavenet-A/B`；`googleVoice` 可覆盖声音，`googleSpeed` 可设置语速）。`edgeVoice` 可覆盖 edge-tts 的声音（用 `.venv/bin/edge-tts --list-voices` 列出），`edgeRate`（例如 `+10%`）可调整语速。如需添加语言，请在 `extension/defaults.js` 的 `YTD_LANGS` 中加入一个条目。
 
 `speakerVoices`（默认 `off`）适用于访谈、播客之类的对话。许多手动字幕会在换人说话时，在行首加上 `- ` 或 `>>`。设为 `alternate` 后，这些标记会从文本中去掉，并在每次换人时切换声音：第一位说话者使用 `voiceGender` 的声音，另一位使用相反性别的声音。标记中没有姓名，所以只适用于两个人；自动生成的字幕通常也没有这些标记。
 
