@@ -1,9 +1,9 @@
 # Privacy policy
 
-Speech Clock Dub is a browser extension that dubs YouTube videos (and, experimentally, Udemy lectures) using translation and speech services
+Speech Clock Dub is a browser extension that dubs YouTube videos (and, experimentally, Udemy lectures and Vimeo videos) using translation and speech services
 that you choose. It has no server of its own, no account system, no analytics and no advertising.
 
-_Last updated: 2026-10-30_
+_Last updated: 2026-11-01_
 
 ## Summary
 
@@ -13,18 +13,18 @@ _Last updated: 2026-10-30_
   configure on its options page. With the default settings these are Google's Gemini API (translation)
   and Google Cloud Text-to-Speech (voice), which need your own API keys. You can instead point it at
   servers on your own computer or network.
-- It does not read anything on youtube.com or udemy.com other than the caption data and the playback state
+- It does not read anything on youtube.com, udemy.com or vimeo.com's player other than the caption data and the playback state
   of the video you chose to dub.
 
 ## What the extension reads
 
-When you start a dub on a YouTube watch page or a Udemy lecture page, the extension reads:
+When you start a dub on a YouTube watch page, a Udemy lecture page or a Vimeo video, the extension reads:
 
 - the caption track of that video (the text and timings), either from the YouTube player, from Udemy's
-  lecture caption file (see below) or from a caption file that you load yourself;
+  lecture caption file or Vimeo's player caption file (see below) or from a caption file that you load yourself;
 - the video element's playback state, so that it can change the playback rate and pause or resume it.
 
-It does not read your browsing history, your YouTube or Udemy account, other tabs, cookies or form data.
+It does not read your browsing history, your YouTube, Udemy or Vimeo account, other tabs, cookies or form data.
 
 On Udemy, the page has no caption track the extension can read directly, so the extension makes two
 requests to udemy.com's own lecture API (the address of the course and the caption list of the lecture you
@@ -32,6 +32,12 @@ are on) and then downloads the caption file the lecture lists. These requests go
 your browser, with your existing Udemy session (the browser attaches its cookies, as it does for the Udemy
 page itself); the extension does not read or store the cookies. The responses are used only to find and read
 the captions.
+
+On Vimeo, every video plays inside a `player.vimeo.com` frame, on vimeo.com and on other sites that embed
+it. The extension runs only inside that frame; it cannot read the embedding page. From there it requests the
+player's own configuration (which lists the captions) and the caption file, both from `player.vimeo.com`,
+with your existing Vimeo session as the browser would for the player itself. The extension does not read or
+store cookies, and uses the responses only to find and read the captions.
 
 ## Where the data goes
 
