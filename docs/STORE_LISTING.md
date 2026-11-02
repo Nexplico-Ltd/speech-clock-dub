@@ -8,7 +8,7 @@ Speech Clock Dub
 
 ## Summary (132 characters at most)
 
-Dubs YouTube, Udemy and Vimeo lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. Video follows the voice.
+Dubs YouTube, Udemy, Vimeo, Coursera and edX lectures into 12 languages with your own LLM and TTS.
 
 ## Category
 
@@ -16,8 +16,8 @@ Productivity (or Education)
 
 ## Description
 
-Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy and Vimeo videos), mostly slide-based lectures, into Japanese, English, Traditional
-Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesized speech is the master
+Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy, Vimeo, Coursera and edX videos), mostly slide-based lectures, into Japanese, English, Traditional
+Chinese, Simplified Chinese, Korean, Spanish, Portuguese, Italian, French, German, Dutch or Russian. Unlike most dubbing tools, the synthesized speech is the master
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
 
@@ -40,6 +40,8 @@ Features
   be signed in and enrolled in the course.
 - Also works on Vimeo videos (experimental): captions come from the Vimeo player's caption file, so the video must
   have captions or subtitles.
+- Also works on Coursera and edX videos (experimental): captions come from the video's own subtitle track or
+  transcript, so the video must have one. edX is supported on courses.edx.org and learning.edx.org only.
 - Optional alternating voices for dialogue, from caption speaker markers or labelled by the LLM
   (experimental).
 - Google Cloud Text-to-Speech as the default voice provider (your own API key), or VOICEVOX / edge-tts.
@@ -55,12 +57,12 @@ https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 Open source (Apache-2.0): https://github.com/Nexplico-Ltd/speech-clock-dub
 
-Not affiliated with YouTube, Udemy, Vimeo or Google. Respect the rights of the video authors and the terms of the
+Not affiliated with YouTube, Udemy, Vimeo, Coursera, edX or Google. Respect the rights of the video authors and the terms of the
 voices you use.
 
 ## Single purpose
 
-Dub the YouTube, Udemy or Vimeo video the user is watching into another language, using the user's own translation and
+Dub the YouTube, Udemy, Vimeo, Coursera or edX video the user is watching into another language, using the user's own translation and
 speech services, and keep the video in step with the generated speech.
 
 ## Permission justifications
@@ -77,13 +79,16 @@ speech services, and keep the video in step with the generated speech.
   the address of another service (a hosted OpenAI-compatible LLM, or their own LLM / VOICEVOX / edge-tts
   server on another machine, for example a GPU box on the local network) and presses Save, the options page asks Chrome for access to that single host, so
   the user can approve or deny it. No other hosts are requested.
-- **Content scripts on `https://www.youtube.com/*`, `https://*.udemy.com/*` and `https://player.vimeo.com/*`**:
+- **Content scripts on `https://www.youtube.com/*`, `https://*.udemy.com/*`, `https://player.vimeo.com/*`,
+  `https://www.coursera.org/*`, `https://courses.edx.org/*` and `https://learning.edx.org/*`**:
   read the caption track of the video being dubbed, control the video's playback rate and pause state, and
   draw the Dub / Sub buttons and subtitles on the player. On Udemy the script also asks udemy.com's own
   lecture API (same origin, with the user's existing session) for the caption file of the lecture being
   dubbed. On Vimeo it runs only inside Vimeo's player frame (`player.vimeo.com`, including players embedded in
   other sites, where it cannot see the embedding page) and fetches that player's config and caption file from
-  the same origin.
+  the same origin. On Coursera it reads the subtitle track the lecture's video element already lists. On edX it
+  runs only inside the video frames (`courses.edx.org`) and fetches the transcript named by the video block
+  from the same origin. Only the hosts above get a content script; it does nothing on a page without a video.
 - **Remote code**: none. All code is in the package.
 
 ## Data usage disclosures (privacy practices tab)

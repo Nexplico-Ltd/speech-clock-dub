@@ -8,7 +8,7 @@
 
 영상이 음성을 따라가는 YouTube 강의 더빙 도구입니다.
 
-YouTube 강의 영상을 일본어, 영어, 번체 중국어, 간체 중국어, 한국어로 더빙하는 Chrome/Firefox(MV3) 확장 프로그램입니다. 슬라이드 위주의 영상을 염두에 두고 만들었습니다. 번역한 음성을 화면 속도에 억지로 맞추는 대신, **화면이 음성을 따라갑니다**.
+YouTube 강의 영상을 일본어, 영어, 번체 중국어, 간체 중국어, 한국어, 스페인어, 포르투갈어, 이탈리아어, 프랑스어, 독일어, 네덜란드어, 러시아어로 더빙하는 Chrome/Firefox(MV3) 확장 프로그램입니다. 슬라이드 위주의 영상을 염두에 두고 만들었습니다. 번역한 음성을 화면 속도에 억지로 맞추는 대신, **화면이 음성을 따라갑니다**.
 
 ## 동작 방식
 
@@ -116,6 +116,13 @@ voicevox.lan:50443 {
 | `zh-TW` | 번체 중국어(대만) | `zh-TW-HsiaoChenNeural` |
 | `zh-CN` | 간체 중국어 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 한국어 | `ko-KR-SunHiNeural` |
+| `es` | 스페인어 | `es-ES-ElviraNeural` |
+| `pt` | 포르투갈어(브라질) | `pt-BR-FranciscaNeural` |
+| `it` | 이탈리아어 | `it-IT-ElsaNeural` |
+| `fr` | 프랑스어 | `fr-FR-DeniseNeural` |
+| `de` | 독일어 | `de-DE-KatjaNeural` |
+| `nl` | 네덜란드어 | `nl-NL-ColetteNeural` |
+| `ru` | 러시아어 | `ru-RU-SvetlanaNeural` |
 
 `translationLevel`은 번역문의 난이도를 정합니다: `standard`(기본값), `easy`(학습자를 위한 쉬운 단어와 짧은 문장. 일본어는 JLPT N5~N3 수준), `advanced`(더 정확하고 격식 있는 표현. 일본어는 JLPT N3~N1 수준). 의미와 전문 용어는 바뀌지 않습니다. 번역 프롬프트에 규칙을 한 줄 추가할 뿐이므로 얼마나 지켜지는지는 모델에 따라 다릅니다.
 
@@ -129,8 +136,15 @@ voicevox.lan:50443 {
 | `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+| `es` | `es-ES-ElviraNeural` | `es-ES-AlvaroNeural` |
+| `pt` | `pt-BR-FranciscaNeural` | `pt-BR-AntonioNeural` |
+| `it` | `it-IT-ElsaNeural` | `it-IT-DiegoNeural` |
+| `fr` | `fr-FR-DeniseNeural` | `fr-FR-HenriNeural` |
+| `de` | `de-DE-KatjaNeural` | `de-DE-ConradNeural` |
+| `nl` | `nl-NL-ColetteNeural` | `nl-NL-MaartenNeural` |
+| `ru` | `ru-RU-SvetlanaNeural` | `ru-RU-DmitryNeural` |
 
-`ttsProvider`의 기본값은 `google`(Google Cloud Text-to-Speech)입니다. `auto`는 `ja`에 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `google`로 바꾸면 Google Cloud Text-to-Speech를 사용합니다(기본 음성: `ja-JP-Wavenet-B/C`, `en-US-Wavenet-F/D`, `cmn-TW-Wavenet-A/B`, `cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`. `googleVoice`로 음성을, `googleSpeed`로 말하기 속도를 바꿀 수 있습니다). `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
+`ttsProvider`의 기본값은 `google`(Google Cloud Text-to-Speech)입니다. `auto`는 `ja`에 VOICEVOX, 그 외에는 edge-tts를 사용합니다. `google`로 바꾸면 Google Cloud Text-to-Speech를 사용합니다(기본 음성: `ja-JP-Wavenet-B/C`, `en-US-Wavenet-F/D`, `cmn-TW-Wavenet-A/B`, `cmn-CN-Wavenet-A/B`, `ko-KR-Wavenet-A/C`, `es-ES-Wavenet-C/B`, `pt-BR-Wavenet-A/B`, `it-IT-Wavenet-A/C`, `fr-FR-Wavenet-A/B`, `de-DE-Wavenet-F/B`, `nl-NL-Wavenet-A/B`, `ru-RU-Wavenet-A/B`. `googleVoice`로 음성을, `googleSpeed`로 말하기 속도를 바꿀 수 있습니다). `edgeVoice`로 edge-tts 음성을 바꿀 수 있고(`.venv/bin/edge-tts --list-voices`로 목록 확인), `edgeRate`(예: `+10%`)로 속도를 바꿀 수 있습니다. 언어를 추가하려면 `extension/defaults.js`의 `YTD_LANGS`에 항목을 추가하세요.
 
 `speakerVoices`(기본값 `off`)는 인터뷰나 팟캐스트 같은 대화용입니다. 수동 자막 중에는 화자가 바뀔 때 줄 맨 앞에 `- ` 또는 `>>`를 붙이는 경우가 많습니다. `alternate`로 설정하면 이 표시를 본문에서 제거하고, 화자가 바뀔 때마다 음성을 바꿉니다. 첫 번째 화자는 `voiceGender`의 음성, 다른 화자는 반대 성별의 음성을 씁니다. 표시에는 이름이 없으므로 화자가 두 명일 때만 동작하며, 자동 생성 자막에는 보통 이 표시가 없습니다.
 
