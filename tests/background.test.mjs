@@ -70,7 +70,7 @@ test('translate prompt follows the target language', async () => {
   const ja = (await translate({ targetLang: 'ja' }, hello)).body.messages[0].content;
   assert.match(ja, /Japanese/);
   assert.match(ja, /Welcome back/, 'Japanese keeps the "Welcome back" rule');
-  for (const [lang, word] of [['en', 'English'], ['zh-TW', 'Traditional Chinese'], ['zh-CN', 'Simplified Chinese'], ['ko', 'Korean']]) {
+  for (const [lang, word] of [['en', 'English'], ['zh-TW', 'Traditional Chinese'], ['zh-CN', 'Simplified Chinese'], ['ko', 'Korean'], ['es', 'Spanish'], ['pt', 'Portuguese'], ['it', 'Italian'], ['fr', 'French'], ['de', 'German'], ['nl', 'Dutch'], ['ru', 'Russian']]) {
     const prompt = (await translate({ targetLang: lang }, hello)).body.messages[0].content;
     assert.match(prompt, new RegExp(word), lang);
     assert.doesNotMatch(prompt, /Welcome back/, `${lang} must not get the Japanese-only rule`);
@@ -91,7 +91,7 @@ test('translationLevel adds a level rule, JLPT-based for Japanese', async () => 
 test('translationLevel: standard and unknown values leave the prompt unchanged, advanced works for every language', async () => {
   const hello = { text: 'Hello there.' };
   const prompt = async (settings) => (await translate(settings, hello)).body.messages[0].content;
-  for (const targetLang of ['ja', 'en', 'zh-TW', 'zh-CN', 'ko']) {
+  for (const targetLang of ['ja', 'en', 'zh-TW', 'zh-CN', 'ko', 'es', 'pt', 'it', 'fr', 'de', 'nl', 'ru']) {
     const standard = await prompt({ targetLang });
     assert.equal(await prompt({ targetLang, translationLevel: 'standard' }), standard, targetLang);
     assert.equal(await prompt({ targetLang, translationLevel: 'expert' }), standard, `${targetLang}: unknown level`);
@@ -139,6 +139,9 @@ test('ttsProvider auto: edge-tts for other languages, with the voice for the cho
   assert.equal(await voice({ targetLang: 'en' }), 'en-US-AriaNeural');
   assert.equal(await voice({ targetLang: 'en', voiceGender: 'male' }), 'en-US-GuyNeural');
   assert.equal(await voice({ targetLang: 'ko', voiceGender: 'male' }), 'ko-KR-InJoonNeural');
+  assert.equal(await voice({ targetLang: 'es' }), 'es-ES-ElviraNeural');
+  assert.equal(await voice({ targetLang: 'de', voiceGender: 'male' }), 'de-DE-ConradNeural');
+  assert.equal(await voice({ targetLang: 'ru' }), 'ru-RU-SvetlanaNeural');
   assert.equal(await voice({ targetLang: 'zh-TW' }), 'zh-TW-HsiaoChenNeural');
   assert.equal(await voice({ targetLang: 'zh-CN', voiceGender: 'male' }), 'zh-CN-YunxiNeural');
   assert.equal(await voice({ targetLang: 'en', edgeVoice: 'en-GB-SoniaNeural' }), 'en-GB-SoniaNeural');

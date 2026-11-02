@@ -8,7 +8,7 @@ Speech Clock Dub
 
 ## Summary (132 characters at most)
 
-Dubs YouTube, Udemy, Vimeo, Coursera and edX lectures into Japanese, English, Chinese or Korean with your own LLM and TTS.
+Dubs YouTube, Udemy, Vimeo, Coursera and edX lectures into 12 languages with your own LLM and TTS.
 
 ## Category
 
@@ -17,7 +17,7 @@ Productivity (or Education)
 ## Description
 
 Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy, Vimeo, Coursera and edX videos), mostly slide-based lectures, into Japanese, English, Traditional
-Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesized speech is the master
+Chinese, Simplified Chinese, Korean, Spanish, Portuguese, Italian, French, German, Dutch or Russian. Unlike most dubbing tools, the synthesized speech is the master
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
 

@@ -8,7 +8,7 @@
 
 YouTube の講義動画向けの吹き替えツール。映像が音声に合わせて動きます。
 
-YouTube の講義動画を、日本語・英語・繁体字中国語・簡体字中国語・韓国語に吹き替える Chrome / Firefox（MV3）拡張機能です。スライドが中心の動画を想定しています。翻訳した音声を映像に合わせて詰め込むのではなく、**映像のほうが音声に合わせて動きます**。
+YouTube の講義動画を、日本語・英語・繁体字中国語・簡体字中国語・韓国語・スペイン語・ポルトガル語・イタリア語・フランス語・ドイツ語・オランダ語・ロシア語に吹き替える Chrome / Firefox（MV3）拡張機能です。スライドが中心の動画を想定しています。翻訳した音声を映像に合わせて詰め込むのではなく、**映像のほうが音声に合わせて動きます**。
 
 ## 仕組み
 
@@ -116,6 +116,13 @@ voicevox.lan:50443 {
 | `zh-TW` | 繁体字中国語（台湾） | `zh-TW-HsiaoChenNeural` |
 | `zh-CN` | 簡体字中国語 | `zh-CN-XiaoxiaoNeural` |
 | `ko` | 韓国語 | `ko-KR-SunHiNeural` |
+| `es` | スペイン語 | `es-ES-ElviraNeural` |
+| `pt` | ポルトガル語（ブラジル） | `pt-BR-FranciscaNeural` |
+| `it` | イタリア語 | `it-IT-ElsaNeural` |
+| `fr` | フランス語 | `fr-FR-DeniseNeural` |
+| `de` | ドイツ語 | `de-DE-KatjaNeural` |
+| `nl` | オランダ語 | `nl-NL-ColetteNeural` |
+| `ru` | ロシア語 | `ru-RU-SvetlanaNeural` |
 
 `translationLevel` は訳文の難しさを決めます: `standard`（既定）、`easy`（学習者向けのやさしい語と短い文。日本語では JLPT N5〜N3 程度）、`advanced`（より正確でかたい表現。日本語では JLPT N3〜N1 程度）。意味と専門用語は変わりません。翻訳プロンプトに規則を1行足すだけなので、どこまで守られるかはモデルしだいです。
 
@@ -129,8 +136,15 @@ voicevox.lan:50443 {
 | `zh-TW` | `zh-TW-HsiaoChenNeural` | `zh-TW-YunJheNeural` |
 | `zh-CN` | `zh-CN-XiaoxiaoNeural` | `zh-CN-YunxiNeural` |
 | `ko` | `ko-KR-SunHiNeural` | `ko-KR-InJoonNeural` |
+| `es` | `es-ES-ElviraNeural` | `es-ES-AlvaroNeural` |
+| `pt` | `pt-BR-FranciscaNeural` | `pt-BR-AntonioNeural` |
+| `it` | `it-IT-ElsaNeural` | `it-IT-DiegoNeural` |
+| `fr` | `fr-FR-DeniseNeural` | `fr-FR-HenriNeural` |
+| `de` | `de-DE-KatjaNeural` | `de-DE-ConradNeural` |
+| `nl` | `nl-NL-ColetteNeural` | `nl-NL-MaartenNeural` |
+| `ru` | `ru-RU-SvetlanaNeural` | `ru-RU-DmitryNeural` |
 
-`ttsProvider` の既定は `google`（Google Cloud Text-to-Speech）です。`auto` は `ja` に VOICEVOX、それ以外に edge-tts を使います。`google` にすると Google Cloud Text-to-Speech を使います（既定の声: `ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`。`googleVoice` で声を、`googleSpeed` で話速を変えられます）。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
+`ttsProvider` の既定は `google`（Google Cloud Text-to-Speech）です。`auto` は `ja` に VOICEVOX、それ以外に edge-tts を使います。`google` にすると Google Cloud Text-to-Speech を使います（既定の声: `ja-JP-Wavenet-B/C`、`en-US-Wavenet-F/D`、`cmn-TW-Wavenet-A/B`、`cmn-CN-Wavenet-A/B`、`ko-KR-Wavenet-A/C`, `es-ES-Wavenet-C/B`, `pt-BR-Wavenet-A/B`, `it-IT-Wavenet-A/C`, `fr-FR-Wavenet-A/B`, `de-DE-Wavenet-F/B`, `nl-NL-Wavenet-A/B`, `ru-RU-Wavenet-A/B`。`googleVoice` で声を、`googleSpeed` で話速を変えられます）。`edgeVoice` で edge-tts の声を上書きでき（`.venv/bin/edge-tts --list-voices` で一覧できます）、`edgeRate`（例: `+10%`）で速度を変えられます。言語を追加するには、`extension/defaults.js` の `YTD_LANGS` にエントリを追加します。
 
 `speakerVoices`（既定は `off`）は、インタビューやポッドキャストのような対話向けです。手動字幕の多くは、話者の交代を行頭の `- ` や `>>` で示しています。`alternate` にすると、この印を本文から取り除き、話者が替わるたびに声を切り替えます。最初の話者には `voiceGender` の声、もう一人には反対の性別の声を使います。印には名前がないため、対応できるのは 2 人までです。また、自動生成字幕には通常この印がありません。
 

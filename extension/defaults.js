@@ -40,6 +40,48 @@ const YTD_LANGS = {
     voices: { female: 'ko-KR-SunHiNeural', male: 'ko-KR-InJoonNeural' },
     google: { code: 'ko-KR', voices: { female: 'ko-KR-Wavenet-A', male: 'ko-KR-Wavenet-C' } },
   },
+  es: {
+    name: 'Spanish',
+    style: 'natural spoken Spanish (neutral, as understood across Spain and Latin America)',
+    voices: { female: 'es-ES-ElviraNeural', male: 'es-ES-AlvaroNeural' },
+    google: { code: 'es-ES', voices: { female: 'es-ES-Wavenet-C', male: 'es-ES-Wavenet-B' } },
+  },
+  pt: {
+    name: 'Portuguese',
+    style: 'natural spoken Brazilian Portuguese',
+    voices: { female: 'pt-BR-FranciscaNeural', male: 'pt-BR-AntonioNeural' },
+    google: { code: 'pt-BR', voices: { female: 'pt-BR-Wavenet-A', male: 'pt-BR-Wavenet-B' } },
+  },
+  it: {
+    name: 'Italian',
+    style: 'natural spoken Italian',
+    voices: { female: 'it-IT-ElsaNeural', male: 'it-IT-DiegoNeural' },
+    google: { code: 'it-IT', voices: { female: 'it-IT-Wavenet-A', male: 'it-IT-Wavenet-C' } },
+  },
+  fr: {
+    name: 'French',
+    style: 'natural spoken French',
+    voices: { female: 'fr-FR-DeniseNeural', male: 'fr-FR-HenriNeural' },
+    google: { code: 'fr-FR', voices: { female: 'fr-FR-Wavenet-A', male: 'fr-FR-Wavenet-B' } },
+  },
+  de: {
+    name: 'German',
+    style: 'natural spoken German',
+    voices: { female: 'de-DE-KatjaNeural', male: 'de-DE-ConradNeural' },
+    google: { code: 'de-DE', voices: { female: 'de-DE-Wavenet-F', male: 'de-DE-Wavenet-B' } },
+  },
+  nl: {
+    name: 'Dutch',
+    style: 'natural spoken Dutch',
+    voices: { female: 'nl-NL-ColetteNeural', male: 'nl-NL-MaartenNeural' },
+    google: { code: 'nl-NL', voices: { female: 'nl-NL-Wavenet-A', male: 'nl-NL-Wavenet-B' } },
+  },
+  ru: {
+    name: 'Russian',
+    style: 'natural spoken Russian',
+    voices: { female: 'ru-RU-SvetlanaNeural', male: 'ru-RU-DmitryNeural' },
+    google: { code: 'ru-RU', voices: { female: 'ru-RU-Wavenet-A', male: 'ru-RU-Wavenet-B' } },
+  },
 };
 
 // Wording of the translationLevel rule for languages without their own `levels` in YTD_LANGS.
