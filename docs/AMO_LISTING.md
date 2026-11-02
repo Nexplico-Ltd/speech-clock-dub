@@ -9,15 +9,15 @@ Speech Clock Dub
 
 ## Summary (250 characters at most)
 
-Dubs YouTube, Udemy and Vimeo lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
+Dubs YouTube, Udemy, Vimeo, Coursera and edX lectures into Japanese, English, Chinese or Korean with your own LLM and TTS. The video follows the voice, not the other way around. Works on Firefox for desktop and Android.
 
 ## Categories
 
-Language Support, Social & Communication (or Other). Tags: youtube, udemy, vimeo, dubbing, translation, tts, lecture.
+Language Support, Social & Communication (or Other). Tags: youtube, udemy, vimeo, coursera, edx, dubbing, translation, tts, lecture.
 
 ## Description
 
-Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy and Vimeo videos), mostly slide-based lectures, into Japanese, English, Traditional
+Speech Clock Dub dubs YouTube videos (and, experimentally, Udemy, Vimeo, Coursera and edX videos), mostly slide-based lectures, into Japanese, English, Traditional
 Chinese, Simplified Chinese or Korean. Unlike most dubbing tools, the synthesized speech is the master
 clock: the extension speeds up, slows down, pauses and resumes the video to follow the voice, so the
 slides stay in step with what you hear and the speech never has to be squeezed or cut off.
@@ -37,6 +37,8 @@ Features
   be signed in and enrolled in the course.
 - Also works on Vimeo videos (experimental): captions come from the Vimeo player's caption file, so the video must
   have captions or subtitles.
+- Also works on Coursera and edX videos (experimental): captions come from the video's own subtitle track or
+  transcript, so the video must have one. edX is supported on courses.edx.org and learning.edx.org only.
 - Optional alternating voices for dialogue (experimental).
 - Works on Firefox for Android (m.youtube.com): touch-sized buttons that hide after a few idle seconds.
 
@@ -49,7 +51,7 @@ https://github.com/Nexplico-Ltd/speech-clock-dub/blob/main/docs/PRIVACY.md
 
 Open source (Apache-2.0): https://github.com/Nexplico-Ltd/speech-clock-dub
 
-Not affiliated with YouTube, Udemy, Vimeo or Google. Respect the rights of the video authors and the terms of the
+Not affiliated with YouTube, Udemy, Vimeo, Coursera, edX or Google. Respect the rights of the video authors and the terms of the
 services you use.
 
 ## Other fields
@@ -81,14 +83,17 @@ collected by the developers.
 - **Optional host permissions `http://*/*`, `https://*/*`**: not granted at install. When the user enters
   the address of another service (a hosted OpenAI-compatible LLM, or a server on the local network) and
   presses Save, the options page asks for access to that single host.
-- **Content scripts on `https://www.youtube.com/*`, `https://m.youtube.com/*`, `https://*.udemy.com/*` and
-  `https://player.vimeo.com/*`**: one runs in the page context (`world: "MAIN"`, YouTube only) to read the caption tracks from the YouTube
+- **Content scripts on `https://www.youtube.com/*`, `https://m.youtube.com/*`, `https://*.udemy.com/*`,
+  `https://player.vimeo.com/*`, `https://www.coursera.org/*`, `https://courses.edx.org/*` and
+  `https://learning.edx.org/*`**: one runs in the page context (`world: "MAIN"`, YouTube only) to read the caption tracks from the YouTube
   player; the other reads the playback state, controls the video's playback rate and pause state, and draws
   the Dub / Sub buttons and the subtitles on the player. On Udemy it also asks udemy.com's own lecture API
   (same origin, with the user's existing session) for the caption file of the lecture being dubbed. On Vimeo
-  it runs only inside Vimeo's player frame (`all_frames` is set for `player.vimeo.com` only, so it also runs in
-  players embedded in other sites but cannot see the embedding page) and fetches that player's config and
-  caption file from the same origin.
+  it runs only inside Vimeo's player frame (`all_frames` is set only for `player.vimeo.com`, `courses.edx.org` and
+  `learning.edx.org`, so it also runs in players embedded in other sites but cannot see the embedding page) and
+  fetches that player's config and caption file from the same origin. On Coursera it reads the subtitle track
+  the lecture's video element already lists. On edX it fetches the transcript named by the video block (inside
+  the `courses.edx.org` video frame) from the same origin. It does nothing on a page without a video.
 - **Remote code**: none. All code is in the package.
 
 ## Notes to reviewers
