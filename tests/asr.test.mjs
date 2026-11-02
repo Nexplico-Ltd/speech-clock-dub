@@ -105,6 +105,26 @@ test('conjunctions at the tail of a cue move to the head of the next one', () =>
   ]);
 });
 
+test('conjunctions of other languages move to the next cue too', () => {
+  const cases = [
+    [['wir', 'legen', 'die', 'Spannung', 'an', 'und', 'dann', 'fließt', 'der', 'Strom'], 'und'],
+    [['aplicamos', 'la', 'tensión', 'y', 'luego', 'fluye', 'la', 'corriente'], 'y'],
+    [['nous', 'appliquons', 'la', 'tension', 'et', 'ensuite', 'le', 'courant', 'passe'], 'et'],
+    [['мы', 'подаём', 'напряжение', 'и', 'тогда', 'течёт', 'ток'], 'и'],
+    [['전압을', '걸고', '그리고', '전류가', '흐릅니다'], '그리고'],
+  ];
+  for (const [texts, conj] of cases) {
+    // Punctuation known everywhere (the limit is 1.5 x maxCueChars), set so that the first cue is cut
+    // right after the conjunction.
+    const flags = texts.map(() => ({ end: false, clause: false }));
+    const upTo = texts.slice(0, texts.indexOf(conj) + 1).reduce((sum, w) => sum + w.length + 1, 0);
+    const out = plain(ASR.cues(mk(texts), flags, { ...opts, maxCueChars: upTo / 1.5 - 0.01 })).map((c) => c.text);
+    assert.ok(out.length > 1, `${texts.join(' ')} is cut`);
+    assert.ok(!out.slice(0, -1).some((t) => t.split(' ').at(-1) === conj), `${conj} is not left at a cue tail`);
+    assert.ok(out.some((t) => t.startsWith(`${conj} `)), `${conj} starts a cue`);
+  }
+});
+
 test('a conjunction before a long pause or a sentence end stays where it is', () => {
   const gap = [...mk(['x', 'y', 'and']), { start: 20, end: 20.3, text: 'z' }];
   assert.deepEqual(plain(ASR.cues(gap, noFlags(4), opts)).map((c) => c.text), ['x y and', 'z']);
